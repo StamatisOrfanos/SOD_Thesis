@@ -1,0 +1,21 @@
+
+DETRs with Collaborative Hybrid Assignments Training -> https://github.com/sense-x/co-detr
+
+SOLQ: Segmenting Objects by Learning Queries -> https://github.com/megvii-research/SOLQ
+
+EfficientDet -> https://github.com/google/automl/tree/master/efficientdet
+
+DEFORMABLE DETR -> https://github.com/fundamentalvision/Deformable-DETR
+
+// ------------------------------------------------ Help ------------------------------------------------------ \\
+
+Three things everyone should know about Vision Transformers -> https://arxiv.org/pdf/2203.09795.pdf
+
+How to train your ViT? Data, Augmentation, and Regularization in Vision Transformers -> https://arxiv.org/pdf/2106.10270.pdf
+
+DEtection TRansformer (DETR) vs. YOLO for object detection. -> https://medium.com/@faheemrustamy/detection-transformer-detr-vs-yolo-for-object-detection-baeb3c50bc3
+
+Vision Transformer -> https://github.com/google-research/vision_transformer
+
+\\ ------------------------------------------------------------------------------------------------------------- //
+
