@@ -1,21 +1,41 @@
+                                                        Make it Happen
 
-DETRs with Collaborative Hybrid Assignments Training -> https://github.com/sense-x/co-detr
 
-SOLQ: Segmenting Objects by Learning Queries -> https://github.com/megvii-research/SOLQ
+// ------------------------------------------------ Code ------------------------------------------------------ \\
+1. DETRs with Collaborative Hybrid Assignments Training -> https://github.com/sense-x/co-detr ->
 
-EfficientDet -> https://github.com/google/automl/tree/master/efficientdet
+2. SOLQ: Segmenting Objects by Learning Queries -> https://github.com/megvii-research/SOLQ    ->
 
-DEFORMABLE DETR -> https://github.com/fundamentalvision/Deformable-DETR
+3. EfficientDet -> https://github.com/google/automl/tree/master/efficientdet                  ->
 
-// ------------------------------------------------ Help ------------------------------------------------------ \\
-
-Three things everyone should know about Vision Transformers -> https://arxiv.org/pdf/2203.09795.pdf
-
-How to train your ViT? Data, Augmentation, and Regularization in Vision Transformers -> https://arxiv.org/pdf/2106.10270.pdf
-
-DEtection TRansformer (DETR) vs. YOLO for object detection. -> https://medium.com/@faheemrustamy/detection-transformer-detr-vs-yolo-for-object-detection-baeb3c50bc3
-
-Vision Transformer -> https://github.com/google-research/vision_transformer
-
+4. DEFORMABLE DETR -> https://github.com/fundamentalvision/Deformable-DETR                    ->
 \\ ------------------------------------------------------------------------------------------------------------- //
 
+
+
+// ------------------------------------------------ Code ------------------------------------------------------ \\
+1. https://arxiv.org/pdf/2206.06323.pdf                                                                  ->
+
+2. https://arxiv.org/pdf/2306.04670.pdf                                                                  ->
+
+3. https://medium.com/@faheemrustamy/detection-transformer-detr-vs-yolo-for-object-detection-baeb3c50bc3 ->
+
+4. Vision Transformer  -> https://github.com/google-research/vision_transformer
+\\ ------------------------------------------------------------------------------------------------------------- //
+
+
+
+// ------------------------------------------------ Help ------------------------------------------------------ \\
+1. Three things everyone should know about Vision Transformers 
+-> https://arxiv.org/pdf/2203.09795.pdf ---------------------------> DONE
+
+
+2. How to train your ViT? Data, Augmentation, and Regularization in Vision Transformers 
+-> https://arxiv.org/pdf/2106.10270.pdf ---------------------------> DONE
+
+3. DEtection TRansformer vs. YOLO for object detection. 
+-> https://medium.com/@faheemrustamy/detection-transformer-detr-vs-yolo-for-object-detection-baeb3c50bc3
+
+4. AN IMAGE IS WORTH 16X16 WORDS: TRANSFORMERS FOR IMAGE RECOGNITION AT SCALE
+-> https://arxiv.org/pdf/2010.11929.pdf ---------------------------> DONE
+\\ ------------------------------------------------------------------------------------------------------------- //
