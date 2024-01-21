@@ -1,0 +1,1 @@
+https://github.com/facebookresearch/Mask2Former/tree/main/mask2former/modeling
