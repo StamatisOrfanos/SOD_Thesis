@@ -19,18 +19,12 @@ The primary objectives of this project include:
 
 
 ### Getting Started
-Provide instructions on how to set up the project locally. This might include:
 [Check this](https://github.com/dk-liang/Awesome-Visual-Transformer)
 
 ### Prerequisites (software requirements, dependencies)
-Installation steps
-Running the code
-Usage
-Detail how someone can use your project:
+
 
 ### Example commands
-How to run tests
-How to replicate your experiments
 
 
 ### License

@@ -10,7 +10,10 @@ class EFPN(nn.Module):
         # Load EfficientNet with pre-trained weights
         self.backbone = EfficientNet.from_pretrained('efficientnet-b7')
 
-# Define FPN convolution layers to match channel dimensions if necessary
+        # Initialize FTTModule
+        self.ftt_model = FTT()
+
+        # Define FPN convolution layers to match channel dimensions if necessary
         self.conv_c2_prime = nn.Conv2d(32, 256, kernel_size=1)  
         self.conv_c2       = nn.Conv2d(48, 256, kernel_size=1)  
         self.conv_c3       = nn.Conv2d(80, 256, kernel_size=1)  
@@ -38,13 +41,23 @@ class EFPN(nn.Module):
 
         # Process feature maps through FPN
         p5 = self.lateral_p5(c5)
-        p4 = self.lateral_p4(c4) + self.top_down_p5(p5)
-        p3 = self.lateral_p3(c3) + self.top_down_p4(p4)
-        p2 = self.lateral_p2(c2) + self.top_down_p3(p3)
+        upsampled_p5 = F.interpolate(p5, size=c4.shape[2:], mode='nearest')
+        
+        p4 = self.lateral_p4(c4) + upsampled_p5
+        upsampled_p4 = F.interpolate(p4, size=c3.shape[2:], mode='nearest')
+        
+        p3 = self.lateral_p3(c3) + upsampled_p4
+        upsampled_p3 = F.interpolate(p3, size=c2.shape[2:], mode='nearest')
+        
+        p2 = self.lateral_p2(c2) + upsampled_p3
 
         # FTT operations for P3' and P2' here
-        p3_prime = FTTModule(p2, p3)
-        p2_prime = self.top_down_p2(p3_prime) + self.conv_c2_prime(c2_prime)
+        p3_prime = self.ftt_model(p2, p3)
+
+        # Process c2_prime through its convolution layer
+        c2_prime_processed = self.conv_c2_prime(c2_prime)
+        upsampled_p3_prime = self.top_down_p2(p3_prime)
+        p2_prime = upsampled_p3_prime + c2_prime_processed
 
         # Return the feature pyramids
         return p2_prime, p2, p3, p4, p5
@@ -52,21 +65,21 @@ class EFPN(nn.Module):
 
     def backbone_features(self, x):
         # Get feature maps from the EfficientNet backbone
-        c2_prime = self.backbone.extract_endpoints(x)['reduction_1']  # For C2'
-        c2 = self.backbone.extract_endpoints(x)['reduction_2']        # For C2
-        c3 = self.backbone.extract_endpoints(x)['reduction_3']        # For C3
-        c4 = self.backbone.extract_endpoints(x)['reduction_4']        # For C4
-        c5 = self.backbone.extract_endpoints(x)['reduction_5']        # For C5
+        c2_prime = self.backbone.extract_endpoints(x)['reduction_1']  
+        c2 = self.backbone.extract_endpoints(x)['reduction_2']        
+        c3 = self.backbone.extract_endpoints(x)['reduction_3']        
+        c4 = self.backbone.extract_endpoints(x)['reduction_4']        
+        c5 = self.backbone.extract_endpoints(x)['reduction_5']        
         return c2_prime, c2, c3, c4, c5
 
 
 # Define the FTT module of the Extended Feature Pyramid Network
-class FTTModule(nn.Module):
+class FTT(nn.Module):
     def __init__(self):
-        super(FTTModule, self).__init__()
-        self.content_extractor = ContentExtractor()
-        self.texture_extractor = TextureExtractor()
-        self.subpixel_conv = SubPixelConv()
+        super(FTT, self).__init__()
+        self.content_extractor = ContentExtractor(256, 256, num_layers=3)
+        self.texture_extractor = TextureExtractor(256, 256, num_layers=3)
+        self.subpixel_conv = SubPixelConv(256, 256, upscale_factor=2)
     
     def forward(self, p2, p3):
         # Apply the content extractor to P3 and upsample the content features
@@ -123,16 +136,3 @@ class SubPixelConv(nn.Module):
         x = self.conv(x)
         x = F.pixel_shuffle(x, self.upscale_factor)
         return x
-    
-
-
-
-model = EFPN()
-model.eval()  # Set the model to evaluation mode
-test_input = torch.randn(1, 3, 600, 600)  # Random tensor simulating an image
-
-
-with torch.no_grad():  # Disable gradient computation for testing
-    output = model(test_input)
-for i, feature_map in enumerate(output):
-    print(f"Feature map {i}: {feature_map.shape}")
