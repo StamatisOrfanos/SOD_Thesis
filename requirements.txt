@@ -1,0 +1,7 @@
+efficientnet_pytorch==0.7.1
+Pillow==9.5.0
+Pillow==9.4.0
+Pillow==10.2.0
+scipy==1.10.1
+torch==2.0.1
+utils==1.0.2
