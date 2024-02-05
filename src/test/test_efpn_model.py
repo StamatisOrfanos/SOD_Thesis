@@ -1,0 +1,34 @@
+import torch
+from torchvision import transforms
+from PIL import Image
+from models.Efpn.efpn_model import EFPN
+
+    
+# ------------------------------------------------------------------------------------------------------------------------------
+# Step 1: Load and preprocess the image
+def load_image(image_path):
+    image = Image.open(image_path).convert('RGB')
+    transform = transforms.Compose([
+        transforms.Resize((600, 600)),  # Resize to the input size expected by EfficientNet
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalization for EfficientNet
+    ])
+    return transform(image).unsqueeze(0)  # Add batch dimension
+
+image = load_image("/Users/stamatiosorphanos/Documents/MCs_Thesis/SOD_Thesis/docs/Extended_Mask2Former/1.jpg")
+
+# Step 2: Instantiate the model
+model = EFPN()
+model.eval()  # Set the model to evaluation mode
+
+# Step 3: Pass the image through the model
+with torch.no_grad():  # No need to calculate gradients
+    feature_maps = model(image)
+
+# Step 4: Visualize or inspect the feature maps
+# This part depends on what you want to do with the feature maps.
+for fm in feature_maps:
+    print(fm.shape)
+
+# ------------------------------------------------------------------------------------------------------------------------------
+
