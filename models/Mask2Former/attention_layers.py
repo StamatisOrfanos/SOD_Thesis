@@ -1,21 +1,33 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+# Modified by Bowen Cheng from: https://github.com/facebookresearch/detr/blob/master/models/detr.py
 from typing import Optional
 from torch import nn, Tensor
 from torch.nn import functional as F
 
-# 
-class SelfAttentionLayer(nn.Module):
 
+
+class SelfAttentionLayer(nn.Module):
+    """
+    Parameters:
+    - d_model (int): The number of expected features in the input (and output) tensor, the embedding dimension.
+    - nhead (int): The number of heads in the multihead attention models.
+    - dropout (float): The dropout value, used in the attention to prevent overfitting.
+    - activation (str): The activation function for the feedforward layer.
+
+    This layer is responsible for computing self-attention, where the query, key, and value are all the same tensor.
+    It also applies dropout and layer normalization as part of the standard Transformer architecture.
+    """
     def __init__(self, d_model, nhead, dropout=0.0, activation="relu"):
         super().__init__()
         self.self_attention = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
         self.norm = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
         self.activation = _get_activation_fn(activation)
-        self._reset_parameters()
+        self.reset_parameters()
     
     
     # Initialize parameters using xavier_uniform method for better convergence
-    def _reset_parameters(self):
+    def reset_parameters(self):
         for p in self.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
@@ -38,18 +50,27 @@ class SelfAttentionLayer(nn.Module):
     
      
 class MaskedAttentionLayer(nn.Module):
+    """
+    Parameters:
+    - d_model (int): The number of expected features in the input tensor, typically the embedding dimension.
+    - nhead (int): The number of heads in the multihead attention model.
+    - dropout (float): The dropout value, used in the attention to prevent overfitting.
+    - activation (str): The activation function for the feedforward layer.
 
+    This layer is responsible for computing cross-attention, where the query comes from one tensor (target_tensor) and the key/value come from another tensor (memory).
+    It applies dropout and layer normalization as part of the standard Transformer architecture.
+    """
     def __init__(self, d_model, nhead, dropout=0.0, activation="relu"):
         super().__init__()
         self.multihead_attention = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
         self.norm = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
         self.activation = _get_activation_fn(activation)
-        self._reset_parameters()
+        self.reset_parameters()
     
     
     # Initialize parameters using xavier_uniform method for better convergence
-    def _reset_parameters(self):
+    def reset_parameters(self):
         for p in self.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
