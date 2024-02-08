@@ -11,9 +11,7 @@ class FFNLayer(nn.Module):
     - d_model (int): The number of expected features in the input and output tensor, the dimensionality of the embedding.
     - dim_feedforward (int): The dimension of the feedforward network model, which is the size of the hidden layer.
     - dropout (float): The dropout value, which is the probability of an element to be zeroed. Helps in regularizing the model.
-    - activation (str): The activation function of the intermediate layer.
-    
-    The class also includes a method to reset parameters, which initializes the weights of the model using the Xavier uniform initialization.
+    - activation (str): The activation function of the intermediate layer.    
     """
     def __init__(self, d_model, dim_feedforward=2048, dropout=0.0, activation="relu"):
         super().__init__()
@@ -43,7 +41,7 @@ class FFNLayer(nn.Module):
     
 
 class MLP(nn.Module):
-    """ Very simple multi-layer perceptron (also called FFN)"""
+    """ Very simple multi-layer perceptron"""
 
     def __init__(self, input_dim, hidden_dim, output_dim, num_layers):
         super().__init__()

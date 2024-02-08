@@ -9,16 +9,10 @@ from models.Mask2Former.ffn_layer import FFNLayer, MLP
 from position_embedding_sine import PositionEmbeddingSine
 
 
-from detectron2.config import configurable
-from detectron2.layers import Conv2d
-
-
-
 
 class MultiScaleMaskedTransformerDecoder(nn.Module):
-    def __init__(self,  in_channels, num_classes: int, hidden_dim: int,  
-                 num_queries: int, nheads: int, dim_feedforward: int, dec_layers: int, 
-                 pre_norm: bool, mask_dim: int, enforce_input_project: bool):
+    def __init__(self, in_channels, num_classes: int, hidden_dim: int, num_queries: int, nheads: int, 
+                 dim_feedforward: int, dec_layers: int, mask_dim: int):
         """
         Args:
             in_channels: channels of the input features
@@ -27,12 +21,8 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
             num_queries: number of queries
             nheads: number of heads
             dim_feedforward: feature dimension in feedforward network
-            enc_layers: number of Transformer encoder layers
             dec_layers: number of Transformer decoder layers
-            pre_norm: whether to use pre-LayerNorm or not
             mask_dim: mask feature dimension
-            enforce_input_project: add input project 1x1 conv even if input
-                channels and hidden dim is identical
         """
         super().__init__()
         self.mask_classification = True
@@ -53,8 +43,7 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
                 SelfAttentionLayer(
                     d_model=hidden_dim,
                     nhead=nheads,
-                    dropout=0.0,
-                    normalize_before=pre_norm,
+                    dropout=0.0
                 )
             )
 
@@ -62,8 +51,7 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
                 MaskedAttentionLayer(
                     d_model=hidden_dim,
                     nhead=nheads,
-                    dropout=0.0,
-                    normalize_before=pre_norm,
+                    dropout=0.0
                 )
             )
 
@@ -71,8 +59,7 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
                 FFNLayer(
                     d_model=hidden_dim,
                     dim_feedforward=dim_feedforward,
-                    dropout=0.0,
-                    normalize_before=pre_norm,
+                    dropout=0.0
                 )
             )
 
@@ -92,15 +79,14 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
         
         
         for _ in range(self.num_feature_levels):
-            if in_channels != hidden_dim or enforce_input_project:
-                self.input_proj.append(Conv2d(in_channels, hidden_dim, kernel_size=1))
+            if in_channels != hidden_dim:
+                self.input_proj.append(nn.Conv2d(in_channels, hidden_dim, kernel_size=1))
                 weight_init.c2_xavier_fill(self.input_proj[-1])
             else:
                 self.input_proj.append(nn.Sequential())
 
         # output FFNs
-        if self.mask_classification:
-            self.class_embed = nn.Linear(hidden_dim, num_classes + 1)
+        self.class_embed = nn.Linear(hidden_dim, num_classes + 1)
         self.mask_embed = MLP(hidden_dim, hidden_dim, mask_dim, 3)
 
 
@@ -212,38 +198,3 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
             ]
         else:
             return [{"pred_masks": b} for b in outputs_seg_masks[:-1]]
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-    # _version = 2
-
-    # def _load_from_state_dict(
-    #     self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
-    # ):
-    #     version = local_metadata.get("version", None)
-    #     if version is None or version < 2:
-    #         # Do not warn if train from scratch
-    #         scratch = True
-    #         logger = logging.getLogger(__name__)
-    #         for k in list(state_dict.keys()):
-    #             newk = k
-    #             if "static_query" in k:
-    #                 newk = k.replace("static_query", "query_feat")
-    #             if newk != k:
-    #                 state_dict[newk] = state_dict[k]
-    #                 del state_dict[k]
-    #                 scratch = False
-
-    #         if not scratch:
-    #             logger.warning(
-    #                 f"Weight format of {self.__class__.__name__} have changed! "
-    #                 "Please upgrade your models. Applying automatic conversion now ..."
-    #             )
