@@ -1,7 +1,5 @@
-import torch
 from torch import nn
 from torch.nn import functional as F
-from torch.autograd import Variable
 from efficientnet_pytorch import EfficientNet
 
 class EFPN(nn.Module):
@@ -60,6 +58,7 @@ class EFPN(nn.Module):
         p2_prime = upsampled_p3_prime + c2_prime_processed
 
         # Return the feature pyramids
+        print(type(p2_prime))
         return p2_prime, p2, p3, p4, p5
 
 

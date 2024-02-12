@@ -1,9 +1,11 @@
+import sys, os 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import torch
 from torchvision import transforms
 from PIL import Image
-from models.Efpn.efpn_model import EFPN
+from models.Efpn.efpn_model import EFPN    
 
-    
+
 # ------------------------------------------------------------------------------------------------------------------------------
 # Step 1: Load and preprocess the image
 def load_image(image_path):

@@ -1,3 +1,5 @@
+import sys, os 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import torch
 from torchvision import transforms
 from PIL import Image
@@ -12,7 +14,7 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), ])
 
 # Load the image
-input_image = Image.open("models/Mask2Former/1.jpg").convert('RGB')
+input_image = Image.open("docs/fft.png").convert('RGB')
 
 # Transform the image and add a batch dimension
 input_tensor = transform(input_image)

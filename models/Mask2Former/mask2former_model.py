@@ -5,18 +5,9 @@ import fvcore.nn.weight_init as weight_init
 import torch
 from torch import nn
 from torch.nn import functional as F
-from models.Mask2Former.ffn_layer import MLP
-from models.Mask2Former.position_embedding_sine import PositionEmbeddingSine
-from models.Mask2Former.transformer_encoder import TransformerEncoderLayer
-
-
-
-
-from detectron2.modeling.backbone import Backbone
-from detectron2.modeling.postprocessing import sem_seg_postprocess
-from detectron2.structures import Boxes, ImageList, Instances, BitMasks
-
-
+from ffn_layer import MLP
+from position_embedding_sine import PositionEmbeddingSine
+from transformer_encoder import TransformerEncoderLayer
 
 
 
@@ -63,7 +54,7 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
 
         # Define the amount of multi-scale features and create the corresponding level embedding (we use 4 scales)
         # and the projection layers to align the channel dimensions if necessary.
-        self.num_feature_levels = 4
+        self.num_feature_levels = 5
         self.scale_level_embedding = nn.Embedding(self.num_feature_levels, hidden_dim)
         self.input_proj = nn.ModuleList()
         
@@ -165,42 +156,3 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
             aux_losses = [{"pred_masks": masks} for masks in outputs_seg_masks[:-1]]
 
         return aux_losses
-    
-    
-    def instance_inference(self, mask_cls, mask_pred):
-        # mask_pred is already processed to have the same shape as original input
-        image_size = mask_pred.shape[-2:]
-
-        # [Q, K]
-        scores = F.softmax(mask_cls, dim=-1)[:, :-1]
-        labels = torch.arange(self.sem_seg_head.num_classes, device=self.device).unsqueeze(0).repeat(self.num_queries, 1).flatten(0, 1)
-        # scores_per_image, topk_indices = scores.flatten(0, 1).topk(self.num_queries, sorted=False)
-        scores_per_image, topk_indices = scores.flatten(0, 1).topk(self.test_topk_per_image, sorted=False)
-        labels_per_image = labels[topk_indices]
-
-        topk_indices = topk_indices // self.sem_seg_head.num_classes
-        # mask_pred = mask_pred.unsqueeze(1).repeat(1, self.sem_seg_head.num_classes, 1).flatten(0, 1)
-        mask_pred = mask_pred[topk_indices]
-
-        # if this is panoptic segmentation, we only keep the "thing" classes
-        if self.panoptic_on:
-            keep = torch.zeros_like(scores_per_image).bool()
-            for i, lab in enumerate(labels_per_image):
-                keep[i] = lab in self.metadata.thing_dataset_id_to_contiguous_id.values()
-
-            scores_per_image = scores_per_image[keep]
-            labels_per_image = labels_per_image[keep]
-            mask_pred = mask_pred[keep]
-
-        result = Instances(image_size)
-        # mask (before sigmoid)
-        result.pred_masks = (mask_pred > 0).float()
-        result.pred_boxes = Boxes(torch.zeros(mask_pred.size(0), 4))
-        # Uncomment the following to get boxes from masks (this is slow)
-        # result.pred_boxes = BitMasks(mask_pred > 0).get_bounding_boxes()
-
-        # calculate average mask prob
-        mask_scores_per_image = (mask_pred.sigmoid().flatten(1) * result.pred_masks.flatten(1)).sum(1) / (result.pred_masks.flatten(1).sum(1) + 1e-6)
-        result.scores = scores_per_image * mask_scores_per_image
-        result.pred_classes = labels_per_image
-        return result
