@@ -6,14 +6,14 @@ from PIL import Image
 from models.Mask2Former.backbone_model import Backbone
 from models.Mask2Former.pixel_decoder import PixelDecoder
 
-
-# Define the image transformation
+# --------------------------------------------------------------------------------------------------------------------------------
+# Step 1: Define the image transformation
 transform = transforms.Compose([
     transforms.Resize(600),            
     transforms.ToTensor(),             
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), ])
 
-# Load the image
+# Step 2: Load the image
 input_image = Image.open("docs/fft.png").convert('RGB')
 
 # Transform the image and add a batch dimension
@@ -21,22 +21,21 @@ input_tensor = transform(input_image)
 input_batch = input_tensor.unsqueeze(0) 
 
 
-# Initialize the backbone
+# Step 3: Initialize the backbone
 backbone = Backbone()
 
-# Move the model to GPU if available
+# Step 4: Move the model to GPU if available
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 backbone = backbone.to(device)
 input_batch = input_batch.to(device)
 
-# Get the feature maps
+# Step 5: Get the feature maps
 with torch.no_grad(): feature_maps = backbone(input_batch)
 
 # Print the shape of the feature maps
 print("Feature maps shape:", feature_maps.shape)
 
-
-# You would use the PixelDecoder like this:
+# Step 6: You would use the PixelDecoder like this:
 pixel_decoder = PixelDecoder(input_channels=2560)
 backbone_feature_maps = feature_maps
 all_feature_maps = pixel_decoder(backbone_feature_maps)
@@ -45,4 +44,5 @@ all_feature_maps = pixel_decoder(backbone_feature_maps)
 # Example usage:
 pixel_decoder = PixelDecoder(input_channels=2560)
 feature_maps_level1, feature_maps_level2, feature_maps_level3, feature_maps_level4 = pixel_decoder(feature_maps)
-print(feature_maps_level1)
+print(type(feature_maps_level1))
+#  --------------------------------------------------------------------------------------------------------------------------------

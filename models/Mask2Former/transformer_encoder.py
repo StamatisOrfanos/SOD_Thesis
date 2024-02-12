@@ -1,8 +1,8 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 # Modified by Bowen Cheng from: https://github.com/facebookresearch/detr/blob/master/models/detr.py
 from torch import nn
-from attention_layers import MaskedAttentionLayer, SelfAttentionLayer
-from position_embedding_sine import PositionEmbeddingSine
+from models.Mask2Former.attention_layers import MaskedAttentionLayer, SelfAttentionLayer
+from models.Mask2Former.position_embedding_sine import PositionEmbeddingSine
 
 import torch.nn as nn
 

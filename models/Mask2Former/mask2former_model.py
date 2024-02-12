@@ -5,13 +5,13 @@ import fvcore.nn.weight_init as weight_init
 import torch
 from torch import nn
 from torch.nn import functional as F
-from ffn_layer import MLP
-from position_embedding_sine import PositionEmbeddingSine
-from transformer_encoder import TransformerEncoderLayer
+from models.Mask2Former.ffn_layer import MLP
+from models.Mask2Former.position_embedding_sine import PositionEmbeddingSine
+from models.Mask2Former.transformer_encoder import TransformerEncoderLayer
 
 
 
-class MultiScaleMaskedTransformerDecoder(nn.Module):
+class Mask2Former(nn.Module):
     def __init__(self, in_channels: int, num_classes: int, hidden_dim: int, num_queries: int, nheads: int, dim_feedforward: int, dec_layers: int, mask_dim: int):
         """
         Parameters:
