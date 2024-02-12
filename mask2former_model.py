@@ -199,20 +199,8 @@ class MLP(nn.Module):
 
 
 class MultiScaleMaskedTransformerDecoder(nn.Module):
-    def __init__(
-        self,
-        in_channels,
-        num_classes,
-        mask_classification=True,  
-        hidden_dim=256,
-        num_queries=100,
-        nheads=8,
-        dim_feedforward=2048,
-        dec_layers=10,
-        pre_norm=False,
-        mask_dim=256,
-        enforce_input_project=False
-    ):
+    def __init__(self, in_channels, num_classes, mask_classification=True, hidden_dim=256, num_queries=100, nheads=8, 
+                 dim_feedforward=2048, dec_layers=10, pre_norm=False, mask_dim=256,enforce_input_project=False):
         super().__init__()
 
         assert mask_classification, "Only support mask classification model"

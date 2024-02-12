@@ -1,6 +1,2 @@
 https://github.com/facebookresearch/Mask2Former/tree/main/mask2former/modeling
 
-
-Is there a way we can clarify those attention modules so that they are closer to the schema, being named as Masked-Attention and Self-Attention,
-because it might create confusion for somody that does not get the use of the mask arguments is the effective implementation of the mask attention. 
-Overall create a code block that s closer to the architecture schema?

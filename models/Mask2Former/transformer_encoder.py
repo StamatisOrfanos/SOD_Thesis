@@ -2,8 +2,8 @@
 # Modified by Bowen Cheng from: https://github.com/facebookresearch/detr/blob/master/models/detr.py
 from torch import nn
 from torch.nn import functional as F
-from models.Mask2Former.attention_layers import MaskedAttentionLayer, SelfAttentionLayer
-from models.Mask2Former.ffn_layer import FFNLayer, MLP
+from attention_layers import MaskedAttentionLayer, SelfAttentionLayer
+from ffn_layer import FFNLayer, MLP
 from position_embedding_sine import PositionEmbeddingSine
 
 import torch.nn as nn

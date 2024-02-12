@@ -17,7 +17,6 @@ The primary objectives of this project include:
 - /models - Pre-trained models or model configuration files.
 - /results - Results and analysis from experiments.
 
-
 ### Getting Started
 [Check this](https://github.com/dk-liang/Awesome-Visual-Transformer)
 

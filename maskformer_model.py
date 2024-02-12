@@ -7,16 +7,17 @@ from torch.nn import functional as F
 
 from detectron2.config import configurable
 from detectron2.data import MetadataCatalog
-from detectron2.modeling import build_backbone, build_sem_seg_head
+from detectron2.modeling import META_ARCH_REGISTRY, build_backbone, build_sem_seg_head
 from detectron2.modeling.backbone import Backbone
 from detectron2.modeling.postprocessing import sem_seg_postprocess
-from detectron2.structures import Boxes, ImageList, Instances
+from detectron2.structures import Boxes, ImageList, Instances, BitMasks
 from detectron2.utils.memory import retry_if_cuda_oom
 
-from src.criterion import SetCriterion
-from src.matcher import HungarianMatcher
+from .modeling.criterion import SetCriterion
+from .modeling.matcher import HungarianMatcher
 
 
+@META_ARCH_REGISTRY.register()
 class MaskFormer(nn.Module):
     """
     Main class for mask classification semantic segmentation architectures.
@@ -91,77 +92,6 @@ class MaskFormer(nn.Module):
 
         if not self.semantic_on:
             assert self.sem_seg_postprocess_before_inference
-
-    @classmethod
-    def from_config(cls, cfg):
-        backbone = build_backbone(cfg)
-        sem_seg_head = build_sem_seg_head(cfg, backbone.output_shape())
-
-        # Loss parameters:
-        deep_supervision = cfg.MODEL.MASK_FORMER.DEEP_SUPERVISION
-        no_object_weight = cfg.MODEL.MASK_FORMER.NO_OBJECT_WEIGHT
-
-        # loss weights
-        class_weight = cfg.MODEL.MASK_FORMER.CLASS_WEIGHT
-        dice_weight = cfg.MODEL.MASK_FORMER.DICE_WEIGHT
-        mask_weight = cfg.MODEL.MASK_FORMER.MASK_WEIGHT
-
-        # building criterion
-        matcher = HungarianMatcher(
-            cost_class=class_weight,
-            cost_mask=mask_weight,
-            cost_dice=dice_weight,
-            num_points=cfg.MODEL.MASK_FORMER.TRAIN_NUM_POINTS,
-        )
-
-        weight_dict = {"loss_ce": class_weight, "loss_mask": mask_weight, "loss_dice": dice_weight}
-
-        if deep_supervision:
-            dec_layers = cfg.MODEL.MASK_FORMER.DEC_LAYERS
-            aux_weight_dict = {}
-            for i in range(dec_layers - 1):
-                aux_weight_dict.update({k + f"_{i}": v for k, v in weight_dict.items()})
-            weight_dict.update(aux_weight_dict)
-
-        losses = ["labels", "masks"]
-
-        criterion = SetCriterion(
-            sem_seg_head.num_classes,
-            matcher=matcher,
-            weight_dict=weight_dict,
-            eos_coef=no_object_weight,
-            losses=losses,
-            num_points=cfg.MODEL.MASK_FORMER.TRAIN_NUM_POINTS,
-            oversample_ratio=cfg.MODEL.MASK_FORMER.OVERSAMPLE_RATIO,
-            importance_sample_ratio=cfg.MODEL.MASK_FORMER.IMPORTANCE_SAMPLE_RATIO,
-        )
-
-        return {
-            "backbone": backbone,
-            "sem_seg_head": sem_seg_head,
-            "criterion": criterion,
-            "num_queries": cfg.MODEL.MASK_FORMER.NUM_OBJECT_QUERIES,
-            "object_mask_threshold": cfg.MODEL.MASK_FORMER.TEST.OBJECT_MASK_THRESHOLD,
-            "overlap_threshold": cfg.MODEL.MASK_FORMER.TEST.OVERLAP_THRESHOLD,
-            "metadata": MetadataCatalog.get(cfg.DATASETS.TRAIN[0]),
-            "size_divisibility": cfg.MODEL.MASK_FORMER.SIZE_DIVISIBILITY,
-            "sem_seg_postprocess_before_inference": (
-                cfg.MODEL.MASK_FORMER.TEST.SEM_SEG_POSTPROCESSING_BEFORE_INFERENCE
-                or cfg.MODEL.MASK_FORMER.TEST.PANOPTIC_ON
-                or cfg.MODEL.MASK_FORMER.TEST.INSTANCE_ON
-            ),
-            "pixel_mean": cfg.MODEL.PIXEL_MEAN,
-            "pixel_std": cfg.MODEL.PIXEL_STD,
-            # inference
-            "semantic_on": cfg.MODEL.MASK_FORMER.TEST.SEMANTIC_ON,
-            "instance_on": cfg.MODEL.MASK_FORMER.TEST.INSTANCE_ON,
-            "panoptic_on": cfg.MODEL.MASK_FORMER.TEST.PANOPTIC_ON,
-            "test_topk_per_image": cfg.TEST.DETECTIONS_PER_IMAGE,
-        }
-
-    @property
-    def device(self):
-        return self.pixel_mean.device
 
     def forward(self, batched_inputs):
         """
