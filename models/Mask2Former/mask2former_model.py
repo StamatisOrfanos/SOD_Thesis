@@ -82,7 +82,7 @@ class Mask2Former(nn.Module):
         """
         Parameters:
             feature_map_list (list): List of multi-scale feature maps from the backbone or previous layer (each element corresponds to a different scale).
-            mask_features (list): Features to be used for mask prediction, not explicitly used in this snippet.
+            mask_features_list (list): Features to be used for mask prediction, not explicitly used in this snippet.
             mask: Optional argument, not used in this function but can be used for additional operations like applying masks to features.
         """
         # Assert that the number of feature maps matches the expected number of feature levels.

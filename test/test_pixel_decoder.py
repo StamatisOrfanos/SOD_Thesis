@@ -44,5 +44,14 @@ all_feature_maps = pixel_decoder(backbone_feature_maps)
 # Example usage:
 pixel_decoder = PixelDecoder(input_channels=2560)
 feature_maps_level1, feature_maps_level2, feature_maps_level3, feature_maps_level4 = pixel_decoder(feature_maps)
-print(type(feature_maps_level1))
+
+
+# Step 7: We are going to count the number of parameters for both the Backbone and Pixel Decoder
+backbone_params = sum(param.numel() for param in backbone.parameters())
+print("The total number of the Backbone parameters are: ", backbone_params)
+
+pixel_decoder_params = sum(param.numel() for param in pixel_decoder.parameters())
+print("The total number of Pixel Decoder parameters are: ", pixel_decoder_params)
+
+print("The total parameters of the EfficientNet backbone and Pixel decoder are: ", backbone_params+pixel_decoder_params)
 #  --------------------------------------------------------------------------------------------------------------------------------

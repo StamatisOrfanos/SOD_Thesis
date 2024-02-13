@@ -31,6 +31,10 @@ with torch.no_grad():  # No need to calculate gradients
 # This part depends on what you want to do with the feature maps.
 for fm in feature_maps:
     print(fm.shape)
+    
+# Step 5: Count the number of parameters of the EFPN model
+total_params = sum(param.numel() for param in model.parameters())
+print("The total number of EFPN parameters are: ", total_params)
 
 # ------------------------------------------------------------------------------------------------------------------------------
 
