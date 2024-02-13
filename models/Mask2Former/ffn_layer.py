@@ -19,14 +19,14 @@ class FFNLayer(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.linear2 = nn.Linear(dim_feedforward, d_model)
         self.norm = nn.LayerNorm(d_model)
-        self.activation = _get_activation_fn(activation)
+        self.activation = get_activation_fn(activation)
         self._reset_parameters()
     
     
     def _reset_parameters(self):
-        for p in self.parameters():
-            if p.dim() > 1:
-                nn.init.xavier_uniform_(p)
+        for parameter in self.parameters():
+            if parameter.dim() > 1:
+                nn.init.xavier_uniform_(parameter)
 
 
     def with_positional_embedding(self, tensor, position: Optional[Tensor]):
@@ -54,7 +54,7 @@ class MLP(nn.Module):
             x = F.relu(layer(x)) if i < self.num_layers - 1 else layer(x)
         return x
        
-def _get_activation_fn(activation):
+def get_activation_fn(activation):
     """Return an activation function given a string"""
     if activation == "relu":
         return F.relu

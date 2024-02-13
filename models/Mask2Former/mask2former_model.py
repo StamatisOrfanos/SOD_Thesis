@@ -10,7 +10,6 @@ from models.Mask2Former.position_embedding_sine import PositionEmbeddingSine
 from models.Mask2Former.transformer_encoder import TransformerEncoderLayer
 
 
-
 class Mask2Former(nn.Module):
     def __init__(self, in_channels: int, num_classes: int, hidden_dim: int, num_queries: int, nheads: int, dim_feedforward: int, dec_layers: int, mask_dim: int):
         """
@@ -77,12 +76,11 @@ class Mask2Former(nn.Module):
 
 
 
-
     def forward(self, feature_map_list, mask_features_list, mask=None):
         """
         Parameters:
             feature_map_list (list): List of multi-scale feature maps from the backbone or previous layer (each element corresponds to a different scale).
-            mask_features_list (list): Features to be used for mask prediction, not explicitly used in this snippet.
+            mask_features (list): Features to be used for mask prediction, not explicitly used in this snippet.
             mask: Optional argument, not used in this function but can be used for additional operations like applying masks to features.
         """
         # Assert that the number of feature maps matches the expected number of feature levels.

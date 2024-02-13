@@ -2,7 +2,6 @@
 # Modified by Bowen Cheng from: https://github.com/facebookresearch/detr/blob/master/models/detr.py
 from torch import nn
 from models.Mask2Former.attention_layers import MaskedAttentionLayer, SelfAttentionLayer
-from models.Mask2Former.position_embedding_sine import PositionEmbeddingSine
 from models.Mask2Former.ffn_layer import FFNLayer
 
 import torch.nn as nn
@@ -10,26 +9,19 @@ import torch.nn as nn
 class TransformerEncoderLayer(nn.Module):
     def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.0, activation="relu"):
         super().__init__()
-        self.self_attn          = SelfAttentionLayer(d_model, nhead, dropout=dropout, activation=activation)        
-        self.cross_attn         = MaskedAttentionLayer(d_model, nhead, dropout=dropout, activation=activation)
-        self.ffn                = FFNLayer(d_model, dim_feedforward, dropout=dropout, activation=activation)
-        self.position_embedding = PositionEmbeddingSine(num_pos_feats=d_model // 2, normalize=True)
+        self.self_attention = SelfAttentionLayer(d_model, nhead, dropout=dropout, activation=activation)        
+        self.mask_attention = MaskedAttentionLayer(d_model, nhead, dropout=dropout, activation=activation)
+        self.ffn            = FFNLayer(d_model, dim_feedforward, dropout=dropout, activation=activation)
 
 
+    def forward(self, src, level_index, attention_mask, query_embed, position):        
+        # Apply mask-attention using the current level's source feature maps and positional encodings.
+        output = self.mask_attention(output, src[level_index], attention_mask, None, position[level_index], query_embed)
 
-    def forward(self, src, mask, query_embed, pos_embed):
-        # Add position embedding to the source features
-        src_with_pos = self.position_embedding(src, mask)
+        # Apply self-attention.
+        output = self.self_attention(output, None, None, query_embed)
+            
+        # Apply feedforward network layer.
+        output = self.ffn(output)
         
-        # Apply self-attention and then add position embedding to the query features
-        src = self.self_attn(src_with_pos, target_tensor_mask=mask)
-        query_with_pos = self.position_embedding(query_embed, mask)
-        
-        # Apply cross-attention with query embedding and apply FFN
-        src = self.cross_attn(src_with_pos, src, memory_mask=mask, pos=pos_embed, query_pos=query_with_pos)
-        src = self.ffn(src)
-        
-        return src
-
-    def with_pos_embed(self, tensor, pos_embed):
-        return tensor if pos_embed is None else tensor + pos_embed
+        return output    

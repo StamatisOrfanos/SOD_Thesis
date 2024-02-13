@@ -22,15 +22,15 @@ class SelfAttentionLayer(nn.Module):
         self.self_attention = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
         self.norm = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
-        self.activation = _get_activation_fn(activation)
+        self.activation = get_activation_fn(activation)
         self.reset_parameters()
     
     
     # Initialize parameters using xavier_uniform method for better convergence
     def reset_parameters(self):
-        for p in self.parameters():
-            if p.dim() > 1:
-                nn.init.xavier_uniform_(p)
+        for parameter in self.parameters():
+            if parameter.dim() > 1:
+                nn.init.xavier_uniform_(parameter)
 
     
     def with_positional_embedding(self, tensor, position: Optional[Tensor]):
@@ -65,15 +65,15 @@ class MaskedAttentionLayer(nn.Module):
         self.multihead_attention = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
         self.norm = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
-        self.activation = _get_activation_fn(activation)
+        self.activation = get_activation_fn(activation)
         self.reset_parameters()
     
     
     # Initialize parameters using xavier_uniform method for better convergence
     def reset_parameters(self):
-        for p in self.parameters():
-            if p.dim() > 1:
-                nn.init.xavier_uniform_(p)
+        for parameter in self.parameters():
+            if parameter.dim() > 1:
+                nn.init.xavier_uniform_(parameter)
 
 
     def with_positional_embedding(self, tensor, position: Optional[Tensor]):
@@ -82,8 +82,8 @@ class MaskedAttentionLayer(nn.Module):
 
     def forward(self, target_tensor, memory, memory_mask: Optional[Tensor] = None, memory_key_padding_mask: Optional[Tensor] = None, pos: Optional[Tensor] = None, query_pos: Optional[Tensor] = None):
         # Apply positional embeddings to the target and memory tensors
-        target_tensor_query = self.with_pos_embed(target_tensor, query_pos)
-        memory_key = self.with_pos_embed(memory, pos)
+        target_tensor_query = self.with_positional_embedding(target_tensor, query_pos)
+        memory_key = self.with_positional_embedding(memory, pos)
 
         # Perform cross-attention between target and memory tensors
         target_tensor2 = self.multihead_attention(query=target_tensor_query, key=memory_key, value=memory, attn_mask=memory_mask, key_padding_mask=memory_key_padding_mask)[0]
@@ -97,7 +97,7 @@ class MaskedAttentionLayer(nn.Module):
 
    
    
-def _get_activation_fn(activation):
+def get_activation_fn(activation):
     """Return an activation function given a string"""
     if activation == "relu":
         return F.relu
