@@ -51,7 +51,7 @@ class Mask2Former(nn.Module):
         self.query_features = nn.Embedding(num_queries, hidden_dim)
         self.query_embeddings = nn.Embedding(num_queries, hidden_dim)
 
-        # Define the amount of multi-scale features and create the corresponding level embedding (we use 4 scales)
+        # Define the amount of multi-scale features and create the corresponding level embedding (we use 5 scales from the EFPN)
         # and the projection layers to align the channel dimensions if necessary.
         self.num_feature_levels = 5
         self.scale_level_embedding = nn.Embedding(self.num_feature_levels, hidden_dim)
@@ -59,9 +59,9 @@ class Mask2Former(nn.Module):
         
         self.reset_parameters(in_channels, hidden_dim)
 
-        # Output layers 
-        self.class_embedding = nn.Linear(hidden_dim, num_classes + 1)      # Number of classes plus the background
-        self.mask_embedding  = MLP(hidden_dim, hidden_dim, mask_dim, 3)    # Mask dimensions output
+        # Output layers [Number of classes plus the background, Mask dimensions output]
+        self.class_embedding = nn.Linear(hidden_dim, num_classes + 1)
+        self.mask_embedding  = MLP(hidden_dim, hidden_dim, mask_dim, 3)
 
 
 
@@ -80,57 +80,140 @@ class Mask2Former(nn.Module):
         """
         Parameters:
             feature_map_list (list): List of multi-scale feature maps from the backbone or previous layer (each element corresponds to a different scale).
-            mask_features (list): Features to be used for mask prediction, not explicitly used in this snippet.
+            mask_features (list): Features to be used for mask prediction.
             mask: Optional argument, not used in this function but can be used for additional operations like applying masks to features.
         """
-        # Assert that the number of feature maps matches the expected number of feature levels.
         assert len(feature_map_list) == self.num_feature_levels
         
-        srcs = []
-        mask_transformed = []
-        pos_embeds = []
+        
+        # Lists to store    src : [projected feature maps for each scale]
+        # positional_embeddings : [positional encodings for each scale]
+        # feature_maps_size_list: [sizes (H, W) of feature maps for each scale]
+        src, positional_embeddings, feature_maps_size_list = self.generate_info_per_feature_map(feature_map_list)
+
+        # Initialize query embeddings and replicate them for the batch size and create the initial output features for the queries.
+        _, batch_size, _ = src[0].shape 
+        query_embed      = self.query_embeddings.weight.unsqueeze(1).repeat(1, batch_size, 1)
+        output           = self.query_features.weight.unsqueeze(1).repeat(1, batch_size, 1) 
         
         
-        # Project and positionally encode each level of features
-        for level, (feature, mask) in enumerate(zip(feature_map_list, mask_features_list)):
-            src = self.input_proj[level](feature)
-            mask_transformed.append(mask) 
-            pos_embed = self.positional_embedding_layer(src, mask)
-            pos_embeds.append(pos_embed)
-            srcs.append(src)
-            
-        # Prepare query embeddings
-        query_embed = self.query_embeddings.weight
-        query_features = self.query_features.weight.unsqueeze(1).repeat(1, srcs[0].size(1), 1)
+        # List of predictions for each class and the corresponding mask of each small object for each feature map
+        predictions_class, predictions_mask = self.class_mask_predictions(src, output, positional_embeddings, feature_maps_size_list, mask_features_list, query_embed)
+
+        # Collect the final class and mask predictions, along with auxiliary outputs for intermediate layers to support training stability and performance.
+        result = {
+            'pred_logits': predictions_class[-1],
+            'pred_masks': predictions_mask[-1],
+            'aux_outputs': self._set_aux_loss(predictions_class if self.mask_classification else None, predictions_mask)
+        }
         
-        # Pass through the Transformer encoder layers
-        for layer in self.transformer_encoder_layers:
-            query_features = layer(query_features, mask_transformed, query_embed, pos_embeds)
-
-        # Normalize the output features from the Transformer
-        query_features = self.decoder_norm(query_features)
-
-        # Pass to prediction heads
-        logits, mask_embeddings = self.forward_prediction_heads(query_features)
-
-        return logits, mask_embeddings
+        return result
 
 
-    def forward_prediction_heads(self, query_features):
+    def generate_info_per_feature_map(self, feature_map_list):
         """
         Parameters:
-            query_features (Tensor): The output features from the Transformer encoder.            
+            feature_map_list (list): List of multi-scale feature maps from the backbone or previous layer
         """
-        # Classification for each query
-        logits = self.class_embedding(query_features)
-
-        # Mask embeddings for each query
-        mask_embeddings = self.mask_embedding(query_features)
+        src = []
+        positional_embeddings = []
+        feature_maps_size_list = []
         
-        return logits, mask_embeddings
-       
+        for i in range(self.num_feature_levels):      
+            
+            feature_maps_size_list.append(feature_map_list[i].shape[-2:]) 
+            
+            # Generate positional encodings, flatten it from NxCxHxW to HWxNxC for processing.
+            positional_embeddings.append(self.positional_embedding_layer(feature_map_list[i], None).flatten(2)) 
+            
+            # Project feature map to the desired dimensionality (hidden_dim), add level embeddings, and flatten.
+            src.append(self.input_proj[i](feature_map_list[i]).flatten(2) + self.scale_level_embedding.weight[i][None, :, None])
+            
+            # Permute the flattened positional encodings and source feature maps for transformer processing.
+            positional_embeddings[-1] = positional_embeddings[-1].permute(2, 0, 1) 
+            src[-1] = src[-1].permute(2, 0, 1)
+            
+        return src, positional_embeddings, feature_maps_size_list
 
-    @torch.jit.unused
+
+
+
+    def class_mask_predictions(self, output, src, positional_embeddings, feature_maps_size_list, mask_features_list, query_embed):
+        """
+        Parameters:
+            output (): 
+            src (list): Projected feature maps for each scale to dimensionality 
+            positional_embeddings (list): [positional encodings for each scale]
+            feature_maps_size_list (list): [sizes (H, W) of feature maps for each scale]
+            mask_features_list (list): Features to be used for mask prediction.
+            query_embed (tensor): 
+        """
+        # List to store class predictions at each layer. List to store mask predictions at each layer.
+        predictions_class = [] 
+        predictions_mask  = [] 
+
+        # Forward pass through prediction heads to generate initial predictions.
+        outputs_class, outputs_mask, attention_mask = self.forward_prediction_heads(output, mask_features_list, feature_maps_size_list[0])
+        predictions_class.append(outputs_class)
+        predictions_mask.append(outputs_mask)
+        
+        
+        for i in range(self.num_layers):
+            
+            # Determine the current feature level index and Update attention mask.
+            level_index = i % self.num_feature_levels
+            attention_mask[torch.where(attention_mask.sum(-1) == attention_mask.shape[-1])] = False
+            
+            # Apply the TransformerEncoder Layer that includes the forward functions for [Mask-Attention, Self-Attention, Feed-Forward]
+            output = self.transformer_encoder_layers[i](output, src, level_index, attention_mask, positional_embeddings, query_embed)
+            
+            # Generate predictions for this layer.
+            outputs_class, outputs_mask, attention_mask = self.forward_prediction_heads(output, mask_features_list, feature_maps_size_list[(i + 1) % self.num_feature_levels])
+            predictions_class.append(outputs_class)
+            predictions_mask.append(outputs_mask)
+    
+        return predictions_class, predictions_mask
+
+
+
+    def forward_prediction_heads(self, output, mask_features, attention_mask_target_size):
+        """
+        Parameters:
+            output (): 
+            mask_features_list (list): Features to be used for mask prediction.
+            attention_mask_target_size (list): Feature maps size list
+        """
+        # Transpose the decoder output to match the expected input shape for the subsequent operations after Normalizing.
+        # This changes the shape from [sequence length, batch size, features] to [batch size, sequence length, features].
+        decoder_output = self.decoder_norm(output)
+        decoder_output = decoder_output.transpose(0, 1)
+        
+        # Pass the transposed decoder output through a linear layer to predict class logits.
+        # Similarly, pass the transposed decoder output through another linear layer to get mask embeddings.
+        outputs_class  = self.class_embedding(decoder_output)
+        mask_embedding = self.mask_embedding(decoder_output)
+        
+        
+        # Perform a tensor operation to generate the mask predictions. Project the mask embeddings onto the mask features.
+        # "bqc,bchw->bqhw" is the einsum operation indicating: batch (b), queries (q), channels (c), height (h) and width (w).
+        # It effectively combines mask embeddings (bqc) with mask features (bchw) to produce mask predictions (bqhw).
+        outputs_mask = torch.einsum("bqc,bchw->bqhw", mask_embedding, mask_features)
+
+        # Interpolate the output masks to match the target size for attention masks. This is used for higher-resolution prediction.
+        attention_mask = F.interpolate(outputs_mask, size=attention_mask_target_size, mode="bilinear", align_corners=False)
+        
+        # Apply sigmoid to the interpolated attention mask, flatten it, repeat it for each attention head, and then flatten the first two dimensions.
+        # The threshold (< 0.5) determines which positions are allowed to attend: values below 0.5 after sigmoid are set to `True` (meaning they cannot attend).
+        attention_mask = (attention_mask.sigmoid().flatten(2).unsqueeze(1).repeat(1, self.num_heads, 1, 1).flatten(0, 1) < 0.5).bool()
+        
+        # Detach the attention mask from the computation graph to prevent gradients from flowing into it.
+        attention_mask = attention_mask.detach()
+
+        return outputs_class, outputs_mask, attention_mask
+
+
+
+
     def _set_aux_loss(self, outputs_class: List[torch.Tensor], outputs_seg_masks: List[torch.Tensor]) -> List[Dict[str, Union[torch.Tensor, List[torch.Tensor]]]]:
         """
         This method is designed to work around limitations with TorchScript and dictionaries containing non-homogeneous values by creating a list of 
@@ -140,7 +223,6 @@ class Mask2Former(nn.Module):
         Parameters:
             outputs_class (List[torch.Tensor]): A list of tensors representing the class predictions at each decoder layer.
             outputs_seg_masks (List[torch.Tensor]): A list of tensors representing the predicted segmentation masks at each decoder layer.
-
         """
         # Validate input lengths
         assert len(outputs_class) == len(outputs_seg_masks), "Outputs for class and segmentation masks must have the same length."
