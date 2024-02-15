@@ -1,7 +1,7 @@
-import torch
-from torch import nn
-from Efpn.efpn_model import EFPN
-from Mask2Former.mask2former_model import Mask2Former
+# import torch
+# from torch import nn
+# from efpn_backbone.efpn_model import EFPN
+# from Mask2Former.mask2former_model import Mask2Former
 
 # Assuming EFPN and MultiScaleMaskedTransformerDecoder are defined as per your previous message
 

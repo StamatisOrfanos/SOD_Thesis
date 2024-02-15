@@ -3,7 +3,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import torch
 from torchvision import transforms
 from PIL import Image
-from models.Efpn.efpn_model import EFPN    
+from models.efpn_backbone.efpn_model import EFPN    
 
 
 # ------------------------------------------------------------------------------------------------------------------------------

@@ -5,9 +5,9 @@ import fvcore.nn.weight_init as weight_init
 import torch
 from torch import nn
 from torch.nn import functional as F
-from models.Mask2Former.ffn_layer import MLP
-from models.Mask2Former.position_embedding_sine import PositionEmbeddingSine
-from models.Mask2Former.transformer_encoder import TransformerEncoderLayer
+from models.mask2former_detector.ffn_layer import MLP
+from models.mask2former_detector.position_embedding_sine import PositionEmbeddingSine
+from models.mask2former_detector.transformer_encoder import TransformerEncoderLayer
 
 
 class Mask2Former(nn.Module):
@@ -103,7 +103,7 @@ class Mask2Former(nn.Module):
         # Collect the final class and mask predictions, along with auxiliary outputs for intermediate layers to support training stability and performance.
         result = {
             'pred_logits': predictions_class[-1],
-            'pred_masks': predictions_mask[-1],
+            'pred_masks' : predictions_mask[-1],
             'aux_outputs': self._set_aux_loss(predictions_class if self.mask_classification else None, predictions_mask)
         }
         
@@ -119,8 +119,7 @@ class Mask2Former(nn.Module):
         positional_embeddings = []
         feature_maps_size_list = []
         
-        for i in range(self.num_feature_levels):      
-            
+        for i in range(self.num_feature_levels):                
             feature_maps_size_list.append(feature_map_list[i].shape[-2:]) 
             
             # Generate positional encodings, flatten it from NxCxHxW to HWxNxC for processing.

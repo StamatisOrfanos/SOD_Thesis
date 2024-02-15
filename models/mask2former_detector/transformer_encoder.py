@@ -1,6 +1,6 @@
 from torch import nn
-from models.Mask2Former.attention_layers import MaskedAttentionLayer, SelfAttentionLayer
-from models.Mask2Former.ffn_layer import FFNLayer
+from models.mask2former_detector.attention_layers import MaskedAttentionLayer, SelfAttentionLayer
+from models.mask2former_detector.ffn_layer import FFNLayer
 
 import torch.nn as nn
 
