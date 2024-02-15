@@ -32,10 +32,10 @@ class EFPN(nn.Module):
         self.top_down_p2 = nn.Upsample(scale_factor=2, mode='nearest')
 
 
-    def forward(self, x):
+    def forward(self, image):
         # Pass input through EfficientNet backbone
         # Identify the layers or feature maps in EfficientNet that correspond to C2, C3, C4, C5
-        c2_prime, c2, c3, c4, c5 = self.backbone_features(x)
+        c2_prime, c2, c3, c4, c5 = self.backbone_features(image)
 
         # Process feature maps through FPN
         p5 = self.lateral_p5(c5)
@@ -62,13 +62,13 @@ class EFPN(nn.Module):
         return p2_prime, p2, p3, p4, p5
 
 
-    def backbone_features(self, x):
+    def backbone_features(self, image):
         # Get feature maps from the EfficientNet backbone
-        c2_prime = self.backbone.extract_endpoints(x)['reduction_1']  
-        c2 = self.backbone.extract_endpoints(x)['reduction_2']        
-        c3 = self.backbone.extract_endpoints(x)['reduction_3']        
-        c4 = self.backbone.extract_endpoints(x)['reduction_4']        
-        c5 = self.backbone.extract_endpoints(x)['reduction_5']        
+        c2_prime = self.backbone.extract_endpoints(image)['reduction_1']  
+        c2 = self.backbone.extract_endpoints(image)['reduction_2']        
+        c3 = self.backbone.extract_endpoints(image)['reduction_3']        
+        c4 = self.backbone.extract_endpoints(image)['reduction_4']        
+        c5 = self.backbone.extract_endpoints(image)['reduction_5']        
         return c2_prime, c2, c3, c4, c5
 
 

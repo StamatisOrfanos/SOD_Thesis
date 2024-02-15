@@ -36,5 +36,7 @@ for fm in feature_maps:
 total_params = sum(param.numel() for param in model.parameters())
 print("The total number of EFPN parameters are: ", total_params)
 
+# Step 6: Get the summary of the EFPN model
+print("\n\nThe summary of the EFPN model is the following: \n", model)
 # ------------------------------------------------------------------------------------------------------------------------------
 

@@ -44,7 +44,6 @@ class Mask2Former(nn.Module):
         ])
 
         # Learnable query features and learnable query p.e.
-        self.decoder_norm = nn.LayerNorm(hidden_dim)
         self.num_queries = num_queries
              
         # Learnable embeddings for the decoder queries (provide a fixed number of "slots" for the decoder to focus on different parts of the input)
@@ -184,7 +183,7 @@ class Mask2Former(nn.Module):
         """
         # Transpose the decoder output to match the expected input shape for the subsequent operations after Normalizing.
         # This changes the shape from [sequence length, batch size, features] to [batch size, sequence length, features].
-        decoder_output = self.decoder_norm(output)
+        decoder_output = output
         decoder_output = decoder_output.transpose(0, 1)
         
         # Pass the transposed decoder output through a linear layer to predict class logits.

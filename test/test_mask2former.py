@@ -12,7 +12,8 @@ total_params = sum(param.numel() for param in model.parameters())
 print("The total number of Mask2Former parameters are: ", total_params)
 
 
-
+# Step 3: Get the summary of the Mask2Former model
+print("\n\nThe summary of the Mask2Former model is the following: \n", model)
 
 
 # ------------------------------------------------------------------------------------------------------------------------------------
