@@ -3,6 +3,13 @@ from torch.nn import functional as F
 from efficientnet_pytorch import EfficientNet
 
 class EFPN(nn.Module):
+    """
+        Extended Feature Pyramid Network (EFPN) based on EfficientNet-B7 as the backbone.
+           -  The model creates and enhances feature maps using EfficientNet's deep feature extraction capabilities combined with a 
+              Feature Pyramid Network (FPN) structure for multi-scale feature integration. 
+           -  The model uses a Feature  Texture Transfer (FTT) module to enrich feature maps with both content and texture 
+              details, aiming to improve performance on instance segmentation tasks.
+    """
     def __init__(self):
         super(EFPN, self).__init__()
         # Load EfficientNet with pre-trained weights
@@ -58,22 +65,22 @@ class EFPN(nn.Module):
         p2_prime = upsampled_p3_prime + c2_prime_processed
 
         # Return the feature pyramids
-        print(type(p2_prime))
         return p2_prime, p2, p3, p4, p5
 
 
     def backbone_features(self, image):
         # Get feature maps from the EfficientNet backbone
-        c2_prime = self.backbone.extract_endpoints(image)['reduction_1']  
-        c2 = self.backbone.extract_endpoints(image)['reduction_2']        
-        c3 = self.backbone.extract_endpoints(image)['reduction_3']        
-        c4 = self.backbone.extract_endpoints(image)['reduction_4']        
-        c5 = self.backbone.extract_endpoints(image)['reduction_5']        
+        endpoints = self.backbone.extract_endpoints(image)
+        c2_prime  = endpoints['reduction_1']
+        c2        = endpoints['reduction_2']
+        c3        = endpoints['reduction_3']
+        c4        = endpoints['reduction_4']
+        c5        = endpoints['reduction_5']
         return c2_prime, c2, c3, c4, c5
 
 
-# Define the FTT module of the Extended Feature Pyramid Network
 class FTT(nn.Module):
+    # Define the FTT module of the Extended Feature Pyramid Network
     def __init__(self):
         super(FTT, self).__init__()
         self.content_extractor = ContentExtractor(256, 256, num_layers=3)
@@ -92,8 +99,8 @@ class FTT(nn.Module):
         return combined_features
 
 
-# Define the ContentExtractor to be used by the p3 feature map
 class ContentExtractor(nn.Module):
+    # Define the ContentExtractor to be used by the p3 feature map
     def __init__(self, in_channels, out_channels, num_layers):
         super().__init__()
         layers = []
@@ -108,8 +115,8 @@ class ContentExtractor(nn.Module):
         return self.layers(x)
 
 
-# Define the TextureExtractor to be used by the p2 feature map
 class TextureExtractor(nn.Module):
+    # Define the TextureExtractor to be used by the p2 feature map
     def __init__(self, in_channels, out_channels, num_layers):
         super().__init__()
         layers = []
@@ -124,8 +131,8 @@ class TextureExtractor(nn.Module):
         return self.layers(x)
 
 
-# Define the ContentExtractor to be used by the p3 feature map
 class SubPixelConv(nn.Module):
+    # Define the ContentExtractor to be used by the p3 feature map
     def __init__(self, in_channels, out_channels, upscale_factor):
         super().__init__()
         self.conv = nn.Conv2d(in_channels, out_channels * (upscale_factor ** 2), kernel_size=3, padding=1)

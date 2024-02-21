@@ -1,5 +1,3 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
-# Modified by Bowen Cheng from: https://github.com/facebookresearch/detr/blob/master/models/detr.py
 from typing import List, Dict, Union
 import fvcore.nn.weight_init as weight_init
 import torch
@@ -182,7 +180,7 @@ class Mask2Former(nn.Module):
             attention_mask_target_size (list): Feature maps size list
         """
         # Transpose the decoder output to match the expected input shape for the subsequent operations after Normalizing.
-        # This changes the shape from [sequence length, batch size, features] to [batch size, sequence length, features].
+        # This changes the shape from [sequence length, batch size, features] to [batch size, sequence length, features].        
         decoder_output = output
         decoder_output = decoder_output.transpose(0, 1)
         

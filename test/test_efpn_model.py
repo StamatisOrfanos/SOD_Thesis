@@ -24,11 +24,10 @@ model = EFPN()
 model.eval()  # Set the model to evaluation mode
 
 # Step 3: Pass the image through the model
-with torch.no_grad():  # No need to calculate gradients
+with torch.no_grad():
     feature_maps = model(image)
 
 # Step 4: Visualize or inspect the feature maps
-# This part depends on what you want to do with the feature maps.
 for fm in feature_maps:
     print(fm.shape)
     
