@@ -30,7 +30,7 @@ class ExtendedMask2Former(nn.Module):
     def forward(self, image):
         feature_maps = self.backbone(image)
         mask_features_list = [self.mask_features for _ in range(len(feature_maps))]
-        output = self.decoder(feature_maps, mask_features_list)
+        output = self.decoder(feature_maps, self.mask_features)
         return output
     
     
