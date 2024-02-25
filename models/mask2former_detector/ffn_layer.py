@@ -51,6 +51,7 @@ class MLP(nn.Module):
         for i, layer in enumerate(self.layers):
             x = F.relu(layer(x)) if i < self.num_layers - 1 else layer(x)
         return x
+
        
 def get_activation_fn(activation):
     """Return an activation function given a string"""

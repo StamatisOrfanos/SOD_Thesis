@@ -4,7 +4,7 @@ from models.mask2former_detector.ffn_layer import FFNLayer
 
 import torch.nn as nn
 
-class TransformerEncoderLayer(nn.Module):
+class TransformerDecoderLayer(nn.Module):
     def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.0, activation="relu"):
         super().__init__()
         self.self_attention = SelfAttentionLayer(d_model, nhead, dropout=dropout, activation=activation)        

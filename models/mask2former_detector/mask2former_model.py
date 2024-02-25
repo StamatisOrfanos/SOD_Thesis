@@ -5,7 +5,7 @@ from torch import nn
 from torch.nn import functional as F
 from models.mask2former_detector.ffn_layer import MLP
 from models.mask2former_detector.position_embedding_sine import PositionEmbeddingSine
-from models.mask2former_detector.transformer_encoder import TransformerEncoderLayer
+from models.mask2former_detector.transformer_decoder_block import TransformerDecoderLayer
 
 
 class Mask2Former(nn.Module):
@@ -31,7 +31,7 @@ class Mask2Former(nn.Module):
         self.num_heads = nheads
         self.num_layers = dec_layers
         self.transformer_encoder_layers = nn.ModuleList([
-            TransformerEncoderLayer(
+            TransformerDecoderLayer(
                 d_model=hidden_dim,
                 nhead=nheads,
                 dim_feedforward=dim_feedforward,
@@ -231,3 +231,24 @@ class Mask2Former(nn.Module):
             aux_losses = [{"pred_masks": masks} for masks in outputs_seg_masks[:-1]]
 
         return aux_losses
+    
+    
+    def instance_segmentation(self, feature_map_list, mask_features_list):
+        outputs = self.forward(feature_map_list, mask_features_list)
+
+        # Calculate class confidence
+        pred_logits = outputs['pred_logits']  # Shape: [batch_size, num_queries, num_classes + 1]
+        class_confidences = F.softmax(pred_logits, dim=-1)  # Convert logits to probabilities
+        max_class_confidences, _ = class_confidences.max(dim=-1)  # Shape: [batch_size, num_queries]
+
+        # Calculate mask confidence
+        pred_masks = outputs['pred_masks']  # Shape: [batch_size, num_queries, H, W]
+        mask_confidences = pred_masks.mean(dim=[-2, -1])  # Average foreground probability
+
+        # Combine confidences
+        final_confidences = max_class_confidences * mask_confidences  # Element-wise multiplication
+
+        # Update outputs with final confidences
+        outputs['final_confidences'] = final_confidences
+
+        return outputs
