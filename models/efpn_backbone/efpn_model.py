@@ -10,7 +10,7 @@ class EFPN(nn.Module):
            -  The model uses a Feature  Texture Transfer (FTT) module to enrich feature maps with both content and texture 
               details, aiming to improve performance on instance segmentation tasks.
     """
-    def __init__(self):
+    def __init__(self, num_classes):
         super(EFPN, self).__init__()
         # Load EfficientNet with pre-trained weights
         self.backbone = EfficientNet.from_pretrained('efficientnet-b7')
@@ -37,6 +37,15 @@ class EFPN(nn.Module):
         self.top_down_p4 = nn.Upsample(scale_factor=2, mode='nearest')
         self.top_down_p3 = nn.Upsample(scale_factor=2, mode='nearest')
         self.top_down_p2 = nn.Upsample(scale_factor=2, mode='nearest')
+        
+        # Define the masks for each feature map
+        self.segmentation_heads = nn.ModuleDict({
+            'p2_prime': SegmentationHead(256, num_classes),
+            'p2': SegmentationHead(256, num_classes),
+            'p3': SegmentationHead(256, num_classes),
+            'p4': SegmentationHead(256, num_classes),
+            'p5': SegmentationHead(256, num_classes),
+        })
 
 
     def forward(self, image):
@@ -63,9 +72,19 @@ class EFPN(nn.Module):
         c2_prime_processed = self.conv_c2_prime(c2_prime)
         upsampled_p3_prime = self.top_down_p2(p3_prime)
         p2_prime = upsampled_p3_prime + c2_prime_processed
+        
+        
+        # Create the masks per feature map
+        feature_maps = [p2_prime, p2, p3, p4, p5]
+        masks = []
+        
+        for name, feature_map in zip(self.segmentation_heads.keys(), feature_maps):
+            mask = self.segmentation_heads[name](feature_map)
+            masks.append(mask)
 
-        # Return the feature pyramids
-        return p2_prime, p2, p3, p4, p5
+
+        # Return the feature map pyramid and the corresponding masks
+        return feature_maps, masks
 
 
     def backbone_features(self, image):
@@ -141,4 +160,20 @@ class SubPixelConv(nn.Module):
     def forward(self, x):
         x = self.conv(x)
         x = F.pixel_shuffle(x, self.upscale_factor)
+        return x
+
+ 
+class SegmentationHead(nn.Module):
+    # Define the SegmentationHead to create the masks for each feature map 
+    def __init__(self, in_channels, num_classes):
+        super(SegmentationHead, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels, in_channels // 2, kernel_size=3, padding=1)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv2 = nn.Conv2d(in_channels // 2, num_classes, kernel_size=1)
+    
+    def forward(self, x):
+        x = self.relu(self.conv1(x))
+        x = self.conv2(x)
+        # Upsample to match the original image size, if necessary Note: You might need to adjust the scale_factor based on the feature map's resolution
+        x = F.interpolate(x, scale_factor=4, mode='bilinear', align_corners=False)
         return x
