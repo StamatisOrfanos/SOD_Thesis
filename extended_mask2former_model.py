@@ -18,18 +18,16 @@ class ExtendedMask2Former(nn.Module):
         dec_layers()      :=1, 
         mask_dim          :()=256
     """
-    def __init__(self, num_classes, hidden_dim=256, num_queries=100, nheads=8, dim_feedforward=2048, dec_layers=1, num_masks=100, mask_dim=256, mask_feature_indices=[1, 2, 3, 4]):
+    def __init__(self, num_classes, hidden_dim=256, num_queries=100, nheads=8, dim_feedforward=2048, dec_layers=1, mask_dim=256):
         super(ExtendedMask2Former, self).__init__()
                 
-        self.backbone = EFPN()
+        self.backbone = EFPN(num_classes)
         self.decoder = Mask2Former(hidden_dim, num_classes, hidden_dim, num_queries, nheads, dim_feedforward, dec_layers, mask_dim)
-        self.mask_features = mask_feature_indices
         
         
     def forward(self, image):
-        feature_maps = self.backbone(image)
-        mask_features_list = [feature_maps[i] for i in self.mask_feature_indices]
-        output = self.decoder(feature_maps, mask_features_list)
+        feature_maps, masks = self.backbone(image)
+        output = self.decoder(feature_maps, masks)
         return output
     
     

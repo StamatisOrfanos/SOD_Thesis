@@ -38,14 +38,8 @@ class EFPN(nn.Module):
         self.top_down_p3 = nn.Upsample(scale_factor=2, mode='nearest')
         self.top_down_p2 = nn.Upsample(scale_factor=2, mode='nearest')
         
-        # Define the masks for each feature map
-        self.segmentation_heads = nn.ModuleDict({
-            'p2_prime': SegmentationHead(256, num_classes),
-            'p2': SegmentationHead(256, num_classes),
-            'p3': SegmentationHead(256, num_classes),
-            'p4': SegmentationHead(256, num_classes),
-            'p5': SegmentationHead(256, num_classes),
-        })
+        # Define the masks for the richest feature map
+        self.segmentation_heads = nn.ModuleDict({'p2_prime': SegmentationHead(256, num_classes)})
 
 
     def forward(self, image):
@@ -76,15 +70,11 @@ class EFPN(nn.Module):
         
         # Create the masks per feature map
         feature_maps = [p2_prime, p2, p3, p4, p5]
-        masks = []
-        
-        for name, feature_map in zip(self.segmentation_heads.keys(), feature_maps):
-            mask = self.segmentation_heads[name](feature_map)
-            masks.append(mask)
+        mask = self.segmentation_heads["p2_prime"](p2_prime)
 
 
-        # Return the feature map pyramid and the corresponding masks
-        return feature_maps, masks
+        # Return the feature map pyramid and the mask
+        return feature_maps, mask
 
 
     def backbone_features(self, image):

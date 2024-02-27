@@ -73,7 +73,7 @@ class Mask2Former(nn.Module):
 
 
 
-    def forward(self, feature_map_list, masks_list, mask=None):
+    def forward(self, feature_map_list, mask):
         """
         Parameters:
             feature_map_list (list): List of multi-scale feature maps from the backbone or previous layer (each element corresponds to a different scale).
@@ -94,7 +94,7 @@ class Mask2Former(nn.Module):
         output           = self.query_features.weight.unsqueeze(1).repeat(1, batch_size, 1)         
         
         # List of predictions for each class and the corresponding mask of each small object for each feature map
-        predictions_class, predictions_mask = self.class_mask_predictions(output, src, positional_embeddings, feature_maps_size_list, masks_list, query_embed)
+        predictions_class, predictions_mask = self.class_mask_predictions(output, src, positional_embeddings, feature_maps_size_list, mask, query_embed)
 
         # Collect the final class and mask predictions, along with auxiliary outputs for intermediate layers to support training stability and performance.
         result = {
@@ -133,14 +133,14 @@ class Mask2Former(nn.Module):
 
 
 
-    def class_mask_predictions(self, output, src, positional_embeddings, feature_maps_size_list, masks_list, query_embed):
+    def class_mask_predictions(self, output, src, positional_embeddings, feature_maps_size_list, mask, query_embed):
         """
         Parameters:
             output (tensor): 
             src (list): Projected feature maps for each scale to dimensionality 
             positional_embeddings (list): [positional encodings for each scale]
             feature_maps_size_list (list): [sizes (H, W) of feature maps for each scale]
-            masks_list (list): Features to be used for mask prediction.
+            mask (list): Features to be used for mask prediction.
             query_embed (tensor): 
         """
         # List to store class predictions at each layer. List to store mask predictions at each layer.
@@ -148,7 +148,7 @@ class Mask2Former(nn.Module):
         predictions_mask  = [] 
 
         # Forward pass through prediction heads to generate initial predictions.
-        outputs_class, outputs_mask, attention_mask = self.forward_prediction_heads(output, masks_list, feature_maps_size_list[0])
+        outputs_class, outputs_mask, attention_mask = self.forward_prediction_heads(output, mask, feature_maps_size_list[0])
         predictions_class.append(outputs_class)
         predictions_mask.append(outputs_mask)
         
@@ -163,7 +163,7 @@ class Mask2Former(nn.Module):
             output = self.transformer_encoder_layers[i](output, src, level_index, attention_mask, positional_embeddings, query_embed)
             
             # Generate predictions for this layer.
-            outputs_class, outputs_mask, attention_mask = self.forward_prediction_heads(output, masks_list, feature_maps_size_list[(i + 1) % self.num_feature_levels])
+            outputs_class, outputs_mask, attention_mask = self.forward_prediction_heads(output, mask, feature_maps_size_list[(i + 1) % self.num_feature_levels])
             predictions_class.append(outputs_class)
             predictions_mask.append(outputs_mask)
     
@@ -171,11 +171,11 @@ class Mask2Former(nn.Module):
 
 
 
-    def forward_prediction_heads(self, output, masks_list, attention_mask_target_size):
+    def forward_prediction_heads(self, output, mask, attention_mask_target_size):
         """
         Parameters:
             output (tensor): 
-            masks_list (list): Features to be used for mask prediction.
+            mask (list): Features to be used for mask prediction.
             attention_mask_target_size (list): Feature maps size list
         """
         # Transpose the decoder output to match the expected input shape for the subsequent operations after Normalizing.
@@ -192,7 +192,7 @@ class Mask2Former(nn.Module):
         # Perform a tensor operation to generate the mask predictions. Project the mask embeddings onto the mask features.
         # "bqc,bchw->bqhw" is the einsum operation indicating: batch (b), queries (q), channels (c), height (h) and width (w).
         # It effectively combines mask embeddings (bqc) with mask features (bchw) to produce mask predictions (bqhw).
-        outputs_mask = torch.einsum("bqc,bchw->bqhw", mask_embedding, masks_list)
+        outputs_mask = torch.einsum("bqc,bchw->bqhw", mask_embedding, mask)
 
         # Interpolate the output masks to match the target size for attention masks. This is used for higher-resolution prediction.
         attention_mask = F.interpolate(outputs_mask, size=attention_mask_target_size, mode="bilinear", align_corners=False)
@@ -233,8 +233,8 @@ class Mask2Former(nn.Module):
         return aux_losses
     
     
-    def instance_segmentation(self, feature_map_list, masks_list):
-        outputs = self.forward(feature_map_list, masks_list)
+    def instance_segmentation(self, feature_map_list, mask):
+        outputs = self.forward(feature_map_list, mask)
 
         # Calculate class confidence
         pred_logits = outputs['pred_logits']  # Shape: [batch_size, num_queries, num_classes + 1]
