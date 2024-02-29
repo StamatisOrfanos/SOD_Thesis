@@ -10,7 +10,7 @@ class EFPN(nn.Module):
            -  The model uses a Feature  Texture Transfer (FTT) module to enrich feature maps with both content and texture 
               details, aiming to improve performance on instance segmentation tasks.
     """
-    def __init__(self, num_classes):
+    def __init__(self, in_channels, hidden_dim, mask_dim):
         super(EFPN, self).__init__()
         # Load EfficientNet with pre-trained weights
         self.backbone = EfficientNet.from_pretrained('efficientnet-b7')
@@ -39,10 +39,9 @@ class EFPN(nn.Module):
         self.top_down_p2 = nn.Upsample(scale_factor=2, mode='nearest')
         
         # Define the masks for the richest feature map
-        self.segmentation_heads = nn.ModuleDict({'p2_prime': SegmentationHead(256, num_classes)})
+        self.mask = MaskFeatureGenerator(in_channels, hidden_dim, mask_dim)
 
-
-    def forward(self, image):
+    def forward(self, image, hidden_dim):
         # Pass input through EfficientNet backbone
         # Identify the layers or feature maps in EfficientNet that correspond to C2, C3, C4, C5
         c2_prime, c2, c3, c4, c5 = self.backbone_features(image)
@@ -70,8 +69,7 @@ class EFPN(nn.Module):
         
         # Create the masks per feature map
         feature_maps = [p2_prime, p2, p3, p4, p5]
-        mask = self.segmentation_heads["p2_prime"](p2_prime)
-
+        mask = self.mask(p2_prime)
 
         # Return the feature map pyramid and the mask
         return feature_maps, mask
@@ -153,17 +151,17 @@ class SubPixelConv(nn.Module):
         return x
 
  
-class SegmentationHead(nn.Module):
-    # Define the SegmentationHead to create the masks for each feature map 
-    def __init__(self, in_channels, num_classes):
-        super(SegmentationHead, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels, in_channels // 2, kernel_size=3, padding=1)
+class MaskFeatureGenerator(nn.Module):
+    def __init__(self, in_channels, hidden_dim, mask_dim):
+        super(MaskFeatureGenerator, self).__init__()
+        # Assuming spatial dimension reduction isn't necessary. If it is, consider adding conv layers with stride > 1
+        # Output conv layer to produce mask_dim features per pixel
+        self.conv1 = nn.Conv2d(in_channels, hidden_dim, kernel_size=3, padding=1)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv2d(in_channels // 2, num_classes, kernel_size=1)
-    
+        self.conv2 = nn.Conv2d(hidden_dim, mask_dim, kernel_size=1)
+
     def forward(self, x):
+        # No activation here, as we're producing features, not probabilities
         x = self.relu(self.conv1(x))
-        x = self.conv2(x)
-        # Upsample to match the original image size, if necessary Note: You might need to adjust the scale_factor based on the feature map's resolution
-        x = F.interpolate(x, scale_factor=4, mode='bilinear', align_corners=False)
+        x = self.conv2(x)  
         return x

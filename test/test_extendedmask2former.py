@@ -31,9 +31,12 @@ model = ExtendedMask2Former(num_classes=100, hidden_dim=256, num_queries=100, nh
 total_params = sum(param.numel() for param in model.parameters())
 print("The total number of Extended Mask2Former parameters are: ", total_params)
 
-
+hidden_dim = 256
+num_classes = 100
 # Step 4: Get the summary of the Mask2Former model
 # generate a model architecture visualization
-make_dot(image.mean(), params=dict(model(image).named_parameters()), show_attrs=True, show_saved=True).render("Extended_Mask2Former", format="png")
+y = model(image, hidden_dim)
+prediction =  y["pred_logits"]
+make_dot(prediction.mean(), params=dict(ExtendedMask2Former(num_classes).named_parameters()), show_attrs=True, show_saved=True).render("Extended_Mask2Former", format="png")
 
 # ------------------------------------------------------------------------------------------------------------------------------------

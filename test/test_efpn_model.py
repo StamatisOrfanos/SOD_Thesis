@@ -20,7 +20,7 @@ def load_image(image_path):
 image = load_image("/Users/stamatiosorphanos/Documents/MCs_Thesis/SOD_Thesis/docs/Extended_Mask2Former/1.jpg")
 
 # Step 2: Instantiate the model
-model = EFPN(num_classes=10)
+model = EFPN(in_channels=256, hidden_dim=256, mask_dim=100)
 model.eval()  # Set the model to evaluation mode
 
 
@@ -31,7 +31,7 @@ print("The total number of EFPN parameters are: ", total_params)
 
 # Step 4: Pass the image through the model
 with torch.no_grad():
-    feature_maps, mask = model(image)
+    feature_maps, mask = model(image, 256)
 
 
 # Step 5: Visualize the feature maps
