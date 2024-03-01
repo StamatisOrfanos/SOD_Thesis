@@ -7,8 +7,6 @@ from extended_mask2former_model import ExtendedMask2Former
 from torchviz import make_dot
 
 
-
-
 # ------------------------------------------------------------------------------------------------------------------------------------
 # Step 1: Load and preprocess the image
 def load_image(image_path):
@@ -37,9 +35,8 @@ hidden_dim = 256
 num_classes = 100
 print("The Extended Feature Pyramid Network Mask2Former Model is the following: \n\n{}".format(model))
 
-
+# Step 5: Produce the model architecture schema using torchviz library
 y = model(image, hidden_dim)
 prediction =  y["pred_logits"]
 make_dot(prediction.mean(), params=dict(ExtendedMask2Former(num_classes).named_parameters()), show_attrs=True, show_saved=True).render("Extended_Mask2Former", format="png")
-
 # ------------------------------------------------------------------------------------------------------------------------------------

@@ -1,9 +1,11 @@
 import sys, os 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import torch
 from torchvision import transforms
 from PIL import Image
-from models.efpn_backbone.efpn_model import EFPN    
+from models.efpn_backbone.efpn_model import EFPN
+from torchviz import make_dot
 
 
 # ------------------------------------------------------------------------------------------------------------------------------
@@ -48,4 +50,3 @@ print(mask.shape)
 # Step 7: Get the summary of the EFPN model
 print("\n\nThe summary of the EFPN model is the following: \n", model)
 # ------------------------------------------------------------------------------------------------------------------------------
-
