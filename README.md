@@ -18,7 +18,8 @@ The primary objectives of this project include:
 - /results - Results and analysis from experiments.
 
 ### Getting Started
-[Check this](https://github.com/dk-liang/Awesome-Visual-Transformer)
+
+
 
 ### Prerequisites (software requirements, dependencies)
 
