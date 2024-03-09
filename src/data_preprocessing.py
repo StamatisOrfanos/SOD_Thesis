@@ -2,43 +2,6 @@ import sys, os, json, shutil, xmltodict
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
-import numpy as np
-from pycocotools.coco import COCO
-import torchvision.transforms as transforms
-from torch.utils.data import Dataset, DataLoader
-
-
-
-
-class CocoDataset(Dataset):
-    def __init__(self, root, annotation, transform=None):
-        self.root = root
-        self.coco = COCO(annotation)
-        self.ids = list(sorted(self.coco.imgs.keys()))
-        self.transform = transform
-
-    def __getitem__(self, index):
-        coco = self.coco
-        img_id = self.ids[index]
-        ann_ids = coco.getAnnIds(imgIds=img_id)
-        coco_annotation = coco.loadAnns(ann_ids)
-        path = coco.loadImgs(img_id)[0]['file_name']
-
-        img = Image.open(os.path.join(self.root, path)).convert('RGB')
-        # Note: You'll need to convert COCO's annotations to your target mask format here
-
-        if self.transform is not applied:
-            img = self.transform(img)
-
-        # Example: Convert annotations to masks and apply preprocessing
-        # masks, categories = convert_coco_poly_to_mask(coco_annotation, img.size)
-
-        return img, masks, categories
-
-    def __len__(self):
-        return len(self.ids)
-
-
 
 
 def data_pre_processing(data_folder):

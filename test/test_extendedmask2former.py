@@ -3,7 +3,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from PIL import Image 
 from torchvision import transforms
-from extended_mask2former_model import ExtendedMask2Former
+from models.extended_mask2former_model import ExtendedMask2Former
 from torchviz import make_dot
 
 

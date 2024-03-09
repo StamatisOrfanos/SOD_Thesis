@@ -1,0 +1,55 @@
+
+
+Mask2Former Loss:
+Motivated by PointRend and Implicit PointRend, which show a segmentation model can be trained with its mask loss calculated on K randomly 
+sampled points instead of the whole mask, we calculate the mask loss with sampled points in both the matching and the final loss calculation. 
+More specifically, in the match- ing loss that constructs the cost matrix for bipartite match- ing, we uniformly sample the same set of K 
+points for all prediction and ground truth masks. In the final loss between predictions and their matched ground truths, we sample 
+different sets of K points for different pairs of prediction and ground truth using importance sampling. We set K = 12544, 
+i.e., 112 × 112 points. This new training strategy effectively reduces training memory by 3×, from 18GB to 6GB per image, making Mask2Former 
+more accessible to users with limited computational resources.
+
+Loss weights. We use the binary cross-entropy loss and the dice loss for our mask loss: 
+L_mask = λ_ce Lce + λ_dice L_dice. 
+We set λ_ce = 5.0 and λ_dice = 5.0. 
+
+The final loss is a combination of mask loss and classification loss: 
+L_mask + λ_c l_s L_cls 
+and we set λ_cls = 2.0 for predictions matched with a ground truth and 0.1 for the “no object,” i.e., predictions that have not been matched with any ground truth.
+
+
+Extended Feature Pyramid Network
+
+Foreground-Background-Balanced Loss. Foreground-background-balanced loss is designed to improve comprehensive quality of EFPN. 
+Common global loss will lead to insufficient learning of small object areas, because small objects only make up fractional part 
+of the whole image. Foreground-background-balanced loss function improves the feature quality of both background and foreground 
+by two parts: 
+1. global reconstruction loss
+2. positive patch loss.
+Global construction loss mainly enforces resemblance to the real background features, since background pixels consist most part 
+of an image. Here we adopt l1 loss that is commonly used in SR as global reconstruction loss Lglob:
+
+L_glob(F,Ft) = ||Ft −F||
+
+where F denotes the generated feature map, and Ft denotes the target feature map.
+
+Positive patch loss is used to draw attention to positive pixels, because severe foreground-background imbalance will impede 
+detector performance . We employ l1 loss on foreground areas as positive patch loss Lglob:
+
+
+
+where Ppos denotes the patches of ground truth objects, N denotes the total number of positive pixels, and (x, y) denotes the coordinates 
+of pixels on feature maps. Positive patch loss plays the role of a stronger constraint for the areas where objects locate, enforcing 
+learning true representation of these areas. The foreground-background-balanced loss function Lfbb is then defined as
+
+
+L_fbb(F,Ft) = L_glob(F,Ft) + λL_pos(F,Ft)
+
+where λ is a weight balancing factor. The balanced loss function mines true positives by improving feature quality of foreground 
+areas, and kills false positives by improving feature quality of background areas.
+
+
+Total Loss. Feature maps from 2× scale FPN are introduced to supervise the training process of EFPN. Not only the bottom extended pyramid level is 
+under supervision, but the FTT module is under supervision as well. The overall training objective in EFPN is defined as :
+L=L (P′,P2×)+L (P′,P2×) (8) fbb 3 3 fbb 2 2
+Here P2× is the target P from 2× input FPN, and P2× is the target P from 2233 2× input FPN
