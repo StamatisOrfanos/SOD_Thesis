@@ -93,14 +93,16 @@ class Mask2Former(nn.Module):
         query_embed      = self.query_embeddings.weight.unsqueeze(1).repeat(1, batch_size, 1)
         output           = self.query_features.weight.unsqueeze(1).repeat(1, batch_size, 1)         
         
-        # List of predictions for each class and the corresponding mask of each small object for each feature map
-        predictions_class, predictions_mask = self.class_mask_predictions(output, src, positional_embeddings, feature_maps_size_list, mask, query_embed)
+        # List of predictions for each class and the corresponding mask and bounding box
+        predictions_class, predictions_mask = self.class_mask_predictions(output, src, positional_embeddings, feature_maps_size_list, mask, query_embed) 
+        bounding_boxes = self.masks_to_bboxes(predictions_mask)
 
         # Collect the final class and mask predictions, along with auxiliary outputs for intermediate layers to support training stability and performance.
         result = {
-            'pred_logits': predictions_class[-1],
-            'pred_masks' : predictions_mask[-1],
-            'aux_outputs': self._set_aux_loss(predictions_class if self.mask_classification else None, predictions_mask)
+            'pred_logits' : predictions_class[-1],
+            'pred_masks'  : predictions_mask[-1],
+            'aux_outputs' : self._set_aux_loss(predictions_class if self.mask_classification else None, predictions_mask),
+            'bounding_box': bounding_boxes[-1] 
         }
         
         return result
@@ -252,3 +254,20 @@ class Mask2Former(nn.Module):
         outputs['final_confidences'] = final_confidences
 
         return outputs
+
+
+    def masks_to_bboxes(self, masks, threshold):
+        """
+        Parameters:
+            masks (tensor): tensor of shape [batch_size, num_queries, height, width]
+            threshold (float): threshold value to check if a pixel is a part of the mask      
+        """
+        bboxes = []
+        for mask in masks:
+            pos = torch.where(mask > threshold)
+            xmin, xmax = pos[1].min(), pos[1].max()
+            ymin, ymax = pos[0].min(), pos[0].max()
+            bboxes.append([xmin, ymin, xmax, ymax])
+        
+        # Returns: Tensor of shape [batch_size, num_queries, 4] (xmin, ymin, xmax, ymax)
+        return torch.tensor(bboxes)

@@ -38,5 +38,7 @@ print("The Extended Feature Pyramid Network Mask2Former Model is the following: 
 # Step 5: Produce the model architecture schema using torchviz library
 y = model(image, hidden_dim)
 prediction =  y["pred_logits"]
-make_dot(prediction.mean(), params=dict(ExtendedMask2Former(num_classes).named_parameters()), show_attrs=True, show_saved=True).render("Extended_Mask2Former", format="png")
+masks = y["pred_masks"]
+print(masks[-1])
+# make_dot(prediction.mean(), params=dict(ExtendedMask2Former(num_classes).named_parameters()), show_attrs=True, show_saved=True).render("Extended_Mask2Former", format="png")
 # ------------------------------------------------------------------------------------------------------------------------------------
