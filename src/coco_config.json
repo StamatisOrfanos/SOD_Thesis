@@ -1,7 +1,7 @@
 {
     "UAV_SOD_DRONE": {
         "CATEGORY_ID_TO_NAME" : {
-            "0" : "background",
+            "0" : "__background__",
             "1" : "building", 
             "2" : "vehicle",  
             "3" : "ship",     
@@ -28,16 +28,17 @@
         },
     
         "NAME_TO_COCO_CATEGORY" : {
-            "building"              : {"name": "background", "supercategory": "outdoor"},
+            "__background__"        : {"name": "__background__", "supercategory": "outdoor"},            
+            "building"              : {"name": "__background__", "supercategory": "outdoor"},
             "vehicle"               : {"name": "car", "supercategory": "vehicle"},
             "ship"                  : {"name": "boat", "supercategory": "vehicle"},
-            "pool"                  : {"name": "background", "supercategory": "outdoor"},
-            "quarry"                : {"name": "background", "supercategory": "outdoor"},
-            "well"                  : {"name": "background", "supercategory": "outdoor"},
-            "prefabricated-house"   : {"name": "background", "supercategory": "outdoor"},
-            "cable-tower"           : {"name": "background", "supercategory": "outdoor"},
-            "cultivation-mesh-cage" : {"name": "background", "supercategory": "outdoor"},
-            "landslide"             : {"name": "background", "supercategory": "outdoor"}
+            "pool"                  : {"name": "__background__", "supercategory": "outdoor"},
+            "quarry"                : {"name": "__background__", "supercategory": "outdoor"},
+            "well"                  : {"name": "__background__", "supercategory": "outdoor"},
+            "prefabricated-house"   : {"name": "__background__", "supercategory": "outdoor"},
+            "cable-tower"           : {"name": "__background__", "supercategory": "outdoor"},
+            "cultivation-mesh-cage" : {"name": "__background__", "supercategory": "outdoor"},
+            "landslide"             : {"name": "__background__", "supercategory": "outdoor"}
         }        
     },
 
@@ -73,9 +74,9 @@
             "12": "12"
         },
         "NAME_TO_COCO_CATEGORY" : {
-            "pedestrian"     : {"name": "person", "supercategory": "obj"},
-            "people"         : {"name": "person", "supercategory": "obj"},
-            "bicycle"        : {"name": "bicycle", "supercategory": "obj"},
+            "pedestrian"     : {"name": "person", "supercategory": "person"},
+            "people"         : {"name": "person", "supercategory": "person"},
+            "bicycle"        : {"name": "bicycle", "supercategory": "vehicle"},
             "car"            : {"name": "car", "supercategory": "vehicle"},
             "van"            : {"name": "car", "supercategory": "vehicle"},
             "truck"          : {"name": "car", "supercategory": "vehicle"},
@@ -83,8 +84,8 @@
             "awning-tricycle": {"name": "motorcycle", "supercategory": "vehicle"},
             "bus"            : {"name": "car", "supercategory": "vehicle"},
             "motor"          : {"name": "motorcycle", "supercategory": "vehicle"},
-            "others"         : {"name": "background", "supercategory": "outdoor"},
-            "obj"            : {"name": "background", "supercategory": "outdoor"}
+            "others"         : {"name": "__background__", "supercategory": "outdoor"},
+            "obj"            : {"name": "__background__", "supercategory": "outdoor"}
         }
     }
 

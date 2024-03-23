@@ -171,4 +171,4 @@ def xml_to_txt(input_folder, coco_mapper_path='src/coco_config.json', dataset="U
 # annotation_processing(validation_folder, "val_annotations.json")
 #  ---------------------------------------------------- #
 # xml_to_txt("uav_sod_data/test/annotations")
-annotation_processing("uav_sod_data/test", "test_annotations.json", "UAV_SOD_DRONE")
+# annotation_processing("uav_sod_data/test", "test_annotations.json", "UAV_SOD_DRONE")
