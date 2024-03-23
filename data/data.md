@@ -11,6 +11,11 @@ This file includes the most probable datasets that we are going to use:
 
 
 ## [UAV Small Object Detection Dataset](https://www.kaggle.com/datasets/sovitrath/uav-small-object-detection-dataset)
+This dataset contains aerial imagery from UAVs to facilitate small object detection using deep learning.
+This version of the dataset contains a training, validation, and test split.
+Training: 717 samples
+Validation: 84 samples
+Test: 43 samples
 
 
 ## [VisDrone-Dataset](https://www.kaggle.com/datasets/wwj0510/visdrone)
