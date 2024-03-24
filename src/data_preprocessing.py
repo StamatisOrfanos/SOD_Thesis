@@ -3,6 +3,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+import numpy as np
 from tqdm import tqdm
 import ImageOps
 from PIL import Image
@@ -197,3 +198,32 @@ def resize_images(source_dir, target_dir, target_size=(600, 600)):
                     
             except Exception as e:
                 print(f"Error processing {filename}: {e}")
+
+
+def compute_mean_std(images_path, dataset_name):
+    """    
+    Parameters:
+    - images_path (str): The path to the directory containing the images.
+    - dataset_name (str): The name of the dataset for which the statistics are computed.
+    """
+    pixel_data = []
+    
+    for filename in os.listdir(images_path):
+        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif')):
+            img_path = os.path.join(images_path, filename)
+            img = Image.open(img_path)
+            img = img.convert('RGB')
+            pixels = np.array(img)
+            pixel_data.append(pixels)
+    
+    # Stack all image data
+    pixel_data = np.vstack([np.array(image).reshape(-1, 3) for image in pixel_data])
+    
+    # Compute mean and standard deviation and normalize to 0-1 range
+    mean = np.mean(pixel_data, axis=0) / 255 
+    std = np.std(pixel_data, axis=0) / 255
+    
+    # Save to JSON file
+    stats = {dataset_name: {'mean': mean.tolist(), 'std': std.tolist()}}
+    with open('preprocessing.json', 'w') as f:
+        json.dump(stats, f, indent=4)
