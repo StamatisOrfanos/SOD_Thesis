@@ -4,8 +4,7 @@ from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from tqdm import tqdm
-
-import fire
+import ImageOps
 from PIL import Image
 from sahi.utils.coco import Coco, CocoAnnotation, CocoCategory, CocoImage
 from sahi.utils.file import save_json
@@ -16,8 +15,8 @@ from sahi.utils.file import save_json
 def annotation_processing(base_folder, output_file_path, dataset, coco_mapper_path='src/coco_config.json'):
     """
     Parameters:
-        data_folder_dir (str): base VisDrone folder path
-        output_file_path (str): Output file path
+       - data_folder_dir (str): base VisDrone folder path
+       - output_file_path (str): Output file path
     """
     # Load the coco mapper from the 
     map = open(coco_mapper_path)
@@ -158,17 +157,43 @@ def xml_to_txt(input_folder, coco_mapper_path='src/coco_config.json', dataset="U
             # Optionally, delete the XML file
             os.remove(filename)
 
-        
-
+def resize_images(source_dir, target_dir, target_size=(600, 600)):
+    """
+    Parameters:
+    - source_dir (str): The path to the directory containing the original images.
+    - target_dir (str): The path to the directory where resized images will be saved.
+    - target_size (tuple): The target size (width, height) for the resized images.
+    """
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+    
+    for filename in os.listdir(source_dir):
+        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif')):
+            try:
+                img_path = os.path.join(source_dir, filename)
+                image = Image.open(img_path)
+                width, height = image.size
                 
-           
-        
-#  ------------- Keep for future reference ------------- #
-# base_dir = 'data/vis_drone_data'
-# train_folder = str(Path(base_dir) / "train")
-# validation_folder = str(Path(base_dir) / "validation")
-# # Generate COCO JSON files
-# annotation_processing(validation_folder, "val_annotations.json")
-#  ---------------------------------------------------- #
-# xml_to_txt("uav_sod_data/test/annotations")
-# annotation_processing("uav_sod_data/test", "test_annotations.json", "UAV_SOD_DRONE")
+                if width > 600 and height > 600:       
+                    # In case the image is bigger than expected resize, while maintaining aspect ratio and save it to the target directory
+                    image.thumbnail(target_size, Image.ANTIALIAS)                    
+                    image.save(os.path.join(target_dir, filename))
+                else:
+                    # In case the image is smaller than expected increase with a "informed" padding based on the most common color to create better context
+                    image.thumbnail(target_size, Image.ANTIALIAS)
+                    result = image.convert('RGB').getcolors(image.width * image.height)
+                    most_common_color = max(result, key=lambda item: item[0])[1]
+
+                    # Calculate accurate padding that needs to be added
+                    left_margin = (target_size[0] - image.width) / 2
+                    top_margin = (target_size[1] - image.height) / 2
+                    right_margin = (target_size[0] - image.width) - left_margin
+                    bottom_margin = (target_size[1] - image.height) - top_margin
+
+                    # Add padding and save it to the target directory 
+                    img_with_padding = ImageOps.expand(image, border=(int(left_margin), int(top_margin), int(right_margin), int(bottom_margin)), 
+                                                        fill=most_common_color)
+                    img_with_padding.save(os.path.join(target_dir, filename))
+                    
+            except Exception as e:
+                print(f"Error processing {filename}: {e}")
