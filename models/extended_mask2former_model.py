@@ -23,8 +23,8 @@ class ExtendedMask2Former(nn.Module):
         
         
     def forward(self, image, hidden_dim):
-        feature_maps, masks = self.efpn(image, hidden_dim)
-        output = self.mask2former(feature_maps, masks)
+        feature_maps, masks, bounding_box = self.efpn(image, hidden_dim)
+        output = self.mask2former(feature_maps, masks, bounding_box)
         return output
     
     
