@@ -82,3 +82,13 @@ class metrics():
         boxBArea = (predicted_bounding_box[2] + 1) * (predicted_bounding_box[3] + 1)
         iou = interArea / float(boxAArea + boxBArea - interArea)
         return iou
+    
+    
+    def calculate_loss(predictions, targets):
+        # Assuming `predictions` and `targets` include both masks and bounding boxes
+        mask_loss = F.binary_cross_entropy_with_logits(predictions['masks'], targets['masks'])
+        bbox_loss = F.smooth_l1_loss(predictions['bounding_boxes'], targets['bounding_boxes'])
+        
+        # Combine the losses, potentially with different weights
+        loss = mask_loss + bbox_loss
+        return loss

@@ -95,13 +95,7 @@ class Mask2Former(nn.Module):
         # Initialize query embeddings and replicate them for the batch size and create the initial output features for the queries.
         _, batch_size, _ = src[0].shape
         query_embed      = self.query_embeddings.weight.unsqueeze(1).repeat(1, batch_size, 1)
-        
-        # If bounding box features are provided, integrate them with query embeddings
-        if bounding_box is not None:
-            integrated_query_embeddings = self.query_bounding_box_integration(query_embed, bounding_box)
-            output = integrated_query_embeddings
-        else:
-            output = self.query_features.weight.unsqueeze(1).repeat(1, batch_size, 1)     
+        output = self.query_features.weight.unsqueeze(1).repeat(1, batch_size, 1)     
         
         # List of predictions for each class and the corresponding mask and bounding box
         predictions_class, predictions_mask = self.class_mask_predictions(output, src, positional_embeddings, feature_maps_size_list, mask, query_embed) 
@@ -162,7 +156,6 @@ class Mask2Former(nn.Module):
         outputs_class, outputs_mask, attention_mask = self.forward_prediction_heads(output, mask, feature_maps_size_list[0])
         predictions_class.append(outputs_class)
         predictions_mask.append(outputs_mask)
-        
         
         for i in range(self.num_layers):
             
