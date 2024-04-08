@@ -28,7 +28,7 @@ model.eval()  # Set the model to evaluation mode
 
 # Step 3: Count the number of parameters of the EFPN model
 total_params = sum(param.numel() for param in model.parameters())
-# print("The total number of EFPN parameters are: ", total_params)
+print("The total number of EFPN parameters are: ", total_params)
 
 
 # Step 4: Pass the image through the model
@@ -50,6 +50,6 @@ print(mask)
 print("\nThe bounding box created is the following:\n")
 print(bounding_box)
 
-# Step 7: Get the summary of the EFPN model
-print("\n\nThe summary of the EFPN model is the following: \n", model)
+# Step 8: Get the summary of the EFPN model
+print("\n\nThe summary of the EFPN model is the following: \n", model) 
 # ------------------------------------------------------------------------------------------------------------------------------
