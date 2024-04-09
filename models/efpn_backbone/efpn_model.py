@@ -11,7 +11,7 @@ class EFPN(nn.Module):
            -  The model uses a Feature  Texture Transfer (FTT) module to enrich feature maps with both content and texture 
               details, aiming to improve performance on instance segmentation tasks.
     """
-    def __init__(self, in_channels, hidden_dim):
+    def __init__(self, in_channels, hidden_dim, num_boxes, num_classes):
         super(EFPN, self).__init__()
         # Load EfficientNet with pre-trained weights
         self.backbone = EfficientNet.from_pretrained('efficientnet-b7')
@@ -43,9 +43,9 @@ class EFPN(nn.Module):
         self.mask = MaskFeatureGenerator(in_channels, hidden_dim)
         
         # Define the bounding box for the spatially richest feature map 
-        self.bounding_box = BoundingBoxHead(in_channels, hidden_dim)
+        self.bounding_box = BoundingBoxHead(in_channels, num_boxes, num_classes)
 
-    def forward(self, image, hidden_dim):
+    def forward(self, image, num_classes):
         # Pass input through EfficientNet backbone
         # Identify the layers or feature maps in EfficientNet that correspond to C2, C3, C4, C5
         c2_prime, c2, c3, c4, c5 = self.backbone_features(image)
@@ -75,10 +75,10 @@ class EFPN(nn.Module):
         mask = self.mask(p2_prime)
         
         # Create the bounding box for the spatially richest feature map p2_prime
-        bounding_box = self.bounding_box(p2_prime)
+        bounding_box, class_scores = self.bounding_box(p2_prime)
         
         # Return the feature map pyramid and the mask
-        return feature_maps, mask, bounding_box
+        return feature_maps, mask, bounding_box, class_scores
 
 
     def backbone_features(self, image):
@@ -170,10 +170,32 @@ class MaskFeatureGenerator(nn.Module):
         x = self.relu(x)
         x = self.conv2(x)  
         return x
-    
+
+
 class BoundingBoxHead(nn.Module):
-    def __init__(self, in_channels, num_boxes, num_classes):
+    def __init__(self, in_channels, num_predictions, num_classes):
         super(BoundingBoxHead, self).__init__()
+        self.in_channels = in_channels
+        self.num_predictions = num_predictions
+        self.num_classes = num_classes        
+        self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.bbox_regressor = nn.Linear(in_channels, num_predictions * 4)  # 4 for [x_min, y_min, width, height]
+        self.classifier = nn.Linear(in_channels, num_predictions * num_classes)
+
+    def forward(self, x):
+        x = self.adaptive_pool(x)
+        x = torch.flatten(x, 1)
+        bboxes = self.bbox_regressor(x)
+        class_scores = self.classifier(x)     
+        bboxes = bboxes.view(-1, self.num_predictions, 4)  # Shape: [batch_size, num_predictions, 4]
+        class_scores = class_scores.view(-1, self.num_predictions, self.num_classes)  # Shape: [batch_size, num_predictions, num_classes]
+        return bboxes, class_scores
+
+
+
+class BoundingBoxHeadPixelDense(nn.Module):
+    def __init__(self, in_channels, num_boxes, num_classes):
+        super(BoundingBoxHeadPixelDense, self).__init__()
         self.conv1 = nn.Conv2d(in_channels, 256, kernel_size=3, padding=1)
         self.relu = nn.ReLU(inplace=True)
         # Predict [x_min, y_min, width, height] for each object and num_boxes could be dynamic based on the detection head's outputs
@@ -181,7 +203,8 @@ class BoundingBoxHead(nn.Module):
         self.classifier = nn.Conv2d(256, num_boxes * num_classes, kernel_size=1)
 
     def forward(self, x):
-        x = self.relu(self.conv1(x))
+        x - self.conv1(x)
+        x = self.relu(x)
         bbox = self.conv2(x)
         class_scores = self.classifier(x)
         return bbox, class_scores
