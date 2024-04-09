@@ -36,7 +36,7 @@ num_classes = 100
 print("The Extended Feature Pyramid Network Mask2Former Model is the following: \n\n{}".format(model))
 
 # Step 5: Produce the model architecture schema using torchviz library
-y = model(image, hidden_dim)
+y = model(image, hidden_dim, num_classes)
 prediction =  y["pred_logits"]
 masks = y["pred_masks"]
 print(masks[-1])

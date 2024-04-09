@@ -3,7 +3,6 @@ import fvcore.nn.weight_init as weight_init
 import torch
 from torch import nn
 from torch.nn import functional as F
-from models.mask2former_detector.attention_query_embedding import AttentionQueryEmbedding
 from models.mask2former_detector.ffn_layer import MLP
 from models.mask2former_detector.position_embedding_sine import PositionEmbeddingSine
 from models.mask2former_detector.transformer_decoder_block import TransformerDecoderLayer
@@ -48,9 +47,6 @@ class Mask2Former(nn.Module):
         # Learnable embeddings for the decoder queries (provide a fixed number of "slots" for the decoder to focus on different parts of the input)
         self.query_features = nn.Embedding(num_queries, hidden_dim)
         self.query_embeddings = nn.Embedding(num_queries, hidden_dim)
-                    
-        # Create an embedding layer that combines the query features with the bounding boxes created by the EFPN
-        self.query_bounding_box_integration = AttentionQueryEmbedding(hidden_dim * 2, hidden_dim)
 
         # Define the amount of multi-scale features and create the corresponding level embedding (we use 5 scales from the EFPN)
         # and the projection layers to align the channel dimensions if necessary.
@@ -77,7 +73,7 @@ class Mask2Former(nn.Module):
 
 
 
-    def forward(self, feature_map_list, mask, bounding_box):
+    def forward(self, feature_map_list, mask, bounding_box, class_scores):
         """
         Parameters:
             feature_map_list (list): List of multi-scale feature maps from the backbone or previous layer (each element corresponds to a different scale).
@@ -85,8 +81,7 @@ class Mask2Former(nn.Module):
             mask: Optional argument, not used in this function but can be used for additional operations like applying masks to features.
         """
         assert len(feature_map_list) == self.num_feature_levels
-        
-        
+               
         # Lists to store    src : [projected feature maps for each scale]
         # positional_embeddings : [positional encodings for each scale]
         # feature_maps_size_list: [sizes (H, W) of feature maps for each scale]
@@ -105,7 +100,8 @@ class Mask2Former(nn.Module):
             'pred_logits' : predictions_class[-1],
             'pred_masks'  : predictions_mask[-1],
             'aux_outputs' : self.set_aux_loss(predictions_class if self.mask_classification else None, predictions_mask),
-            'bounding_box': bounding_box[-1] 
+            'bounding_box': bounding_box,
+            "class_scores": class_scores
         }
         
         return result

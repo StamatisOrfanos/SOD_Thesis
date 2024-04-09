@@ -18,13 +18,13 @@ class ExtendedMask2Former(nn.Module):
     """
     def __init__(self, num_classes, hidden_dim=256, num_queries=100, nheads=8, dim_feedforward=2048, dec_layers=1, mask_dim=100):
         super(ExtendedMask2Former, self).__init__()              
-        self.efpn = EFPN(hidden_dim, hidden_dim, mask_dim)
+        self.efpn = EFPN(hidden_dim, hidden_dim, mask_dim, num_classes)
         self.mask2former = Mask2Former(hidden_dim, num_classes, hidden_dim, num_queries, nheads, dim_feedforward, dec_layers, mask_dim)
         
         
-    def forward(self, image, hidden_dim):
-        feature_maps, masks, bounding_box = self.efpn(image, hidden_dim)
-        output = self.mask2former(feature_maps, masks, bounding_box)
+    def forward(self, image, hidden_dim, num_classes):
+        feature_maps, masks, bounding_box, class_scores = self.efpn(image)
+        output = self.mask2former(feature_maps, masks, bounding_box, class_scores)
         return output
     
     

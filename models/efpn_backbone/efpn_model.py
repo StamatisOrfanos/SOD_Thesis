@@ -40,12 +40,12 @@ class EFPN(nn.Module):
         self.top_down_p2 = nn.Upsample(scale_factor=2, mode='nearest')
         
         # Define the masks for the spatially richest feature map
-        self.mask = MaskFeatureGenerator(in_channels, hidden_dim)
+        self.mask = MaskFeatureGenerator(in_channels, hidden_dim, hidden_dim)
         
         # Define the bounding box for the spatially richest feature map 
         self.bounding_box = BoundingBoxHead(in_channels, num_boxes, num_classes)
 
-    def forward(self, image, num_classes):
+    def forward(self, image):
         # Pass input through EfficientNet backbone
         # Identify the layers or feature maps in EfficientNet that correspond to C2, C3, C4, C5
         c2_prime, c2, c3, c4, c5 = self.backbone_features(image)
@@ -156,19 +156,18 @@ class SubPixelConv(nn.Module):
         x = F.pixel_shuffle(x, self.upscale_factor)
         return x
 
- 
+
 class MaskFeatureGenerator(nn.Module):
-    def __init__(self, in_channels, hidden_dim):
+    def __init__(self, in_channels, hidden_dim, mask_dim):
         super(MaskFeatureGenerator, self).__init__()
-        # Output conv layer to produce mask_dim features per pixel
         self.conv1 = nn.Conv2d(in_channels, hidden_dim, kernel_size=3, padding=1)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv2d(hidden_dim, 4, kernel_size=1)
+        self.conv2 = nn.Conv2d(hidden_dim, mask_dim, kernel_size=1) 
 
     def forward(self, x):
         x = self.conv1(x)
         x = self.relu(x)
-        x = self.conv2(x)  
+        x = self.conv2(x)
         return x
 
 
@@ -185,11 +184,11 @@ class BoundingBoxHead(nn.Module):
     def forward(self, x):
         x = self.adaptive_pool(x)
         x = torch.flatten(x, 1)
-        bboxes = self.bbox_regressor(x)
+        bounding_boxes = self.bbox_regressor(x)
         class_scores = self.classifier(x)     
-        bboxes = bboxes.view(-1, self.num_predictions, 4)  # Shape: [batch_size, num_predictions, 4]
-        class_scores = class_scores.view(-1, self.num_predictions, self.num_classes)  # Shape: [batch_size, num_predictions, num_classes]
-        return bboxes, class_scores
+        bounding_boxes = bounding_boxes.view(-1, self.num_predictions, 4)
+        class_scores = class_scores.view(-1, self.num_predictions, self.num_classes)
+        return bounding_boxes, class_scores
 
 
 
