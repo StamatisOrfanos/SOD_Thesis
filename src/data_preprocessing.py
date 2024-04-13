@@ -4,6 +4,28 @@ from tqdm import tqdm
 from PIL import ImageOps, Image
 
 
+def extract_annotation_values(input_folder):
+    """    
+    Parameters:
+      input_folder (str): Path of the folder containing the text files.
+    """
+    # Retrieve all annotations files in the directory and initialize tqdm loop to create the correct format for the annotations
+    annotation_files = [f for f in os.listdir(input_folder) if f.endswith('.txt')]
+    for file in tqdm(annotation_files, desc="Creating the right annotations format"):
+        file_path = os.path.join(input_folder, file)
+        
+        with open(file_path, 'r+') as file:
+            lines = file.readlines()            
+            file.seek(0)            
+            for line in lines:
+                values = line.strip().split(',')                
+                edited_line = ','.join(values[:5]) + '\n'                
+                file.write(edited_line)
+
+    print("Files edited successfully!")
+
+
+
 def xml_to_txt(input_folder, map_path="src/code_map.json"):
     """    
     Parameters:
