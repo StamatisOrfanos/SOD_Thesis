@@ -1,0 +1,35 @@
+{
+    "UAV_SOD_DRONE": {
+        "CATEGORY_ID_TO_NAME" : {
+            "1" : "building", 
+            "2" : "vehicle",  
+            "3" : "ship",     
+            "4" : "pool",     
+            "5" : "quarry",   
+            "6" : "well",     
+            "7" : "prefabricated-house", 
+            "8" : "cable-tower",  
+            "9" : "cultivation-mesh-cage",
+            "10": "landslide"
+        }      
+    },
+
+    "VIS_DRONE": {
+        "CATEGORY_ID_TO_NAME" : {
+            "0" : "ignore",
+            "1" : "pedestrian",
+            "2" : "people",
+            "3" : "bicycle",
+            "4" : "car",
+            "5" : "van",
+            "6" : "truck",
+            "7" : "tricycle",
+            "8" : "awning-tricycle",
+            "9" : "bus",
+            "10": "motor",
+            "11": "others",
+            "12": "obj"
+        }
+    }
+
+}

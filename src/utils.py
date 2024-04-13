@@ -12,7 +12,6 @@ class metrics():
     def __init__(self,):
         super(self).__init__()
         
-        
     def calculate_data_mean_std(data_loader):
         channels_sum, channels_squared_sum, num_batches = 0, 0, 0
 
@@ -54,8 +53,7 @@ class metrics():
         return auc(recall, precision)
 
     def mean_average_precision(self, y_trues, y_scores):
-        """Calculate the mean average precision across all classes and return mean average precision across all classes.
-        
+        """
         Parameters:
             y_trues: A list of arrays, where each array contains the true binary labels for a class.
             y_scores: A list of arrays, where each array contains the predicted scores for a class.
@@ -67,9 +65,7 @@ class metrics():
 
 
     def intersection_over_union(self, actual_bounding_box, predicted_bounding_box):
-        """_summary_
-
-        Args:
+        """
             boxA (_type_): _description_
             boxB (_type_): _description_
         """
