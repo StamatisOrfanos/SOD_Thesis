@@ -13,17 +13,24 @@ def extract_annotation_values(input_folder):
     annotation_files = [f for f in os.listdir(input_folder) if f.endswith('.txt')]
     for file in tqdm(annotation_files, desc="Creating the right annotations format"):
         file_path = os.path.join(input_folder, file)
-        
+
         with open(file_path, 'r+') as file:
             lines = file.readlines()            
             file.seek(0)            
             for line in lines:
                 values = line.strip().split(',')                
-                edited_line = ','.join(values[:5]) + '\n'                
+                # Convert (x_min, y_min, width, height) to (x_min, y_min, x_max, y_max)
+                x_min = int(values[0])
+                y_min = int(values[1])
+                width = int(values[2])
+                height = int(values[3])
+                x_max = x_min + width
+                y_max = y_min + height
+                object_class = values[5]
+                edited_line = f"{x_min},{y_min},{x_max},{y_max},{object_class}\n"
                 file.write(edited_line)
 
     print("Files edited successfully!")
-
 
 
 def xml_to_txt(input_folder, map_path="src/code_map.json"):
@@ -36,7 +43,6 @@ def xml_to_txt(input_folder, map_path="src/code_map.json"):
     data = json.load(map)
     category_name_to_id = data['UAV_SOD_DRONE']['CATEGORY_ID_TO_NAME']
     map.close() 
-    
     
     # Retrieve all XML files in the directory and initialize tqdm loop
     xml_files = [f for f in os.listdir(input_folder) if f.endswith('.xml')]
@@ -53,14 +59,11 @@ def xml_to_txt(input_folder, map_path="src/code_map.json"):
                 xmin = int(obj['bndbox']['xmin'])
                 ymin = int(obj['bndbox']['ymin'])
                 xmax = int(obj['bndbox']['xmax'])
-                ymax = int(obj['bndbox']['ymax'])
-                width = xmax - xmin
-                height = ymax - ymin                
+                ymax = int(obj['bndbox']['ymax'])        
                 category_name = obj['name']
                 category_code = next(int(key) for key, value in category_name_to_id.items() if value == category_name)
-                annotation = f"{xmin},{ymin},{width},{height},{category_code}"
-                annotations.append(annotation)
-            
+                annotation = f"{xmin},{ymin},{xmax},{ymax},{category_code}"
+                annotations.append(annotation)    
             
             annotations_text = "\n".join(annotations)   
             output_filename = os.path.splitext(file)[0] + ".txt"
@@ -72,9 +75,10 @@ def xml_to_txt(input_folder, map_path="src/code_map.json"):
             os.remove(filename)
 
 
-def resize_images(source_dir, target_dir, target_size=(600, 600)):
+def resize_images(base_dir, source_dir, target_dir, target_size=(600, 600)):
     """
     Parameters:
+      base_dir (str): The path to the base directory containing all the data.
       source_dir (str): The path to the directory containing the original images.
       target_dir (str): The path to the directory where resized images will be saved.
       target_size (tuple): The target size (width, height) for the resized images.
@@ -87,31 +91,63 @@ def resize_images(source_dir, target_dir, target_size=(600, 600)):
             try:
                 img_path = os.path.join(source_dir, filename)
                 image = Image.open(img_path)
-                width, height = image.size
+                original_width, original_height = image.size
+
+                # Calculate the scaling factor and resize
+                scale = min(target_size[0] / original_width, target_size[1] / original_height)
+                new_size = (int(original_width * scale), int(original_height * scale))
+                image = image.resize(new_size, Image.ANTIALIAS)
+
+                # Determine padding
+                padding_width = (target_size[0] - new_size[0]) // 2
+                padding_height = (target_size[1] - new_size[1]) // 2
+                padding = (padding_width, padding_height, target_size[0] - new_size[0] - padding_width, target_size[1] - new_size[1] - padding_height)
+
+                # Find most common color for padding
+                colors = image.convert('RGB').getcolors(maxcolors=new_size[0]*new_size[1])
+                most_common_color = max(colors, key=lambda item: item[0])[1] if colors else (255, 255, 255)
+                image_with_padding = ImageOps.expand(image, border=padding, fill=most_common_color)
+                image_with_padding.save(os.path.join(target_dir, filename))
                 
-                if width > 600 and height > 600:       
-                    # In case the image is bigger than expected resize, while maintaining aspect ratio and save it to the target directory
-                    image.thumbnail(target_size, Image.ANTIALIAS)                    
-                    image.save(os.path.join(target_dir, filename))
-                else:
-                    # In case the image is smaller than expected increase with a "informed" padding based on the most common color to create better context
-                    image.thumbnail(target_size, Image.ANTIALIAS)
-                    result = image.convert('RGB').getcolors(image.width * image.height)
-                    most_common_color = max(result, key=lambda item: item[0])[1]
-
-                    # Calculate accurate padding that needs to be added
-                    left_margin   = (target_size[0] - image.width) / 2
-                    top_margin    = (target_size[1] - image.height) / 2
-                    right_margin  = (target_size[0] - image.width) - left_margin
-                    bottom_margin = (target_size[1] - image.height) - top_margin
-
-                    # Add padding and save it to the target directory 
-                    img_with_padding = ImageOps.expand(image, border=(int(left_margin), int(top_margin), int(right_margin), int(bottom_margin)), 
-                                                       fill=most_common_color)
-                    img_with_padding.save(os.path.join(target_dir, filename))
-                    
+                # SOS ----------------------------------------------------------------------------------------------
+                # SOS: Since we are going to resize the images we have to remap the bounding box coordinates as well
+                # SOS ----------------------------------------------------------------------------------------------
+                resize_bounding_boxes(base_dir, filename, original_width, original_height) 
+  
             except Exception as e:
                 print(f"Error processing {filename}: {e}")
+    
+    print("Successfully resized images and updated annotations")
+    
+
+
+
+def resize_bounding_boxes(base_dir, filename, original_width, original_height, target_size=(600,600)):
+    """    
+    Parameters:
+      base_dir (str): The path to the base directory containing all the data.
+      original_width (int): The original width of the image.
+      original_height (int): The original height of the image.
+      target_size (tuple): The target size (width, height) for the resized image.
+    """
+    annotation_dir = os.path.join(base_dir, 'annotations')
+    
+    annotation_filename = os.path.splitext(filename)[0] + '.txt'
+    ann_path = os.path.join(annotation_dir, annotation_filename)
+    
+    if os.path.exists(ann_path):
+        with open(ann_path, 'r+') as ann_file:
+            lines = ann_file.readlines()
+            ann_file.seek(0)
+            ann_file.truncate()
+            for line in lines:
+                x_min, y_min, x_max, y_max, obj_class = map(float, line.split(','))
+                x_min_new = (x_min / original_width) * target_size[0]
+                x_max_new = (x_max / original_width) * target_size[0]
+                y_min_new = (y_min / original_height) * target_size[1]
+                y_max_new = (y_max / original_height) * target_size[1]
+                new_line = f"{x_min_new},{y_min_new},{x_max_new},{y_max_new},{int(obj_class)}\n"
+                ann_file.write(new_line)
 
 
 def compute_mean_std(images_path, dataset_name):
@@ -139,5 +175,5 @@ def compute_mean_std(images_path, dataset_name):
     
     # Save to JSON file
     stats = {dataset_name: {'mean': mean.tolist(), 'std': std.tolist()}}
-    with open('{}_preprocessing.json'.format(dataset_name), 'w') as f:
+    with open('src/' + '{}_preprocessing.json'.format(dataset_name), 'w') as f:
         json.dump(stats, f, indent=4)
