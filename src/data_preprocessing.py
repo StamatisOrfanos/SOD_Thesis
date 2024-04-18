@@ -16,7 +16,8 @@ def extract_annotation_values(input_folder):
 
         with open(file_path, 'r+') as file:
             lines = file.readlines()            
-            file.seek(0)            
+            file.seek(0)
+            file.truncate()
             for line in lines:
                 values = line.strip().split(',')                
                 # Convert (x_min, y_min, width, height) to (x_min, y_min, x_max, y_max)
@@ -89,31 +90,30 @@ def resize_images(base_dir, source_dir, target_dir, target_size=(600, 600)):
     for filename in os.listdir(source_dir):
         if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif')):
             try:
+                old_filename = filename
                 img_path = os.path.join(source_dir, filename)
                 image = Image.open(img_path)
                 original_width, original_height = image.size
 
-                # Calculate the scaling factor and resize
+                # Calculate the scaling factor and resize the image
                 scale = min(target_size[0] / original_width, target_size[1] / original_height)
                 new_size = (int(original_width * scale), int(original_height * scale))
-                image = image.resize(new_size, Image.ANTIALIAS)
-
+                image_resized = image.resize(new_size, Image.ANTIALIAS)
+                
                 # Determine padding
                 padding_width = (target_size[0] - new_size[0]) // 2
                 padding_height = (target_size[1] - new_size[1]) // 2
                 padding = (padding_width, padding_height, target_size[0] - new_size[0] - padding_width, target_size[1] - new_size[1] - padding_height)
 
                 # Find most common color for padding
-                colors = image.convert('RGB').getcolors(maxcolors=new_size[0]*new_size[1])
+                colors = image_resized.convert('RGB').getcolors(maxcolors=new_size[0]*new_size[1])
                 most_common_color = max(colors, key=lambda item: item[0])[1] if colors else (255, 255, 255)
-                image_with_padding = ImageOps.expand(image, border=padding, fill=most_common_color)
+                image_with_padding = ImageOps.expand(image_resized, border=padding, fill=most_common_color)
                 image_with_padding.save(os.path.join(target_dir, filename))
+                              
+                # Rescale bounding box coordinates
+                resize_bounding_boxes(base_dir, old_filename, original_width, original_height, new_size, padding)
                 
-                # SOS ----------------------------------------------------------------------------------------------
-                # SOS: Since we are going to resize the images we have to remap the bounding box coordinates as well
-                # SOS ----------------------------------------------------------------------------------------------
-                resize_bounding_boxes(base_dir, filename, original_width, original_height) 
-  
             except Exception as e:
                 print(f"Error processing {filename}: {e}")
     
@@ -122,16 +122,17 @@ def resize_images(base_dir, source_dir, target_dir, target_size=(600, 600)):
 
 
 
-def resize_bounding_boxes(base_dir, filename, original_width, original_height, target_size=(600,600)):
+def resize_bounding_boxes(base_dir, filename, original_width, original_height, new_image_size, padding):
     """    
     Parameters:
       base_dir (str): The path to the base directory containing all the data.
+      filename (str): The name of the image file (used to locate the corresponding annotation file).
       original_width (int): The original width of the image.
       original_height (int): The original height of the image.
-      target_size (tuple): The target size (width, height) for the resized image.
+      new_image_size (tuple): The new size (width, height) of the resized image.
+      padding (tuple): The padding (left, top, right, bottom) applied to the image.
     """
     annotation_dir = os.path.join(base_dir, 'annotations')
-    
     annotation_filename = os.path.splitext(filename)[0] + '.txt'
     ann_path = os.path.join(annotation_dir, annotation_filename)
     
@@ -142,11 +143,14 @@ def resize_bounding_boxes(base_dir, filename, original_width, original_height, t
             ann_file.truncate()
             for line in lines:
                 x_min, y_min, x_max, y_max, obj_class = map(float, line.split(','))
-                x_min_new = (x_min / original_width) * target_size[0]
-                x_max_new = (x_max / original_width) * target_size[0]
-                y_min_new = (y_min / original_height) * target_size[1]
-                y_max_new = (y_max / original_height) * target_size[1]
-                new_line = f"{x_min_new},{y_min_new},{x_max_new},{y_max_new},{int(obj_class)}\n"
+                
+                # Calculate new bounding box coordinates
+                x_min_new = (x_min / original_width) * new_image_size[0] + padding[0]
+                x_max_new = (x_max / original_width) * new_image_size[0] + padding[0]
+                y_min_new = (y_min / original_height) * new_image_size[1] + padding[1]
+                y_max_new = (y_max / original_height) * new_image_size[1] + padding[1]
+                
+                new_line = f"{int(x_min_new)},{int(y_min_new)},{int(x_max_new)},{int(y_max_new)},{int(obj_class)}\n"
                 ann_file.write(new_line)
 
 
@@ -175,5 +179,6 @@ def compute_mean_std(images_path, dataset_name):
     
     # Save to JSON file
     stats = {dataset_name: {'mean': mean.tolist(), 'std': std.tolist()}}
-    with open('src/' + '{}_preprocessing.json'.format(dataset_name), 'w') as f:
+    data_type = "validation" if "train" or "test" not in images_path else ("train" if "train" in images_path else "test")
+    with open('src/' + '{}_{}_preprocessing.json'.format(dataset_name, data_type), 'w') as f:
         json.dump(stats, f, indent=4)
