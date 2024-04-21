@@ -2,6 +2,8 @@ import os, json, xmltodict
 import numpy as np
 from tqdm import tqdm
 from PIL import ImageOps, Image
+import cv2
+import numpy as np
 
 
 def extract_annotation_values(input_folder):
@@ -76,82 +78,83 @@ def xml_to_txt(input_folder, map_path="src/code_map.json"):
             os.remove(filename)
 
 
-def resize_images(base_dir, source_dir, target_dir, target_size=(600, 600)):
+
+def resize_data(base_path):
+    # Define the path for the image and annotations
+    image_path       = os.path.join(base_path, "images")
+    annotations_path = os.path.join(base_path, "annotations")
+    
+    image_files =  [f for f in os.listdir(image_path) if f.endswith('.jpg')]
+    for image_file in tqdm(image_files, desc="Resizing the image data and the corresponding annotations to target size (600,600): "):
+        image_file_path = os.path.join(image_path, image_file)
+        annotation_file = image_file.replace(".jpg", ".txt")
+        annotations_file_path = os.path.join(annotations_path, annotation_file)    
+        resize_bounding_boxes(image_file_path, annotations_file_path)
+        resize_images(image_file_path)
+    
+
+
+def resize_images(image_path, target_size=(600, 600)):
     """
     Parameters:
-      base_dir (str): The path to the base directory containing all the data.
-      source_dir (str): The path to the directory containing the original images.
-      target_dir (str): The path to the directory where resized images will be saved.
-      target_size (tuple): The target size (width, height) for the resized images.
+        image_path (string): Path of the image we want to resize
+        target_size (tuple, optional): Target size for the new resized image
     """
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
+    img = Image.open(image_path)
     
-    for filename in os.listdir(source_dir):
-        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif')):
-            try:
-                old_filename = filename
-                img_path = os.path.join(source_dir, filename)
-                image = Image.open(img_path)
-                original_width, original_height = image.size
+    colors = img.getcolors(1024 * 1024)  # increase size to handle more colors
 
-                # Calculate the scaling factor and resize the image
-                scale = min(target_size[0] / original_width, target_size[1] / original_height)
-                new_size = (int(original_width * scale), int(original_height * scale))
-                image_resized = image.resize(new_size, Image.ANTIALIAS)
-                
-                # Determine padding
-                padding_width = (target_size[0] - new_size[0]) // 2
-                padding_height = (target_size[1] - new_size[1]) // 2
-                padding = (padding_width, padding_height, target_size[0] - new_size[0] - padding_width, target_size[1] - new_size[1] - padding_height)
+    if colors:
+        most_common_color = max(colors, key=lambda item: item[0])[1]
+    else:
+        img_np = np.array(img)
+        if len(img_np.shape) == 3:
+            colors, counts = np.unique(img_np.reshape(-1, 3), axis=0, return_counts=True)
+        else:
+            colors, counts = np.unique(img_np.ravel(), return_counts=True)
+        most_common_color = colors[counts.argmax()]
 
-                # Find most common color for padding
-                colors = image_resized.convert('RGB').getcolors(maxcolors=new_size[0]*new_size[1])
-                most_common_color = max(colors, key=lambda item: item[0])[1] if colors else (255, 255, 255)
-                image_with_padding = ImageOps.expand(image_resized, border=padding, fill=most_common_color)
-                image_with_padding.save(os.path.join(target_dir, filename))
-                              
-                # Rescale bounding box coordinates
-                resize_bounding_boxes(base_dir, old_filename, original_width, original_height, new_size, padding)
-                
-            except Exception as e:
-                print(f"Error processing {filename}: {e}")
-    
-    print("Successfully resized images and updated annotations")
-    
+    img.thumbnail((target_size[0], target_size[1]), Image.ANTIALIAS)
+
+    # Pad the image if it's not already the target size
+    padded_img = ImageOps.pad(img, size=target_size, color=most_common_color)
+    padded_img.save(image_path)
 
 
 
-def resize_bounding_boxes(base_dir, filename, original_width, original_height, new_image_size, padding):
-    """    
-    Parameters:
-      base_dir (str): The path to the base directory containing all the data.
-      filename (str): The name of the image file (used to locate the corresponding annotation file).
-      original_width (int): The original width of the image.
-      original_height (int): The original height of the image.
-      new_image_size (tuple): The new size (width, height) of the resized image.
-      padding (tuple): The padding (left, top, right, bottom) applied to the image.
+def resize_bounding_boxes(image_path, annotation_path, target_size=(600,600)):
     """
-    annotation_dir = os.path.join(base_dir, 'annotations')
-    annotation_filename = os.path.splitext(filename)[0] + '.txt'
-    ann_path = os.path.join(annotation_dir, annotation_filename)
-    
-    if os.path.exists(ann_path):
-        with open(ann_path, 'r+') as ann_file:
-            lines = ann_file.readlines()
-            ann_file.seek(0)
-            ann_file.truncate()
-            for line in lines:
-                x_min, y_min, x_max, y_max, obj_class = map(float, line.split(','))
-                
-                # Calculate new bounding box coordinates
-                x_min_new = (x_min / original_width) * new_image_size[0] + padding[0]
-                x_max_new = (x_max / original_width) * new_image_size[0] + padding[0]
-                y_min_new = (y_min / original_height) * new_image_size[1] + padding[1]
-                y_max_new = (y_max / original_height) * new_image_size[1] + padding[1]
-                
-                new_line = f"{int(x_min_new)},{int(y_min_new)},{int(x_max_new)},{int(y_max_new)},{int(obj_class)}\n"
-                ann_file.write(new_line)
+    Parameter:
+        image_path (string): Path of the image we want to resize
+        annotation_path (string): Path of the annotation file we want to update
+        target_size (tuple, optional): Target size for the new resized image   
+    """
+    # Load the image to find its original size
+    img = Image.open(image_path)
+    original_width, original_height = img.size
+
+    # Determine the scale to fit the image within 600x600
+    scale = min(target_size[0] / original_width, target_size[1] / original_height)
+
+    # Calculate new dimensions
+    new_width = int(original_width * scale)
+    new_height = int(original_height * scale)
+
+    # Calculate padding to be added
+    pad_width = (target_size[0] - new_width) // 2
+    pad_height = (target_size[1] - new_height) // 2
+
+    with open(annotation_path, 'r') as file:
+        lines = file.readlines()
+
+    with open(annotation_path, 'w') as file:
+        for line in lines:
+            x_min, y_min, x_max, y_max, class_code = map(int, line.strip().split(','))
+            x_min = int(x_min * scale) + pad_width
+            x_max = int(x_max * scale) + pad_width
+            y_min = int(y_min * scale) + pad_height
+            y_max = int(y_max * scale) + pad_height
+            file.write(f'{x_min},{y_min},{x_max},{y_max},{class_code}\n')
 
 
 def compute_mean_std(images_path, dataset_name):
@@ -179,6 +182,14 @@ def compute_mean_std(images_path, dataset_name):
     
     # Save to JSON file
     stats = {dataset_name: {'mean': mean.tolist(), 'std': std.tolist()}}
-    data_type = "validation" if "train" or "test" not in images_path else ("train" if "train" in images_path else "test")
+    data_type = ""
+    
+    if "train" in images_path:
+        data_type = "train"
+    elif "test" in images_path:
+        data_type = "test"
+    else:
+        data_type = "validation"
+            
     with open('src/' + '{}_{}_preprocessing.json'.format(dataset_name, data_type), 'w') as f:
         json.dump(stats, f, indent=4)
