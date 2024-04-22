@@ -1,9 +1,49 @@
-import os, json, xmltodict
+import os, shutil, json, xmltodict
 import numpy as np
 from tqdm import tqdm
 from PIL import ImageOps, Image
-import cv2
+import cv2, random
 import numpy as np
+
+
+
+
+def reorganize_coco_structure(base_dir):
+    """
+    Parameters:
+        base_dir (string): Path of the COCO2017 base directory.
+    """
+    # Define original paths
+    images_dir = os.path.join(base_dir, 'images')
+    annotations_dir = os.path.join(base_dir, 'annotations')
+    train_dir = os.path.join(base_dir, 'train')
+    validation_dir = os.path.join(base_dir, 'validation')
+
+    # Create new directories
+    os.makedirs(train_dir, exist_ok=True)
+    os.makedirs(validation_dir, exist_ok=True)
+
+    # Move train images and annotations
+    shutil.move(os.path.join(images_dir, 'train_images'), os.path.join(train_dir, 'images'))
+    for file_name in ['captions_train2017.json', 'instances_train2017.json', 'person_keypoints_train2017.json']:
+        if "instances" in file_name:
+            shutil.move(os.path.join(annotations_dir, file_name), train_dir)
+        else:
+            shutil.delete(file_name)
+
+    # Move validation images and annotations
+    shutil.move(os.path.join(images_dir, 'validation_images'), os.path.join(validation_dir, 'images'))
+    for file_name in ['captions_val2017.json', 'instances_validation.json', 'person_keypoints_validation2017.json']:
+        if "instances" in file_name:
+            shutil.move(os.path.join(annotations_dir, file_name), validation_dir)
+        else:
+            shutil.delete(file_name)
+
+    os.rmdir(images_dir)
+    os.rmdir(annotations_dir)
+
+
+
 
 
 def extract_annotation_values(input_folder):
@@ -74,13 +114,14 @@ def xml_to_txt(input_folder, map_path="src/code_map.json"):
             with open(output_filepath, "w") as txt_output:
                 txt_output.write(annotations_text)
                 
-            # Optionally, delete the XML file
             os.remove(filename)
 
 
-
 def resize_data(base_path):
-    # Define the path for the image and annotations
+    """
+    Parameters:
+        base_path (string): Path of directory we want to resize the images and the annotations
+    """
     image_path       = os.path.join(base_path, "images")
     annotations_path = os.path.join(base_path, "annotations")
     
@@ -92,7 +133,6 @@ def resize_data(base_path):
         resize_bounding_boxes(image_file_path, annotations_file_path)
         resize_images(image_file_path)
     
-
 
 def resize_images(image_path, target_size=(600, 600)):
     """
@@ -163,15 +203,18 @@ def compute_mean_std(images_path, dataset_name):
       images_path (str): The path to the directory containing the images.
       dataset_name (str): The name of the dataset for which the statistics are computed.
     """
+    files = [filename for filename in os.listdir(images_path) if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif'))]
+    
+    # If there are more than 2500 images, sample 2500 at random from the dataset
+    if len(files) > 2500: files = random.sample(files, 2500)
     pixel_data = []
     
-    for filename in os.listdir(images_path):
-        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif')):
-            img_path = os.path.join(images_path, filename)
-            img = Image.open(img_path)
-            img = img.convert('RGB')
-            pixels = np.array(img)
-            pixel_data.append(pixels)
+    for filename in files:
+        img_path = os.path.join(images_path, filename)
+        img = Image.open(img_path)
+        img = img.convert('RGB')
+        pixels = np.array(img)
+        pixel_data.append(pixels)
     
     # Stack all image data
     pixel_data = np.vstack([np.array(image).reshape(-1, 3) for image in pixel_data])
