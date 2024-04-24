@@ -43,7 +43,7 @@ class EFPN(nn.Module):
         self.mask = MaskGenerator(in_channels, hidden_dim, hidden_dim)
         
         # Define the bounding box for the spatially richest feature map 
-        self.bounding_box = BoundingBoxHead(in_channels, num_boxes, num_classes)
+        self.bounding_box = BoundingBoxGenerator(in_channels, num_classes)
 
     def forward(self, image):
         # Pass input through EfficientNet backbone
@@ -160,7 +160,7 @@ class SubPixelConv(nn.Module):
 class MaskGenerator(nn.Module):
     def __init__(self, in_channels, out_channels=1, kernel_size=3, activation=nn.Sigmoid()):
         super(MaskGenerator, self).__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, padding=kernel_size // 2)
+        self.conv       = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, padding=kernel_size // 2)
         self.activation = activation
 
     def forward(self, x):
@@ -168,12 +168,28 @@ class MaskGenerator(nn.Module):
         return self.activation(x)
 
 
-class BoundingBoxHead(nn.Module):
+class BoundingBoxGenerator(nn.Module):
+    def __init__(self, in_channels, num_classes):
+        super(BoundingBoxGenerator, self).__init__()
+        self.class_head = nn.Conv2d(in_channels, num_classes, kernel_size=1)
+        self.bounding_box_head = nn.Conv2d(in_channels, 4, kernel_size=1) # [x_min, y_min, x_max, y_max]
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, feature_map):
+        class_logits = self.class_head(feature_map)
+        box_coords   = self.sigmoid(self.bounding_box_head(feature_map))
+        return class_logits, box_coords
+
+
+# --------------------------------------------------------------------------------------------------------------------
+# This is the class we tried to use to get for the bounding box head
+# --------------------------------------------------------------------------------------------------------------------
+class BoundingBoxGeneratorOld(nn.Module):
     def __init__(self, in_channels, num_predictions, num_classes):
-        super(BoundingBoxHead, self).__init__()
+        super(BoundingBoxGeneratorOld, self).__init__()
         self.in_channels = in_channels
         self.num_predictions = num_predictions
-        self.num_classes = num_classes        
+        self.num_classes = num_classes
         self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.bbox_regressor = nn.Linear(in_channels, num_predictions * 4)  # 4 for [x_min, y_min, width, height]
         self.classifier = nn.Linear(in_channels, num_predictions * num_classes)

@@ -6,8 +6,6 @@ import cv2, random
 import numpy as np
 
 
-
-
 def reorganize_coco_structure(base_dir):
     """
     Parameters:
