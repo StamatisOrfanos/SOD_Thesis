@@ -1,12 +1,9 @@
 import sys, os 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 import torch
 from torchvision import transforms
 from PIL import Image
 from models.efpn_backbone.efpn_model import EFPN
-from torchviz import make_dot
-
 
 # ------------------------------------------------------------------------------------------------------------------------------
 # Step 1: Load and preprocess the image
@@ -33,7 +30,7 @@ print("The total number of EFPN parameters are: ", total_params)
 
 # Step 4: Pass the image through the model
 with torch.no_grad():
-    feature_maps, mask, bounding_box, class_scores = model(image, 256)
+    feature_maps, mask, bounding_box, class_scores = model(image)
 
 
 # Step 5: Visualize the feature maps

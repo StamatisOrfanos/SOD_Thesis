@@ -11,7 +11,7 @@ class EFPN(nn.Module):
            -  The model uses a Feature  Texture Transfer (FTT) module to enrich feature maps with both content and texture 
               details, aiming to improve performance on instance segmentation tasks.
     """
-    def __init__(self, in_channels, hidden_dim, num_boxes, num_classes):
+    def __init__(self, in_channels, hidden_dim, num_boxes,  num_classes):
         super(EFPN, self).__init__()
         # Load EfficientNet with pre-trained weights
         self.backbone = EfficientNet.from_pretrained('efficientnet-b7')
@@ -40,10 +40,10 @@ class EFPN(nn.Module):
         self.top_down_p2 = nn.Upsample(scale_factor=2, mode='nearest')
         
         # Define the masks for the spatially richest feature map
-        self.mask = MaskGenerator(in_channels, hidden_dim, hidden_dim)
+        self.mask = MaskFeatureGenerator(in_channels, hidden_dim, hidden_dim)
         
         # Define the bounding box for the spatially richest feature map 
-        self.bounding_box = BoundingBoxGenerator(in_channels, num_classes)
+        self.bounding_box = BoundingBoxGenerator(in_channels, num_boxes, num_classes)
 
     def forward(self, image):
         # Pass input through EfficientNet backbone
@@ -157,36 +157,39 @@ class SubPixelConv(nn.Module):
         return x
 
 
-class MaskGenerator(nn.Module):
-    def __init__(self, in_channels, out_channels=1, kernel_size=3, activation=nn.Sigmoid()):
-        super(MaskGenerator, self).__init__()
-        self.conv       = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, padding=kernel_size // 2)
-        self.activation = activation
+class MaskFeatureGenerator(nn.Module):
+    def __init__(self, in_channels, hidden_dim, mask_dim):
+        super(MaskFeatureGenerator, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels, hidden_dim, kernel_size=3, padding=1)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv2 = nn.Conv2d(hidden_dim, mask_dim, kernel_size=1) 
 
     def forward(self, x):
-        x = self.conv(x)
-        return self.activation(x)
+        x = self.conv1(x)
+        x = self.relu(x)
+        x = self.conv2(x)
+        return x
 
 
-class BoundingBoxGenerator(nn.Module):
+class BoundingBoxGeneratorNew(nn.Module):
     def __init__(self, in_channels, num_classes):
-        super(BoundingBoxGenerator, self).__init__()
+        super(BoundingBoxGeneratorNew, self).__init__()
         self.class_head = nn.Conv2d(in_channels, num_classes, kernel_size=1)
         self.bounding_box_head = nn.Conv2d(in_channels, 4, kernel_size=1) # [x_min, y_min, x_max, y_max]
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, feature_map):
         class_logits = self.class_head(feature_map)
-        box_coords   = self.sigmoid(self.bounding_box_head(feature_map))
-        return class_logits, box_coords
+        bounding_box   = self.sigmoid(self.bounding_box_head(feature_map))
+        return  bounding_box, class_logits
 
 
 # --------------------------------------------------------------------------------------------------------------------
-# This is the class we tried to use to get for the bounding box head
+# These are the Bounding Box classes that we tried to create for the bounding boxes
 # --------------------------------------------------------------------------------------------------------------------
-class BoundingBoxGeneratorOld(nn.Module):
+class BoundingBoxGenerator(nn.Module):
     def __init__(self, in_channels, num_predictions, num_classes):
-        super(BoundingBoxGeneratorOld, self).__init__()
+        super(BoundingBoxGenerator, self).__init__()
         self.in_channels = in_channels
         self.num_predictions = num_predictions
         self.num_classes = num_classes
@@ -204,22 +207,6 @@ class BoundingBoxGeneratorOld(nn.Module):
         return bounding_boxes, class_scores
 
 
-
-# --------------------------------------------------------------------------------------------------------------------
-# These are the classes we tried to use to get dense tensors for both the Masks and Bounding boxes.
-# --------------------------------------------------------------------------------------------------------------------
-class MaskFeatureGenerator(nn.Module):
-    def __init__(self, in_channels, hidden_dim, mask_dim):
-        super(MaskFeatureGenerator, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels, hidden_dim, kernel_size=3, padding=1)
-        self.relu = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv2d(hidden_dim, mask_dim, kernel_size=1) 
-
-    def forward(self, x):
-        x = self.conv1(x)
-        x = self.relu(x)
-        x = self.conv2(x)
-        return x
 
 class BoundingBoxHeadPixelDense(nn.Module):
     def __init__(self, in_channels, num_boxes, num_classes):
