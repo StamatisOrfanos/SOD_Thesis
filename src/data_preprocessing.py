@@ -6,114 +6,7 @@ import cv2, random
 import numpy as np
 
 
-def reorganize_coco_structure(base_dir):
-    """
-    Parameters:
-        base_dir (string): Path of the COCO2017 base directory.
-    """
-    # Define original paths
-    images_dir = os.path.join(base_dir, 'images')
-    annotations_dir = os.path.join(base_dir, 'annotations')
-    train_dir = os.path.join(base_dir, 'train')
-    validation_dir = os.path.join(base_dir, 'validation')
-
-    # Create new directories
-    os.makedirs(train_dir, exist_ok=True)
-    os.makedirs(validation_dir, exist_ok=True)
-
-    # Move train images and annotations
-    shutil.move(os.path.join(images_dir, 'train_images'), os.path.join(train_dir, 'images'))
-    for file_name in ['captions_train2017.json', 'instances_train2017.json', 'person_keypoints_train2017.json']:
-        if "instances" in file_name:
-            shutil.move(os.path.join(annotations_dir, file_name), train_dir)
-        else:
-            shutil.delete(file_name)
-
-    # Move validation images and annotations
-    shutil.move(os.path.join(images_dir, 'validation_images'), os.path.join(validation_dir, 'images'))
-    for file_name in ['captions_val2017.json', 'instances_validation.json', 'person_keypoints_validation2017.json']:
-        if "instances" in file_name:
-            shutil.move(os.path.join(annotations_dir, file_name), validation_dir)
-        else:
-            shutil.delete(file_name)
-
-    os.rmdir(images_dir)
-    os.rmdir(annotations_dir)
-
-
-
-
-
-def extract_annotation_values(input_folder):
-    """    
-    Parameters:
-      input_folder (str): Path of the folder containing the text files.
-    """
-    # Retrieve all annotations files in the directory and initialize tqdm loop to create the correct format for the annotations
-    annotation_files = [f for f in os.listdir(input_folder) if f.endswith('.txt')]
-    for file in tqdm(annotation_files, desc="Creating the right annotations format"):
-        file_path = os.path.join(input_folder, file)
-
-        with open(file_path, 'r+') as file:
-            lines = file.readlines()            
-            file.seek(0)
-            file.truncate()
-            for line in lines:
-                values = line.strip().split(',')                
-                # Convert (x_min, y_min, width, height) to (x_min, y_min, x_max, y_max)
-                x_min = int(values[0])
-                y_min = int(values[1])
-                width = int(values[2])
-                height = int(values[3])
-                x_max = x_min + width
-                y_max = y_min + height
-                object_class = values[5]
-                edited_line = f"{x_min},{y_min},{x_max},{y_max},{object_class}\n"
-                file.write(edited_line)
-
-    print("Files edited successfully!")
-
-
-def xml_to_txt(input_folder, map_path="src/code_map.json"):
-    """    
-    Parameters:
-      input_folder (str): Path of the folder containing the XML files.
-      category_name_to_id (dict): Mapping from category names to IDs.
-    """
-    map = open(map_path)
-    data = json.load(map)
-    category_name_to_id = data['UAV_SOD_DRONE']['CATEGORY_ID_TO_NAME']
-    map.close() 
-    
-    # Retrieve all XML files in the directory and initialize tqdm loop
-    xml_files = [f for f in os.listdir(input_folder) if f.endswith('.xml')]
-    for file in tqdm(xml_files, desc="Converting XML to TXT"):
-        filename = os.path.join(input_folder, file)
-        
-        with open(filename, "r") as xml_file:
-            xml_string = xml_file.read()
-            python_dict = xmltodict.parse(xml_string)
-            objects = python_dict['annotation']['object'] if isinstance(python_dict['annotation']['object'], list) else [python_dict['annotation']['object']]
-            
-            annotations = []
-            for obj in objects:
-                xmin = int(obj['bndbox']['xmin'])
-                ymin = int(obj['bndbox']['ymin'])
-                xmax = int(obj['bndbox']['xmax'])
-                ymax = int(obj['bndbox']['ymax'])        
-                category_name = obj['name']
-                category_code = next(int(key) for key, value in category_name_to_id.items() if value == category_name)
-                annotation = f"{xmin},{ymin},{xmax},{ymax},{category_code}"
-                annotations.append(annotation)    
-            
-            annotations_text = "\n".join(annotations)   
-            output_filename = os.path.splitext(file)[0] + ".txt"
-            output_filepath = os.path.join(input_folder, output_filename)
-            with open(output_filepath, "w") as txt_output:
-                txt_output.write(annotations_text)
-                
-            os.remove(filename)
-
+# Pre-processing functions for all datasets
 
 def resize_data(base_path):
     """
@@ -192,7 +85,11 @@ def resize_bounding_boxes(image_path, annotation_path, target_size=(600,600)):
             x_max = int(x_max * scale) + pad_width
             y_min = int(y_min * scale) + pad_height
             y_max = int(y_max * scale) + pad_height
-            file.write(f'{x_min},{y_min},{x_max},{y_max},{class_code}\n')
+            
+            # Create the segmentation data
+            segmentation = []
+            
+            file.write(f'{x_min},{y_min},{x_max},{y_max},{class_code}, {segmentation}\n')
 
 
 def compute_mean_std(images_path, dataset_name):
@@ -234,3 +131,165 @@ def compute_mean_std(images_path, dataset_name):
             
     with open('src/' + '{}_{}_preprocessing.json'.format(dataset_name, data_type), 'w') as f:
         json.dump(stats, f, indent=4)
+
+
+
+
+
+
+
+
+# COCO dataset specific ---------------------------------------------------------------------------------------------
+
+def reorganize_coco_structure(base_dir):
+    """
+    Parameters:
+        base_dir (string): Path of the COCO2017 base directory.
+    """
+    # Define original paths
+    images_dir = os.path.join(base_dir, 'images')
+    annotations_dir = os.path.join(base_dir, 'annotations')
+    train_dir = os.path.join(base_dir, 'train')
+    validation_dir = os.path.join(base_dir, 'validation')
+
+    # Create new directories
+    os.makedirs(train_dir, exist_ok=True)
+    os.makedirs(validation_dir, exist_ok=True)
+
+    # Move train images and annotations
+    shutil.move(os.path.join(images_dir, 'train_images'), os.path.join(train_dir, 'images'))
+    for file_name in ['captions_train2017.json', 'instances_train2017.json', 'person_keypoints_train2017.json']:
+        if "instances" in file_name:
+            shutil.move(os.path.join(annotations_dir, file_name), train_dir)
+        else:
+            shutil.delete(file_name)
+
+    # Move validation images and annotations
+    shutil.move(os.path.join(images_dir, 'validation_images'), os.path.join(validation_dir, 'images'))
+    for file_name in ['captions_val2017.json', 'instances_val2017.json', 'person_keypoints_validation2017.json']:
+        if "instances" in file_name:
+            shutil.move(os.path.join(annotations_dir, file_name), validation_dir)
+        else:
+            shutil.delete(file_name)
+
+    os.rmdir(images_dir)
+    os.rmdir(annotations_dir)
+
+
+def convert_coco_annotations(input_json, output_dir):
+    counter = 0
+    # Load the original COCO annotations
+    with open(input_json, 'r') as f:
+        data = json.load(f)
+
+    # Prepare output directory
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # Process each annotation associated with images
+    annotations_by_image = {ann['image_id']: [] for ann in data['annotations']}
+    for ann in data['annotations']:
+        annotations_by_image[ann['image_id']].append(ann)
+
+    # Write annotations in separate files for each image
+    for image_id, annotations in annotations_by_image.items():
+        image_file_name = f"{image_id}.txt"
+        with open(os.path.join(output_dir, image_file_name), 'w') as file:
+            for ann in annotations:
+                # Extract bounding box and convert to integer x_min, y_min, x_max, y_max
+                bbox = ann['bbox']
+                x_min, y_min, width, height =  map(int, map(round, bbox))
+                x_max, y_max = x_min + width, y_min + height
+
+                # Category ID
+                category_id = ann['category_id']
+                
+                # Segmentation data
+                segmentation = ann['segmentation'][0]
+                integer_segmentation = [int(round(x)) for x in segmentation]
+                pairs = list(zip(integer_segmentation[::2], integer_segmentation[1::2]))
+                formatted_pairs = str(pairs).replace(' ', '')
+
+                # Write to file
+                file.write(f"{x_min},{y_min},{x_max},{y_max},{category_id},{formatted_pairs}\n")
+                
+        counter +=1
+        if counter == 10: break
+
+
+
+
+# Vis-Drone dateset specific ----------------------------------------------------------------------------------------
+
+def extract_annotation_values(input_folder):
+    """    
+    Parameters:
+      input_folder (str): Path of the folder containing the text files.
+    """
+    # Retrieve all annotations files in the directory and initialize tqdm loop to create the correct format for the annotations
+    annotation_files = [f for f in os.listdir(input_folder) if f.endswith('.txt')]
+    for file in tqdm(annotation_files, desc="Creating the right annotations format"):
+        file_path = os.path.join(input_folder, file)
+
+        with open(file_path, 'r+') as file:
+            lines = file.readlines()            
+            file.seek(0)
+            file.truncate()
+            for line in lines:
+                values = line.strip().split(',')                
+                # Convert (x_min, y_min, width, height) to (x_min, y_min, x_max, y_max)
+                x_min = int(values[0])
+                y_min = int(values[1])
+                width = int(values[2])
+                height = int(values[3])
+                x_max = x_min + width
+                y_max = y_min + height
+                object_class = values[5]
+                edited_line = f"{x_min},{y_min},{x_max},{y_max},{object_class}\n"
+                file.write(edited_line)
+
+    print("Files edited successfully!")
+
+
+# UAV-SOD dateset specific ----------------------------------------------------------------------------------------
+
+def xml_to_txt(input_folder, map_path="src/code_map.json"):
+    """    
+    Parameters:
+      input_folder (str): Path of the folder containing the XML files.
+      category_name_to_id (dict): Mapping from category names to IDs.
+    """
+    map = open(map_path)
+    data = json.load(map)
+    category_name_to_id = data['UAV_SOD_DRONE']['CATEGORY_ID_TO_NAME']
+    map.close() 
+    
+    # Retrieve all XML files in the directory and initialize tqdm loop
+    xml_files = [f for f in os.listdir(input_folder) if f.endswith('.xml')]
+    for file in tqdm(xml_files, desc="Converting XML to TXT"):
+        filename = os.path.join(input_folder, file)
+        
+        with open(filename, "r") as xml_file:
+            xml_string = xml_file.read()
+            python_dict = xmltodict.parse(xml_string)
+            objects = python_dict['annotation']['object'] if isinstance(python_dict['annotation']['object'], list) else [python_dict['annotation']['object']]
+            
+            annotations = []
+            for obj in objects:
+                xmin = int(obj['bndbox']['xmin'])
+                ymin = int(obj['bndbox']['ymin'])
+                xmax = int(obj['bndbox']['xmax'])
+                ymax = int(obj['bndbox']['ymax'])        
+                category_name = obj['name']
+                category_code = next(int(key) for key, value in category_name_to_id.items() if value == category_name)
+                annotation = f"{xmin},{ymin},{xmax},{ymax},{category_code}"
+                annotations.append(annotation)    
+            
+            annotations_text = "\n".join(annotations)   
+            output_filename = os.path.splitext(file)[0] + ".txt"
+            output_filepath = os.path.join(input_folder, output_filename)
+            with open(output_filepath, "w") as txt_output:
+                txt_output.write(annotations_text)
+                
+            os.remove(filename)
+
