@@ -6,7 +6,7 @@ import cv2, random
 import numpy as np
 
 
-# Pre-processing functions for all datasets
+# Pre-processing functions for all datasets ------------------------------------------------------------------------
 
 def resize_data(base_path):
     """
@@ -17,11 +17,11 @@ def resize_data(base_path):
     annotations_path = os.path.join(base_path, "annotations")
     
     image_files =  [f for f in os.listdir(image_path) if f.endswith('.jpg')]
-    for image_file in tqdm(image_files, desc="Resizing the image data and the corresponding annotations to target size (600,600): "):
+    for image_file in tqdm(image_files, desc="Resizing the images, annotations and segmentation data to target size (600,600): "):
         image_file_path = os.path.join(image_path, image_file)
         annotation_file = image_file.replace(".jpg", ".txt")
         annotations_file_path = os.path.join(annotations_path, annotation_file)    
-        resize_bounding_boxes(image_file_path, annotations_file_path)
+        resize_masks_bounding_boxes(image_file_path, annotations_file_path)
         resize_images(image_file_path)
     
 
@@ -53,7 +53,7 @@ def resize_images(image_path, target_size=(600, 600)):
 
 
 
-def resize_bounding_boxes(image_path, annotation_path, target_size=(600,600)):
+def resize_masks_bounding_boxes(image_path, annotation_path, target_size=(600,600)):
     """
     Parameter:
         image_path (string): Path of the image we want to resize
@@ -80,16 +80,17 @@ def resize_bounding_boxes(image_path, annotation_path, target_size=(600,600)):
 
     with open(annotation_path, 'w') as file:
         for line in lines:
-            x_min, y_min, x_max, y_max, class_code = map(int, line.strip().split(','))
+            # Resize the annotations to new size
+            x_min, y_min, x_max, y_max, class_code, segmentation = map(int, line.strip().split(','))
             x_min = int(x_min * scale) + pad_width
             x_max = int(x_max * scale) + pad_width
             y_min = int(y_min * scale) + pad_height
             y_max = int(y_max * scale) + pad_height
             
-            # Create the segmentation data
-            segmentation = []
+            # Resize the annotations 
+            resized_segmentation = [(int(x * scale) + pad_width, int(y * scale) + pad_height) for (x, y) in segmentation]
             
-            file.write(f'{x_min},{y_min},{x_max},{y_max},{class_code}, {segmentation}\n')
+            file.write(f'{x_min},{y_min},{x_max},{y_max},{class_code},{resized_segmentation}\n')
 
 
 def compute_mean_std(images_path, dataset_name):
@@ -134,12 +135,7 @@ def compute_mean_std(images_path, dataset_name):
 
 
 
-
-
-
-
-
-# COCO dataset specific ---------------------------------------------------------------------------------------------
+# COCO dataset ---------------------------------------------------------------------------------------------
 
 def reorganize_coco_structure(base_dir):
     """
@@ -177,9 +173,13 @@ def reorganize_coco_structure(base_dir):
 
 
 def convert_coco_annotations(input_json, output_dir):
-    counter = 0
+    """
+    Parameter:
+        input_json (string): Path of the directory containing the original annotation 
+        output_dir (string): Path of the directory containing the new text annotations
+    """
     # Load the original COCO annotations
-    with open(input_json, 'r') as f:
+    with open(input_json, "r") as f:
         data = json.load(f)
 
     # Prepare output directory
@@ -187,39 +187,53 @@ def convert_coco_annotations(input_json, output_dir):
         os.makedirs(output_dir)
 
     # Process each annotation associated with images
-    annotations_by_image = {ann['image_id']: [] for ann in data['annotations']}
-    for ann in data['annotations']:
-        annotations_by_image[ann['image_id']].append(ann)
-
+    annotations_by_image = {ann["image_id"]: [] for ann in data["annotations"]}
+    for annotation in data["annotations"]:
+        annotations_by_image[annotation["image_id"]].append(annotation)
+        
+    
     # Write annotations in separate files for each image
     for image_id, annotations in annotations_by_image.items():
         image_file_name = f"{image_id}.txt"
-        with open(os.path.join(output_dir, image_file_name), 'w') as file:
-            for ann in annotations:
+        with open(os.path.join(output_dir, image_file_name), "w") as file:
+            for annotation in annotations:
                 # Extract bounding box and convert to integer x_min, y_min, x_max, y_max
-                bbox = ann['bbox']
+                bbox = annotation["bbox"]
                 x_min, y_min, width, height =  map(int, map(round, bbox))
                 x_max, y_max = x_min + width, y_min + height
 
                 # Category ID
-                category_id = ann['category_id']
+                category_id = annotation['category_id']            
                 
                 # Segmentation data
-                segmentation = ann['segmentation'][0]
-                integer_segmentation = [int(round(x)) for x in segmentation]
-                pairs = list(zip(integer_segmentation[::2], integer_segmentation[1::2]))
+                if "segmentation" in annotation and annotation["segmentation"]: 
+                    segmentation = annotation["segmentation"][0]
+                    integer_segmentation = [int(round(x)) for x in segmentation]
+                    pairs = list(zip(integer_segmentation[::2], integer_segmentation[1::2]))
+                else:
+                    pairs = [(x_min, y_min), (x_max, y_min), (x_max, y_max), (x_min, y_max)]
+
                 formatted_pairs = str(pairs).replace(' ', '')
 
                 # Write to file
                 file.write(f"{x_min},{y_min},{x_max},{y_max},{category_id},{formatted_pairs}\n")
                 
-        counter +=1
-        if counter == 10: break
 
+def remove_leading_zeros(input_folder):
+    """
+    Parameters:
+        input_folder (string): Path of the folder containing the images
+    """
+    files = os.listdir(input_folder)
+    
+    for filename in tqdm(files, desc="Renaming images - Removing zeros prefix"):
+        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+            new_filename = filename.lstrip('0')
+            if new_filename != filename:
+                os.rename(filename, new_filename)
+    
 
-
-
-# Vis-Drone dateset specific ----------------------------------------------------------------------------------------
+# Vis-Drone dateset ----------------------------------------------------------------------------------------
 
 def extract_annotation_values(input_folder):
     """    
@@ -237,21 +251,27 @@ def extract_annotation_values(input_folder):
             file.truncate()
             for line in lines:
                 values = line.strip().split(',')                
-                # Convert (x_min, y_min, width, height) to (x_min, y_min, x_max, y_max)
+                # Convert (x_min, y_min, width, height) to (x_min, y_min, x_max, y_max) and store it
                 x_min = int(values[0])
                 y_min = int(values[1])
                 width = int(values[2])
                 height = int(values[3])
                 x_max = x_min + width
                 y_max = y_min + height
+                
+                # Store class of annotation
                 object_class = values[5]
-                edited_line = f"{x_min},{y_min},{x_max},{y_max},{object_class}\n"
+                
+                # Add segmentation data from the bounding box information 
+                segmentation = [(x_min, y_min), (x_min, y_max), (x_max, y_min), (x_max, y_max)]
+                
+                edited_line = f"{x_min},{y_min},{x_max},{y_max},{object_class},{segmentation}\n"
                 file.write(edited_line)
 
     print("Files edited successfully!")
 
 
-# UAV-SOD dateset specific ----------------------------------------------------------------------------------------
+# UAV-SOD dateset ----------------------------------------------------------------------------------------
 
 def xml_to_txt(input_folder, map_path="src/code_map.json"):
     """    
@@ -276,13 +296,20 @@ def xml_to_txt(input_folder, map_path="src/code_map.json"):
             
             annotations = []
             for obj in objects:
-                xmin = int(obj['bndbox']['xmin'])
-                ymin = int(obj['bndbox']['ymin'])
-                xmax = int(obj['bndbox']['xmax'])
-                ymax = int(obj['bndbox']['ymax'])        
+                # Store bounding box data
+                x_min = int(obj['bndbox']['xmin'])
+                y_min = int(obj['bndbox']['ymin'])
+                x_max = int(obj['bndbox']['xmax'])
+                y_max = int(obj['bndbox']['ymax'])    
+                
+                # Store class annotation with code
                 category_name = obj['name']
                 category_code = next(int(key) for key, value in category_name_to_id.items() if value == category_name)
-                annotation = f"{xmin},{ymin},{xmax},{ymax},{category_code}"
+                
+                # Add segmentation data from the bounding box information
+                segmentation = [(x_min, y_min), (x_min, y_max), (x_max, y_min), (x_max, y_max)]
+
+                annotation = f"{x_min},{y_min},{x_max},{y_max},{category_code},{segmentation}"
                 annotations.append(annotation)    
             
             annotations_text = "\n".join(annotations)   
@@ -292,4 +319,3 @@ def xml_to_txt(input_folder, map_path="src/code_map.json"):
                 txt_output.write(annotations_text)
                 
             os.remove(filename)
-
