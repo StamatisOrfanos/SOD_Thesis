@@ -205,13 +205,14 @@ def convert_coco_annotations(input_json, output_dir):
                 # Category ID
                 category_id = annotation['category_id']            
                 
-                # Segmentation data
-                if "segmentation" in annotation and annotation["segmentation"]: 
-                    segmentation = annotation["segmentation"][0]
-                    integer_segmentation = [int(round(x)) for x in segmentation]
+                # Segmentation data (default to bounding box data and get segmentation if exist)
+                pairs = [(x_min, y_min), (x_max, y_min), (x_max, y_max), (x_min, y_max)]
+
+                # Check if segmentation data is valid and process it
+                if ("segmentation" in annotation and  annotation["segmentation"] and isinstance(annotation["segmentation"], list) and 
+                    len(annotation["segmentation"]) > 0 and  isinstance(annotation["segmentation"][0], list) and  len(annotation["segmentation"][0]) > 0):
+                    integer_segmentation = [int(round(x)) for x in annotation["segmentation"][0]]
                     pairs = list(zip(integer_segmentation[::2], integer_segmentation[1::2]))
-                else:
-                    pairs = [(x_min, y_min), (x_max, y_min), (x_max, y_max), (x_min, y_max)]
 
                 formatted_pairs = str(pairs).replace(' ', '')
 
