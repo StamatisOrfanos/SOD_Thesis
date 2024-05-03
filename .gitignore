@@ -4,3 +4,4 @@ __pycache__
 uav_sod_data/
 vis_drone_data/
 city_scapes/
+city_scapes_annotations/gtFine

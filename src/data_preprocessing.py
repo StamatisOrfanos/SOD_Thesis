@@ -11,7 +11,7 @@ import numpy as np
 def resize_data(base_path):
     """
     Parameters:
-        base_path (string): Path of directory we want to resize the images and the annotations
+        - base_path (string): Path of directory we want to resize the images and the annotations
     """
     image_path       = os.path.join(base_path, "images")
     annotations_path = os.path.join(base_path, "annotations")
@@ -28,8 +28,8 @@ def resize_data(base_path):
 def resize_images(image_path, target_size=(600, 600)):
     """
     Parameters:
-        image_path (string): Path of the image we want to resize
-        target_size (tuple, optional): Target size for the new resized image
+        - image_path (string): Path of the image we want to resize
+        - target_size (tuple, optional): Target size for the new resized image
     """
     img = Image.open(image_path)
     
@@ -56,9 +56,9 @@ def resize_images(image_path, target_size=(600, 600)):
 def resize_masks_bounding_boxes(image_path, annotation_path, target_size=(600,600)):
     """
     Parameter:
-        image_path (string): Path of the image we want to resize
-        annotation_path (string): Path of the annotation file we want to update
-        target_size (tuple, optional): Target size for the new resized image   
+        - image_path (string): Path of the image we want to resize
+        - annotation_path (string): Path of the annotation file we want to update
+        - target_size (tuple, optional): Target size for the new resized image   
     """
     # Load the image to find its original size
     img = Image.open(image_path)
@@ -96,8 +96,8 @@ def resize_masks_bounding_boxes(image_path, annotation_path, target_size=(600,60
 def compute_mean_std(images_path, dataset_name):
     """    
     Parameters:
-      images_path (str): The path to the directory containing the images.
-      dataset_name (str): The name of the dataset for which the statistics are computed.
+      - images_path (string): The path to the directory containing the images.
+      - dataset_name (string): The name of the dataset for which the statistics are computed.
     """
     files = [filename for filename in os.listdir(images_path) if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif'))]
     
@@ -140,7 +140,7 @@ def compute_mean_std(images_path, dataset_name):
 def reorganize_coco_structure(base_dir):
     """
     Parameters:
-        base_dir (string): Path of the COCO2017 base directory.
+        - base_dir (string): Path of the COCO2017 base directory.
     """
     # Define original paths
     images_dir = os.path.join(base_dir, 'images')
@@ -175,8 +175,8 @@ def reorganize_coco_structure(base_dir):
 def convert_coco_annotations(input_json, output_dir):
     """
     Parameter:
-        input_json (string): Path of the directory containing the original annotation 
-        output_dir (string): Path of the directory containing the new text annotations
+        - input_json (string): Path of the directory containing the original annotation 
+        - output_dir (string): Path of the directory containing the new text annotations
     """
     # Load the original COCO annotations
     with open(input_json, "r") as f:
@@ -223,7 +223,7 @@ def convert_coco_annotations(input_json, output_dir):
 def remove_leading_zeros(input_folder):
     """
     Parameters:
-        input_folder (string): Path of the folder containing the images
+        - input_folder (string): Path of the folder containing the images
     """
     files = os.listdir(input_folder)
     
@@ -239,7 +239,7 @@ def remove_leading_zeros(input_folder):
 def extract_annotation_values(input_folder):
     """    
     Parameters:
-      input_folder (str): Path of the folder containing the text files.
+      - input_folder (string): Path of the folder containing the text files.
     """
     # Retrieve all annotations files in the directory and initialize tqdm loop to create the correct format for the annotations
     annotation_files = [f for f in os.listdir(input_folder) if f.endswith('.txt')]
@@ -277,8 +277,10 @@ def extract_annotation_values(input_folder):
 def xml_to_txt(input_folder, map_path="src/code_map.json"):
     """    
     Parameters:
-      input_folder (str): Path of the folder containing the XML files.
-      category_name_to_id (dict): Mapping from category names to IDs.
+      - input_folder (string): Path of the folder containing the XML files.
+      - category_name_to_id (dict): Mapping from category names to IDs.
+      - map_path (string): Path of the code_map json file that contains the codes for the classes
+
     """
     map = open(map_path)
     data = json.load(map)
@@ -320,3 +322,129 @@ def xml_to_txt(input_folder, map_path="src/code_map.json"):
                 txt_output.write(annotations_text)
                 
             os.remove(filename)
+
+
+
+# City-Scapes dataset -----------------------------------------------------------------------------
+
+def reorganize_cityscapes_annotations(base_folder):
+    """
+    Parameters:
+        - base_folder (string): Path of the folder containing the city folders along with annotations and images.
+    """
+    
+    # Create the annotations directory if it doesn't exist
+    annotations_path = os.path.join(base_folder, 'annotations')
+    if not os.path.exists(annotations_path):
+        os.makedirs(annotations_path)
+    
+    # Loop through each subdirectory in the base folder
+    for city_folder in os.listdir(base_folder):
+        city_folder_path = os.path.join(base_folder, city_folder)
+        
+        if os.path.isdir(city_folder_path):
+            
+            for root, dirs, files in os.walk(city_folder_path):
+                for file in files:
+                    if file.endswith('.json'):
+                        current_file_path = os.path.join(root, file)
+                        new_file_path = os.path.join(annotations_path, file)
+                        shutil.move(current_file_path, new_file_path)
+                    elif file.endswith('.png'):
+                        current_file_path = os.path.join(root, file)
+                        os.remove(current_file_path)
+
+
+def reorganize_cityscapes_images(base_folder):
+    """
+    Parameters:
+        - base_folder (string): Path of the folder containing the city folders with the images.
+    """
+    
+    # Create the images directory if it doesn't exist
+    images_path = os.path.join(base_folder, 'images')
+    if not os.path.exists(images_path):
+        os.makedirs(images_path)
+    
+    # Loop through each subdirectory in the base folder
+    for city_folder in os.listdir(base_folder):
+        city_folder_path = os.path.join(base_folder, city_folder)
+        
+        if os.path.isdir(city_folder_path):
+            
+            for root, dirs, files in os.walk(city_folder_path):
+                for file in files:
+                    if file.endswith('.png'):
+                        current_file_path = os.path.join(root, file)
+                        new_file_path = os.path.join(images_path, file)
+                        shutil.move(current_file_path, new_file_path)
+                        
+                        
+def json_to_text(input_folder, output_text_path, map_path="src/code_map.json"):
+    """
+    Parameters:
+        - input_json_path (string): Path of the folder containing the city folders with the json annotations.
+        - output_text_path (string): Path of the folder containing the city folders with the images.
+        - map_path (string): Path of the code_map json file that contains the codes for the classes
+    """
+    map = open(map_path)
+    data = json.load(map)
+    category_name_to_id = data['CITY_SCAPES']['CATEGORY_ID_TO_NAME']
+    map.close()
+    
+    json_files = [f for f in os.listdir(input_folder) if f.endswith('.json')]
+
+    for json_file in tqdm(json_files, desc="Converting JSON to Text files"):
+        input_json_path = os.path.join(input_folder, json_file)
+        output_text_path = os.path.join(input_folder, json_file.replace('.json', '.txt'))
+        
+        with open(input_json_path, 'r') as file:
+            data = json.load(file)
+
+        with open(output_text_path, 'w') as file:
+            for obj in data['objects']:
+                label = obj['label']
+                polygon = obj['polygon']
+                
+                # Calculate bounding box from polygon
+                x_min = min(point[0] for point in polygon)
+                x_max = max(point[0] for point in polygon)
+                y_min = min(point[1] for point in polygon)
+                y_max = max(point[1] for point in polygon)
+                
+                # Get class code using dictionary
+                category_code = next(int(key) for key, value in category_name_to_id.items() if value == label)
+                
+                # Format polygon for output
+                polygon_str = str([(x, y) for x, y in polygon])                
+                file.write(f"{x_min},{y_min},{x_max},{y_max},{category_code},{polygon_str}\n")
+        
+        # Remove the JSON file after conversion
+        os.remove(input_json_path)
+
+
+def rename_files(base_folder):
+    """
+    Parameters:
+        base_folder (string): Path of the folder containing the city folders with the images.
+    """
+    image_folder = os.path.join(base_folder, 'image')
+    annotations_folder = os.path.join(base_folder, 'annotations')
+    
+    # Get the list of image files
+    image_files = [f for f in os.listdir(image_folder) if f.endswith('leftImg8bit.png')]
+    # Get the list of JSON files
+    annotation_files = [f for f in os.listdir(annotations_folder) if f.endswith('gtFine_polygons.json')]
+    
+    # Rename image files with tqdm progress bar
+    for img_file in tqdm(image_files, desc="Renaming image files"):
+        identifier = img_file.split('_leftImg8bit.png')[0]
+        new_img_name = f"{identifier}.png"
+        os.rename(os.path.join(image_folder, img_file), os.path.join(image_folder, new_img_name))
+
+    # Rename annotation files with tqdm progress bar
+    for json_file in tqdm(annotation_files, desc="Renaming annotation files"):
+        identifier = json_file.split('_gtFine_polygons.json')[0]
+        new_json_name = f"{identifier}.json"
+        os.rename(os.path.join(annotations_folder, json_file), os.path.join(annotations_folder, new_json_name))
+    
