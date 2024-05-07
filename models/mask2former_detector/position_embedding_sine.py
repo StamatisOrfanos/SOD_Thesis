@@ -11,12 +11,12 @@ from torch import nn
 class PositionEmbeddingSine(nn.Module):
     """
     Parameters:
-    - num_pos_feats (int): The number of positional features to generate. Half of these features
-      will be sine-encoded and the other half will be cosine-encoded.
-    - temperature (int, optional): A scaling factor used in the positional encoding formula.
-      It is usually a large value like 10000.
-    - normalize (bool, optional): Whether to normalize the positional encodings.
-    - scale (float, optional): An optional scaling factor for the positional encodings.
+        - num_pos_feats (int): The number of positional features to generate. Half of these features 
+                               will be sine-encoded and the other half will be cosine-encoded.
+        - temperature (int, optional): A scaling factor used in the positional encoding formula.
+                                       It is usually a large value like 10000.
+        - normalize (bool, optional): Whether to normalize the positional encodings.
+        - scale (float, optional): An optional scaling factor for the positional encodings.
     """
     def __init__(self, num_pos_feats=64, temperature=10000, normalize=False, scale=None):
         super().__init__()
@@ -42,7 +42,7 @@ class PositionEmbeddingSine(nn.Module):
         x_embed = not_mask.cumsum(2, dtype=torch.float32)
         
         
-        # Optionally normalize the positional encodings and scale them
+        # Normalize the positional encodings and scale them
         if self.normalize:
             eps = 1e-6
             y_embed = y_embed / (y_embed[:, -1:, :] + eps) * self.scale

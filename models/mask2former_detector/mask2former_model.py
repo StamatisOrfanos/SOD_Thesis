@@ -12,14 +12,14 @@ class Mask2Former(nn.Module):
     def __init__(self, in_channels: int, num_classes: int, hidden_dim: int, num_queries: int, nheads: int, dim_feedforward: int, dec_layers: int, mask_dim: int):
         """
         Parameters:
-            in_channels (int): Number of channels in the input feature maps.
-            num_classes (int): Number of classes for classification (including background).
-            hidden_dim (int): Dimension of the feature vectors used in the Transformer.
-            num_queries (int): Number of query slots used in the Transformer decoder.
-            nheads (int): Number of attention heads in the multi-head attention layers.
-            dim_feedforward (int): Dimensionality of the hidden layers in the feedforward network.
-            dec_layers (int): Number of Transformer encoder layers to use in the decoder.
-            mask_dim (int): Dimension of the mask feature vectors.
+            - in_channels (int): Number of channels in the input feature maps.
+            - num_classes (int): Number of classes for classification (including background).
+            - hidden_dim (int): Dimension of the feature vectors used in the Transformer.
+            - num_queries (int): Number of query slots used in the Transformer decoder.
+            - nheads (int): Number of attention heads in the multi-head attention layers.
+            - dim_feedforward (int): Dimensionality of the hidden layers in the feedforward network.
+            - dec_layers (int): Number of Transformer encoder layers to use in the decoder.
+            - mask_dim (int): Dimension of the mask feature vectors.
         """
         super().__init__()
         self.mask_classification = True
@@ -76,9 +76,9 @@ class Mask2Former(nn.Module):
     def forward(self, feature_map_list, mask, bounding_box, class_scores):
         """
         Parameters:
-            feature_map_list (list): List of multi-scale feature maps from the backbone or previous layer (each element corresponds to a different scale).
-            mask_features (list): Features to be used for mask prediction.
-            mask: Optional argument, not used in this function but can be used for additional operations like applying masks to features.
+            - feature_map_list (list): List of multi-scale feature maps from the backbone or previous layer (each element corresponds to a different scale).
+            - mask_features (list): Features to be used for mask prediction.
+            - mask: Optional argument, not used in this function but can be used for additional operations like applying masks to features.
         """
         assert len(feature_map_list) == self.num_feature_levels
                
@@ -110,7 +110,7 @@ class Mask2Former(nn.Module):
     def generate_info_per_feature_map(self, feature_map_list):
         """
         Parameters:
-            feature_map_list (list): List of multi-scale feature maps from the backbone or previous layer
+            - feature_map_list (list): List of multi-scale feature maps from the backbone or previous layer
         """
         src = []
         positional_embeddings = []
@@ -137,12 +137,12 @@ class Mask2Former(nn.Module):
     def class_mask_predictions(self, output, src, positional_embeddings, feature_maps_size_list, mask, query_embed):
         """
         Parameters:
-            output (tensor): 
-            src (list): Projected feature maps for each scale to dimensionality 
-            positional_embeddings (list): [positional encodings for each scale]
-            feature_maps_size_list (list): [sizes (H, W) of feature maps for each scale]
-            mask (list): Features to be used for mask prediction.
-            query_embed (tensor): 
+            - output (tensor): 
+            - src (list): Projected feature maps for each scale to dimensionality 
+            - positional_embeddings (list): [positional encodings for each scale]
+            - feature_maps_size_list (list): [sizes (H, W) of feature maps for each scale]
+            - mask (list): Features to be used for mask prediction.
+            - query_embed (tensor): 
         """
         # List to store class predictions at each layer. List to store mask predictions at each layer.
         predictions_class = [] 
@@ -174,9 +174,9 @@ class Mask2Former(nn.Module):
     def forward_prediction_heads(self, output, mask, attention_mask_target_size):
         """
         Parameters:
-            output (tensor): 
-            mask (list): Features to be used for mask prediction.
-            attention_mask_target_size (list): Feature maps size list
+            - output (tensor): 
+            - mask (list): Features to be used for mask prediction.
+            - attention_mask_target_size (list): Feature maps size list
         """
         # Transpose the decoder output to match the expected input shape for the subsequent operations after Normalizing.
         # This changes the shape from [sequence length, batch size, features] to [batch size, sequence length, features].        
@@ -216,8 +216,8 @@ class Mask2Former(nn.Module):
         on whether mask classification is enabled.
 
         Parameters:
-            outputs_class (List[torch.Tensor]): A list of tensors representing the class predictions at each decoder layer.
-            outputs_seg_masks (List[torch.Tensor]): A list of tensors representing the predicted segmentation masks at each decoder layer.
+            - outputs_class (List[torch.Tensor]): A list of tensors representing the class predictions at each decoder layer.
+            - outputs_seg_masks (List[torch.Tensor]): A list of tensors representing the predicted segmentation masks at each decoder layer.
         """
         # Validate input lengths
         assert len(outputs_class) == len(outputs_seg_masks), "Outputs for class and segmentation masks must have the same length."

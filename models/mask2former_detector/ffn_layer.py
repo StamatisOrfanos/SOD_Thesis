@@ -6,10 +6,10 @@ from torch.nn import functional as F
 class FFNLayer(nn.Module):
     """
     Parameters:
-    - d_model (int): The number of expected features in the input and output tensor, the dimensionality of the embedding.
-    - dim_feedforward (int): The dimension of the feedforward network model, which is the size of the hidden layer.
-    - dropout (float): The dropout value, which is the probability of an element to be zeroed. Helps in regularizing the model.
-    - activation (str): The activation function of the intermediate layer.    
+        - d_model (int): The number of expected features in the input and output tensor, the dimensionality of the embedding.
+        - dim_feedforward (int): The dimension of the feedforward network model, which is the size of the hidden layer.
+        - dropout (float): The dropout value, which is the probability of an element to be zeroed. Helps in regularizing the model.
+        - activation (str): The activation function of the intermediate layer.    
     """
     def __init__(self, d_model, dim_feedforward=2048, dropout=0.0, activation="relu"):
         super().__init__()

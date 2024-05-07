@@ -7,10 +7,10 @@ from torch.nn import functional as F
 class SelfAttentionLayer(nn.Module):
     """
     Parameters:
-    - d_model (int): The number of expected features in the input (and output) tensor, the embedding dimension.
-    - nhead (int): The number of heads in the multihead attention models.
-    - dropout (float): The dropout value, used in the attention to prevent overfitting.
-    - activation (str): The activation function for the feedforward layer.
+        - d_model (int): The number of expected features in the input (and output) tensor, the embedding dimension.
+        - nhead (int): The number of heads in the multihead attention models.
+        - dropout (float): The dropout value, used in the attention to prevent overfitting.
+        - activation (str): The activation function for the feedforward layer.
     """
     def __init__(self, d_model, nhead, dropout=0.0, activation="relu"):
         super().__init__()
@@ -46,10 +46,10 @@ class SelfAttentionLayer(nn.Module):
 class MaskedAttentionLayer(nn.Module):
     """
     Parameters:
-    - d_model (int): The number of expected features in the input tensor, typically the embedding dimension.
-    - nhead (int): The number of heads in the multihead attention model.
-    - dropout (float): The dropout value, used in the attention to prevent overfitting.
-    - activation (str): The activation function for the feedforward layer.
+        - d_model (int): The number of expected features in the input tensor, typically the embedding dimension.
+        - nhead (int): The number of heads in the multihead attention model.
+        - dropout (float): The dropout value, used in the attention to prevent overfitting.
+        - activation (str): The activation function for the feedforward layer.
     """
     def __init__(self, d_model, nhead, dropout=0.0, activation="relu"):
         super().__init__()

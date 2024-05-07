@@ -2,8 +2,11 @@ import os, shutil, json, xmltodict
 import numpy as np
 from tqdm import tqdm
 from PIL import ImageOps, Image
-import cv2, random
 import numpy as np
+import random
+from PIL import Image, ImageDraw
+import matplotlib.pyplot as plt
+from pycocotools.coco import COCO
 
 
 # Pre-processing functions for all datasets ------------------------------------------------------------------------
@@ -120,86 +123,78 @@ def compute_mean_std(images_path, dataset_name):
     std = np.std(pixel_data, axis=0) / 255
     
     # Save to JSON file
-    stats = {dataset_name: {'mean': mean.tolist(), 'std': std.tolist()}}
-    data_type = ""
-    
-    if "train" in images_path:
-        data_type = "train"
-    elif "test" in images_path:
-        data_type = "test"
-    else:
-        data_type = "validation"
-            
-    with open('src/' + '{}_{}_preprocessing.json'.format(dataset_name, data_type), 'w') as f:
+    stats = {dataset_name: {'mean': mean.tolist(), 'std': std.tolist()}}            
+    with open('src/' + '{}_preprocessing.json'.format(dataset_name), 'w') as f:
         json.dump(stats, f, indent=4)
+
+
+
+
+def plot_random_image_with_annotations(base_path):
+    """
+    Parameters:
+        - base_path (string): Path to the base directory of the dataset
+    """
+    images_path = os.path.join(base_path, 'train', 'images')
+    annotations_path = os.path.join(base_path, 'train', 'annotations')
+
+    # List all images in the images folder and select a random image
+    image_files = [f for f in os.listdir(images_path) if f.endswith(".png") or f.endswith("jpg")]
+    random_image_name = random.choice(image_files)
+    image_path = os.path.join(images_path, random_image_name)
+    annotation_path = os.path.join(annotations_path, random_image_name.split(".")[0] + ".txt")
+
+    # Load the image
+    image = Image.open(image_path)
+    draw = ImageDraw.Draw(image)
+
+    # Load and parse the annotation file
+    with open(annotation_path, 'r') as file:
+        annotations = file.readlines()
+
+    # Draw each bounding box
+    for annotation in annotations:
+        parts = annotation.strip().split(',')
+        x_min, y_min, x_max, y_max = map(int, parts[:4])
+        draw.rectangle([x_min, y_min, x_max, y_max], outline="red", width=2)
+
+    # Display the image
+    plt.figure(figsize=(10, 10))
+    plt.imshow(image)
+    plt.axis('off')
+    plt.show()
 
 
 
 # COCO dataset ---------------------------------------------------------------------------------------------
 
-def reorganize_coco_structure(base_dir):
-    """
-    Parameters:
-        - base_dir (string): Path of the COCO2017 base directory.
-    """
-    # Define original paths
-    images_dir = os.path.join(base_dir, 'images')
-    annotations_dir = os.path.join(base_dir, 'annotations')
-    train_dir = os.path.join(base_dir, 'train')
-    validation_dir = os.path.join(base_dir, 'validation')
 
-    # Create new directories
-    os.makedirs(train_dir, exist_ok=True)
-    os.makedirs(validation_dir, exist_ok=True)
-
-    # Move train images and annotations
-    shutil.move(os.path.join(images_dir, 'train_images'), os.path.join(train_dir, 'images'))
-    for file_name in ['captions_train2017.json', 'instances_train2017.json', 'person_keypoints_train2017.json']:
-        if "instances" in file_name:
-            shutil.move(os.path.join(annotations_dir, file_name), train_dir)
-        else:
-            shutil.delete(file_name)
-
-    # Move validation images and annotations
-    shutil.move(os.path.join(images_dir, 'validation_images'), os.path.join(validation_dir, 'images'))
-    for file_name in ['captions_val2017.json', 'instances_val2017.json', 'person_keypoints_validation2017.json']:
-        if "instances" in file_name:
-            shutil.move(os.path.join(annotations_dir, file_name), validation_dir)
-        else:
-            shutil.delete(file_name)
-
-    os.rmdir(images_dir)
-    os.rmdir(annotations_dir)
-
-
-def convert_coco_annotations(input_json, output_dir):
-    """
-    Parameter:
-        - input_json (string): Path of the directory containing the original annotation 
-        - output_dir (string): Path of the directory containing the new text annotations
-    """
-    # Load the original COCO annotations
-    with open(input_json, "r") as f:
-        data = json.load(f)
-
-    # Prepare output directory
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    # Process each annotation associated with images
-    annotations_by_image = {ann["image_id"]: [] for ann in data["annotations"]}
-    for annotation in data["annotations"]:
-        annotations_by_image[annotation["image_id"]].append(annotation)
-        
+def convert_coco_annotations(dataDir):
+    # Initialize COCO api for instance annotations
+    json_annotation = os.path.join(dataDir, "annotations.json")
+    coco = COCO(json_annotation)
     
-    # Write annotations in separate files for each image
-    for image_id, annotations in annotations_by_image.items():
-        image_file_name = f"{image_id}.txt"
-        with open(os.path.join(output_dir, image_file_name), "w") as file:
+    # Get all image ids and load annotations
+    imgIds = coco.getImgIds()
+    images = coco.loadImgs(imgIds)
+    
+    # Use the same directory to save annotation files
+    save_dir = os.path.join(dataDir)
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    
+    for image in images:
+        image_filename = image['file_name']
+        annotations_ids = coco.getAnnIds(imgIds=image['id'], iscrowd=None)
+        annotations = coco.loadAnns(annotations_ids)
+        
+        # Create a corresponding text file for each image
+        txt_filename = os.path.splitext(image_filename)[0] + '.txt'
+        with open(os.path.join(save_dir, txt_filename), 'w') as file:
             for annotation in annotations:
                 # Extract bounding box and convert to integer x_min, y_min, x_max, y_max
                 bbox = annotation["bbox"]
-                x_min, y_min, width, height =  map(int, map(round, bbox))
+                x_min, y_min, width, height = map(int, map(round, bbox))
                 x_max, y_max = x_min + width, y_min + height
 
                 # Category ID
@@ -208,7 +203,7 @@ def convert_coco_annotations(input_json, output_dir):
                 # Segmentation data (default to bounding box data and get segmentation if exist)
                 pairs = [(x_min, y_min), (x_max, y_min), (x_max, y_max), (x_min, y_max)]
 
-                # Check if segmentation data is valid and process it
+                # Check if segmentation data is valid and in that case use it
                 if ("segmentation" in annotation and  annotation["segmentation"] and isinstance(annotation["segmentation"], list) and 
                     len(annotation["segmentation"]) > 0 and  isinstance(annotation["segmentation"][0], list) and  len(annotation["segmentation"][0]) > 0):
                     integer_segmentation = [int(round(x)) for x in annotation["segmentation"][0]]
@@ -216,22 +211,36 @@ def convert_coco_annotations(input_json, output_dir):
 
                 formatted_pairs = str(pairs).replace(' ', '')
 
-                # Write to file
                 file.write(f"{x_min},{y_min},{x_max},{y_max},{category_id},{formatted_pairs}\n")
                 
+    # Delete the original annotations.json file
+    os.remove(json_annotation)
 
-def remove_leading_zeros(input_folder):
-    """
-    Parameters:
-        - input_folder (string): Path of the folder containing the images
-    """
-    files = os.listdir(input_folder)
+
+
+def verify_annotations(dataDir):
+    # Paths to the image and annotation directories
+    images_dir = os.path.join(dataDir, 'images')
+    annotations_dir = os.path.join(dataDir, "annotations")
     
-    for filename in tqdm(files, desc="Renaming images - Removing zeros prefix"):
-        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
-            new_filename = filename.lstrip('0')
-            if new_filename != filename:
-                os.rename(filename, new_filename)
+    # List all files in the image and annotation directories
+    image_files = {os.path.splitext(f)[0]: f for f in os.listdir(images_dir) if f.endswith(('.png', '.jpg', '.jpeg'))}
+    annotation_files = {os.path.splitext(f)[0]: f for f in os.listdir(annotations_dir) if f.endswith('.txt')}
+    
+    # Check for unmatched files
+    missing_annotations = [img for img in image_files if img not in annotation_files]
+    missing_images = [ann for ann in annotation_files if ann not in image_files]
+
+    # Print results
+    if not missing_annotations and not missing_images:
+        print("Success: Every image file has a matching annotation file.")
+    else:
+        if missing_annotations:
+            print("Warning: Some images are missing annotations:")
+            print(missing_annotations)
+        if missing_images:
+            print("Warning: Some annotations do not have corresponding images:")
+            print(missing_images)
     
 
 # Vis-Drone dateset ----------------------------------------------------------------------------------------
@@ -326,58 +335,48 @@ def xml_to_txt(input_folder, map_path="src/code_map.json"):
 
 
 # City-Scapes dataset -----------------------------------------------------------------------------
-
-def reorganize_cityscapes_annotations(base_folder):
+def reorganize_cityscapes(city_scapes_images, city_scapes_annotations):
     """
     Parameters:
-        - base_folder (string): Path of the folder containing the city folders along with annotations and images.
+        - city_scapes_images (string): _description_
+        - city_scapes_annotations (string): _description_
     """
-    
-    # Create the annotations directory if it doesn't exist
-    annotations_path = os.path.join(base_folder, 'annotations')
-    if not os.path.exists(annotations_path):
-        os.makedirs(annotations_path)
-    
-    # Loop through each subdirectory in the base folder
-    for city_folder in os.listdir(base_folder):
-        city_folder_path = os.path.join(base_folder, city_folder)
+    dest_dir = 'city-scapes-data'
+
+    # Create the new directory structure
+    for subset in ['train', 'test', 'val']:
+        os.makedirs(os.path.join(dest_dir, subset, 'images'), exist_ok=True)
+        os.makedirs(os.path.join(dest_dir, subset, 'annotations'), exist_ok=True)
+
+        # Move and rename images
+        initial_images = os.path.join(city_scapes_images, subset)
+        destination_images = os.path.join(dest_dir, subset, 'images')
         
-        if os.path.isdir(city_folder_path):
+        for city_folder in os.listdir(initial_images):  
+            full_city_folder_path = os.path.join(initial_images, city_folder)
             
-            for root, dirs, files in os.walk(city_folder_path):
-                for file in files:
-                    if file.endswith('.json'):
-                        current_file_path = os.path.join(root, file)
-                        new_file_path = os.path.join(annotations_path, file)
-                        shutil.move(current_file_path, new_file_path)
-                    elif file.endswith('.png'):
-                        current_file_path = os.path.join(root, file)
-                        os.remove(current_file_path)
+            for image_file in os.listdir(full_city_folder_path):
+                source_image_path      = os.path.join(full_city_folder_path, image_file)
+                new_image_name         = image_file.replace('_leftImg8bit.png', '.png')
+                destination_image_path = os.path.join(destination_images, new_image_name)
+                # Move the image to new path with new name
+                shutil.move(source_image_path, destination_image_path)
 
 
-def reorganize_cityscapes_images(base_folder):
-    """
-    Parameters:
-        - base_folder (string): Path of the folder containing the city folders with the images.
-    """
-    
-    # Create the images directory if it doesn't exist
-    images_path = os.path.join(base_folder, 'images')
-    if not os.path.exists(images_path):
-        os.makedirs(images_path)
-    
-    # Loop through each subdirectory in the base folder
-    for city_folder in os.listdir(base_folder):
-        city_folder_path = os.path.join(base_folder, city_folder)
+        # Move and rename annotations
+        initial_annotations = os.path.join(city_scapes_annotations, subset)
+        destination_annotations = os.path.join(dest_dir, subset, 'annotations')
         
-        if os.path.isdir(city_folder_path):
+        for city_folder in os.listdir(initial_annotations):
+            full_city_folder_path = os.path.join(initial_annotations, city_folder)
             
-            for root, dirs, files in os.walk(city_folder_path):
-                for file in files:
-                    if file.endswith('.png'):
-                        current_file_path = os.path.join(root, file)
-                        new_file_path = os.path.join(images_path, file)
-                        shutil.move(current_file_path, new_file_path)
+            for annotation_file in os.listdir(full_city_folder_path):
+                if annotation_file.endswith('_polygons.json'):
+                    source_annotation_path      = os.path.join(full_city_folder_path, annotation_file)
+                    new_annotations_name        = annotation_file.replace('_gtFine_polygons.json', '.json')
+                    destination_annotation_path = os.path.join(destination_annotations, new_annotations_name)
+                    # Move the annotation to new path with new name
+                    shutil.move(source_annotation_path, destination_annotation_path)
                         
                         
 def json_to_text(input_folder, output_text_path, map_path="src/code_map.json"):
@@ -426,15 +425,14 @@ def json_to_text(input_folder, output_text_path, map_path="src/code_map.json"):
 def rename_files(base_folder):
     """
     Parameters:
-        base_folder (string): Path of the folder containing the city folders with the images.
+        - base_folder (string): Path of the folder containing the city folders with the images.
     """
     image_folder = os.path.join(base_folder, 'image')
     annotations_folder = os.path.join(base_folder, 'annotations')
     
-    # Get the list of image files
+    # Get the list of image and text files
     image_files = [f for f in os.listdir(image_folder) if f.endswith('leftImg8bit.png')]
-    # Get the list of JSON files
-    annotation_files = [f for f in os.listdir(annotations_folder) if f.endswith('gtFine_polygons.json')]
+    annotation_files = [f for f in os.listdir(annotations_folder) if f.endswith('gtFine_polygons.txt')]
     
     # Rename image files with tqdm progress bar
     for img_file in tqdm(image_files, desc="Renaming image files"):
@@ -444,7 +442,7 @@ def rename_files(base_folder):
 
     # Rename annotation files with tqdm progress bar
     for json_file in tqdm(annotation_files, desc="Renaming annotation files"):
-        identifier = json_file.split('_gtFine_polygons.json')[0]
-        new_json_name = f"{identifier}.json"
+        identifier = json_file.split('_gtFine_polygons.txt')[0]
+        new_json_name = f"{identifier}.txt"
         os.rename(os.path.join(annotations_folder, json_file), os.path.join(annotations_folder, new_json_name))
     

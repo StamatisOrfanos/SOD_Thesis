@@ -12,19 +12,6 @@ class metrics():
     def __init__(self,):
         super(self).__init__()
         
-    def calculate_data_mean_std(data_loader):
-        channels_sum, channels_squared_sum, num_batches = 0, 0, 0
-
-        for data, _ in data_loader:
-            channels_sum += torch.mean(data, dim=[0,2,3])
-            channels_squared_sum += torch.mean(data**2, dim=[0,2,3])
-            num_batches += 1
-
-        mean = channels_sum / num_batches
-        standard_deviation = (channels_squared_sum / num_batches - mean**2)**0.5
-        
-        return mean, standard_deviation
-    
 
     def calculate_loss(outputs_efpn, outputs_mask2former, targets, lambda_fg_bg=1, lambda_ce=5.0, lambda_dice=5.0, lambda_cls=2.0):
         # Foreground-Background-Balanced Loss for EFPN output
