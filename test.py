@@ -36,7 +36,7 @@ def draw_bounding_boxes(image_path, annotations, normalized=False):
     # Display the image
     plt.figure(figsize=(10, 10))
     plt.imshow(image)
-    plt.axis('off')  # Turn off axis numbers and ticks
+    plt.axis('off')  
     plt.show()
 
 
