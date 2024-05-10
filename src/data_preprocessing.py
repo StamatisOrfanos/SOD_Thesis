@@ -3,7 +3,7 @@ import numpy as np
 from tqdm import tqdm
 from PIL import ImageOps, Image
 import numpy as np
-import random
+import random, ast
 from PIL import Image, ImageDraw
 import matplotlib.pyplot as plt
 from pycocotools.coco import COCO
@@ -21,10 +21,10 @@ def resize_data(base_path):
     image_path       = os.path.join(base_path, "images")
     annotations_path = os.path.join(base_path, "annotations")
     
-    image_files =  [f for f in os.listdir(image_path) if f.endswith('.jpg')]
+    image_files =  [f for f in os.listdir(image_path) if f.endswith(".jpg") or f.endswith(".png")]
     for image_file in tqdm(image_files, desc="Resizing the images, annotations and segmentation data to target size (600,600): "):
         image_file_path = os.path.join(image_path, image_file)
-        annotation_file = image_file.replace(".jpg", ".txt")
+        annotation_file = image_file.replace(".jpg", ".txt").replace(".png", ".txt")
         annotations_file_path = os.path.join(annotations_path, annotation_file)    
         resize_masks_bounding_boxes(image_file_path, annotations_file_path)
         resize_images(image_file_path)
@@ -86,14 +86,17 @@ def resize_masks_bounding_boxes(image_path, annotation_path, target_size=(600,60
     with open(annotation_path, 'w') as file:
         for line in lines:
             # Resize the annotations to new size
-            x_min, y_min, x_max, y_max, class_code, segmentation = map(int, line.strip().split(','))
+            parts = line.strip().split(',')
+            x_min, y_min, x_max, y_max, class_code = map(int, parts[:5])
+            segmentation = ast.literal_eval(','.join(parts[5:]))  # Safe evaluation of tuple list
             x_min = int(x_min * scale) + pad_width
             x_max = int(x_max * scale) + pad_width
             y_min = int(y_min * scale) + pad_height
             y_max = int(y_max * scale) + pad_height
             
-            # Resize the annotations 
-            resized_segmentation = [(int(x * scale) + pad_width, int(y * scale) + pad_height) for (x, y) in segmentation]
+            # Filter out any single elements in the segmentation list
+            filtered_segmentation = [pt for pt in segmentation if isinstance(pt, tuple)]
+            resized_segmentation = [(int(x * scale) + pad_width, int(y * scale) + pad_height) for (x, y) in filtered_segmentation]            
             
             file.write(f'{x_min},{y_min},{x_max},{y_max},{class_code},{resized_segmentation}\n')
 
@@ -133,7 +136,7 @@ def compute_mean_std(images_path, dataset_name):
 def plot_images_and_annotations(base_dir):
     """
     Parameters:
-        base_dir (str): Base data directory containing train, test and validation folders.
+        base_dir (str): Base data directory containing train, test, and validation folders.
     """
     fig, axes = plt.subplots(1, 2, figsize=(12, 6))
     subsets = ['train', 'validation']
@@ -150,48 +153,52 @@ def plot_images_and_annotations(base_dir):
         # Load the image and read the annotation file
         image = Image.open(image_path)
         draw = ImageDraw.Draw(image)
-        
-        with open(annotation_path, 'r') as file:
-            annotations = file.readlines()
 
-
-        ax.imshow(image)  # Show the image on the respective subplot
-
-        for annotation in annotations:
-            parts = annotation.strip().split(',')
-            x_min, y_min, x_max, y_max = map(int, parts[:4])
-            class_code = parts[4]
+        try:
+            with open(annotation_path, 'r') as file:
+                annotations = file.readlines()
             
-            # Convert string representation of list back to list
-            polygon = eval(parts[5])
+            ax.imshow(image)  # Show the image on the respective subplot
+            
+            for annotation in annotations:
+                try:
+                    # Properly extract parts avoiding issues with commas inside the tuple list
+                    bbox_data, polygon_data = annotation.strip().rsplit(',', 1)
+                    parts = bbox_data.split(',')
+                    x_min, y_min, x_max, y_max = map(int, parts[:4])
+                    class_code = parts[4].strip()
+                    
+                    # Safely evaluate polygon data
+                    polygon = ast.literal_eval(polygon_data.strip())
 
-            # Draw bounding box, masks and annotate class code
-            rect = patches.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, linewidth=1, edgecolor='red', facecolor='none')
-            ax.add_patch(rect)
-            mask_polygon = [tuple(point) for point in polygon]
-            draw.polygon(mask_polygon, outline='lightblue', fill=None)
-            ax.text(x_min, y_min, class_code, color='yellow', fontsize=12, bbox=dict(facecolor='black', alpha=0.5))
-
+                    # Draw bounding box and annotate class code
+                    rect = patches.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, linewidth=1, edgecolor='red', facecolor='none')
+                    ax.add_patch(rect)
+                    mask_polygon = [tuple(point) for point in polygon]
+                    draw.polygon(mask_polygon, outline='lightblue', fill=None)
+                    ax.text(x_min, y_min, class_code, color='yellow', fontsize=12, bbox=dict(facecolor='black', alpha=0.5))
+                
+                except Exception as e:
+                    print(f"Error parsing annotation: {annotation}")
+                    print(f"Error message: {e}")
+        
+        except Exception as e:
+            print(f"Error processing file {annotation_path}: {e}")
+            ax.imshow(image)  # Show the image even if annotation fails
+        
         ax.axis('off')  # Hide axes
         ax.set_title(f'{subset.capitalize()} Set')
 
     plt.tight_layout()
     plt.show()
-
-# Usage
-base_directory = 'path_to_your_base_directory'
-plot_images_and_annotations(base_directory)
-
-
-
-
+    
 
 # COCO dataset ---------------------------------------------------------------------------------------------
 
 
 def convert_coco_annotations(dataDir):
     # Initialize COCO api for instance annotations
-    json_annotation = os.path.join(dataDir, "annotations.json")
+    json_annotation = os.path.join(dataDir, "annotations", "annotations.json")
     coco = COCO(json_annotation)
     
     # Get all image ids and load annotations
@@ -199,7 +206,7 @@ def convert_coco_annotations(dataDir):
     images = coco.loadImgs(imgIds)
     
     # Use the same directory to save annotation files
-    save_dir = os.path.join(dataDir)
+    save_dir = os.path.join(dataDir, "annotations")
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     
@@ -266,35 +273,29 @@ def verify_annotations(dataDir):
 # Vis-Drone dateset ----------------------------------------------------------------------------------------
 
 def extract_annotation_values(input_folder):
-    """    
+    """
     Parameters:
       - input_folder (string): Path of the folder containing the text files.
     """
-    # Retrieve all annotations files in the directory and initialize tqdm loop to create the correct format for the annotations
     annotation_files = [f for f in os.listdir(input_folder) if f.endswith('.txt')]
-    for file in tqdm(annotation_files, desc="Creating the right annotations format"):
-        file_path = os.path.join(input_folder, file)
+    for file_name in tqdm(annotation_files, desc="Creating the right annotations format"):
+        file_path = os.path.join(input_folder, file_name)
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
 
-        with open(file_path, 'r+') as file:
-            lines = file.readlines()            
-            file.seek(0)
-            file.truncate()
+        with open(file_path, 'w') as file:
             for line in lines:
-                values = line.strip().split(',')                
-                # Convert (x_min, y_min, width, height) to (x_min, y_min, x_max, y_max) and store it
+                values = line.strip().split(',')
                 x_min = int(values[0])
                 y_min = int(values[1])
                 width = int(values[2])
                 height = int(values[3])
                 x_max = x_min + width
                 y_max = y_min + height
-                
-                # Store class of annotation
                 object_class = values[5]
-                
-                # Add segmentation data from the bounding box information 
+
+                # Assuming values[4] is incorrectly captured and not used, adjust as necessary
                 segmentation = [(x_min, y_min), (x_min, y_max), (x_max, y_min), (x_max, y_max)]
-                
                 edited_line = f"{x_min},{y_min},{x_max},{y_max},{object_class},{segmentation}\n"
                 file.write(edited_line)
 
@@ -372,15 +373,16 @@ def reorganize_cityscapes(city_scapes_images, city_scapes_annotations):
         initial_images = os.path.join(city_scapes_images, subset)
         destination_images = os.path.join(dest_dir, subset, 'images')
         
-        for city_folder in os.listdir(initial_images):  
+        for city_folder in os.listdir(initial_images):
             full_city_folder_path = os.path.join(initial_images, city_folder)
             
-            for image_file in os.listdir(full_city_folder_path):
-                source_image_path      = os.path.join(full_city_folder_path, image_file)
-                new_image_name         = image_file.replace('_leftImg8bit.png', '.png')
-                destination_image_path = os.path.join(destination_images, new_image_name)
-                # Move the image to new path with new name
-                shutil.move(source_image_path, destination_image_path)
+            if os.path.isdir(full_city_folder_path):
+                for image_file in os.listdir(full_city_folder_path):
+                    source_image_path      = os.path.join(full_city_folder_path, image_file)
+                    new_image_name         = image_file.replace('_leftImg8bit.png', '.png')
+                    destination_image_path = os.path.join(destination_images, new_image_name)
+                    # Move the image to new path with new name
+                    shutil.move(source_image_path, destination_image_path)
 
 
         # Move and rename annotations
