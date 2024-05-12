@@ -43,7 +43,7 @@ class EFPN(nn.Module):
         self.mask = MaskFeatureGenerator(in_channels, hidden_dim, hidden_dim)
         
         # Define the bounding box for the spatially richest feature map 
-        self.bounding_box = BoundingBoxGenerator(in_channels, num_boxes, num_classes)
+        self.bounding_box = BoundingBoxGenerator(in_channels, num_classes)
 
     def forward(self, image):
         # Pass input through EfficientNet backbone
@@ -171,25 +171,25 @@ class MaskFeatureGenerator(nn.Module):
         return x
 
 
-class BoundingBoxGeneratorNew(nn.Module):
+class BoundingBoxGenerator(nn.Module):
     def __init__(self, in_channels, num_classes):
-        super(BoundingBoxGeneratorNew, self).__init__()
+        super(BoundingBoxGenerator, self).__init__()
         self.class_head = nn.Conv2d(in_channels, num_classes, kernel_size=1)
         self.bounding_box_head = nn.Conv2d(in_channels, 4, kernel_size=1) # [x_min, y_min, x_max, y_max]
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, feature_map):
         class_logits = self.class_head(feature_map)
-        bounding_box   = self.sigmoid(self.bounding_box_head(feature_map))
+        bounding_box = self.sigmoid(self.bounding_box_head(feature_map))
         return  bounding_box, class_logits
 
 
 # --------------------------------------------------------------------------------------------------------------------
 # These are the Bounding Box classes that we tried to create for the bounding boxes
 # --------------------------------------------------------------------------------------------------------------------
-class BoundingBoxGenerator(nn.Module):
+class BoundingBoxGeneratorOld(nn.Module):
     def __init__(self, in_channels, num_predictions, num_classes):
-        super(BoundingBoxGenerator, self).__init__()
+        super(BoundingBoxGeneratorOld, self).__init__()
         self.in_channels = in_channels
         self.num_predictions = num_predictions
         self.num_classes = num_classes
