@@ -119,13 +119,10 @@ class Mask2Former(nn.Module):
         for i in range(self.num_feature_levels):                
             feature_maps_size_list.append(feature_map_list[i].shape[-2:]) 
             
-            # Generate positional encodings, flatten it from NxCxHxW to HWxNxC for processing.
-            positional_embeddings.append(self.positional_embedding_layer(feature_map_list[i], None).flatten(2)) 
-            
-            # Project feature map to the desired dimensionality (hidden_dim), add level embeddings, and flatten.
-            src.append(self.input_proj[i](feature_map_list[i]).flatten(2) + self.scale_level_embedding.weight[i][None, :, None])
-            
-            # Permute the flattened positional encodings and source feature maps for transformer processing.
+            # Generate positional encodings, flatten it from NxCxHxW to HWxNxC, then project feature map to the desired dimensionality add level embeddings, and flatten
+            # Permute the flattened positional encodings, source feature maps for transformer processing.
+            positional_embeddings.append(self.positional_embedding_layer(feature_map_list[i], None).flatten(2))         
+            src.append(self.input_proj[i](feature_map_list[i]).flatten(2) + self.scale_level_embedding.weight[i][None, :, None])    
             positional_embeddings[-1] = positional_embeddings[-1].permute(2, 0, 1) 
             src[-1] = src[-1].permute(2, 0, 1)
             
@@ -159,10 +156,8 @@ class Mask2Former(nn.Module):
             level_index = i % self.num_feature_levels
             attention_mask[torch.where(attention_mask.sum(-1) == attention_mask.shape[-1])] = False
             
-            # Apply the TransformerEncoder Layer that includes the forward functions for [Mask-Attention, Self-Attention, Feed-Forward]
+            # Apply the TransformerEncoder Layer that includes the forward functions for [Mask-Attention, Self-Attention, Feed-Forward] and generate prediction for this layer
             output = self.transformer_encoder_layers[i](output, src, level_index, attention_mask, positional_embeddings, query_embed)
-            
-            # Generate predictions for this layer.
             outputs_class, outputs_mask, attention_mask = self.forward_prediction_heads(output, mask, feature_maps_size_list[(i + 1) % self.num_feature_levels])
             predictions_class.append(outputs_class)
             predictions_mask.append(outputs_mask)

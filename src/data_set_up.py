@@ -2,6 +2,8 @@ from torch.utils.data import Dataset
 from PIL import Image
 import os
 import torch
+from torchvision.transforms import functional as F
+
 
 class SODDataset(Dataset):
     def __init__(self, root_dir, split='train', transforms=None):
@@ -44,7 +46,6 @@ class SODDataset(Dataset):
         return mask
     
 
-from torchvision.transforms import functional as F
 
 def transform(image, boxes, mask):
     # Resize, to tensor, etc.
@@ -52,108 +53,3 @@ def transform(image, boxes, mask):
     return image, boxes, mask
 
 
-
-import torch.nn.functional as F
-
-def smooth_l1_loss(input, target):
-    return F.smooth_l1_loss(input, target, reduction='none')
-
-
-
-def cross_entropy_loss(logits, targets):
-    return F.cross_entropy(logits, targets, reduction='none')
-
-
-def binary_cross_entropy_with_logits(input, target):
-    return F.binary_cross_entropy_with_logits(input, target, reduction='none')
-
-def dice_loss(pred, target, smooth=1):
-    pred = pred.sigmoid()
-    numerator = 2 * (pred * target).sum((1, 2, 3))
-    denominator = pred.sum((1, 2, 3)) + target.sum((1, 2, 3))
-    return 1 - (numerator + smooth) / (denominator + smooth)
-
-
-def compute_loss(class_logits, bbox_preds, mask_preds, class_targets, bbox_targets, mask_targets):
-    loss_bbox = smooth_l1_loss(bbox_preds, bbox_targets).mean()
-    loss_class = cross_entropy_loss(class_logits, class_targets).mean()
-    loss_mask = binary_cross_entropy_with_logits(mask_preds, mask_targets).mean() + dice_loss(mask_preds, mask_targets).mean()
-
-    # Weights for each loss component could be tuned based on validation performance
-    total_loss = loss_bbox + loss_class + loss_mask
-    return total_loss
-
-
-
-def compute_losses(predictions, targets):
-    # Extract predictions
-    class_logits = predictions['pred_logits']
-    bbox_preds = predictions['bounding_box']
-    mask_preds = predictions['pred_masks']
-
-    # Extract targets
-    class_targets = targets['labels']
-    bbox_targets = targets['boxes']
-    mask_targets = targets['masks']
-
-    # Calculate losses
-    loss_bbox = smooth_l1_loss(bbox_preds, bbox_targets).mean()
-    loss_class = cross_entropy_loss(class_logits, class_targets).mean()
-    loss_mask = binary_cross_entropy_with_logits(mask_preds, mask_targets).mean() + dice_loss(mask_preds, mask_targets).mean()
-
-    total_loss = loss_bbox + loss_class + loss_mask
-    return total_loss
-
-
-import torch
-from torch.optim import Adam
-
-# Assuming 'model' is your combined EFPN and Mask2Former model
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
-model.train()
-
-optimizer = Adam(model.parameters(), lr=1e-4)
-
-
-
-from tqdm import tqdm
-
-def train_one_epoch(model, data_loader, optimizer, device):
-    model.train()
-    running_loss = 0.0
-    for images, boxes, masks in tqdm(data_loader, desc="Training"):
-        # Move data to the appropriate device
-        images = images.to(device)
-        boxes = [b.to(device) for b in boxes]
-        masks = [m.to(device) for m in masks]
-
-        # Clear previous gradients
-        optimizer.zero_grad()
-
-        # Forward pass
-        predictions = model(images, masks, boxes)
-
-        # Prepare targets in the same structure as predictions
-        targets = {
-            'labels': labels,  # Need definition
-            'boxes': boxes,
-            'masks': masks
-        }
-
-        # Compute loss
-        loss = compute_losses(predictions, targets)
-        running_loss += loss.item()
-
-        # Backward pass and optimize
-        loss.backward()
-        optimizer.step()
-
-    average_loss = running_loss / len(data_loader)
-    print(f"Average loss: {average_loss:.5f}")
-
-# Assuming you have a DataLoader `train_loader`
-num_epochs = 10
-for epoch in range(num_epochs):
-    print(f"Epoch {epoch+1}/{num_epochs}")
-    train_one_epoch(model, train_loader, optimizer, device)

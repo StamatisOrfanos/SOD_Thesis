@@ -38,12 +38,11 @@ class EFPN(nn.Module):
         self.top_down_p4 = nn.Upsample(scale_factor=2, mode='nearest')
         self.top_down_p3 = nn.Upsample(scale_factor=2, mode='nearest')
         self.top_down_p2 = nn.Upsample(scale_factor=2, mode='nearest')
-        
-        # Define the masks for the spatially richest feature map
-        self.mask = MaskFeatureGenerator(in_channels, hidden_dim, hidden_dim)
-        
-        # Define the bounding box for the spatially richest feature map 
+
+        # Define the bounding box and masks for the spatially richest feature map
+        self.mask = MaskFeatureGenerator(in_channels, hidden_dim, hidden_dim)        
         self.bounding_box = BoundingBoxGenerator(in_channels, num_classes)
+
 
     def forward(self, image):
         # Pass input through EfficientNet backbone
@@ -52,7 +51,7 @@ class EFPN(nn.Module):
 
         # Process feature maps through FPN
         p5 = self.lateral_p5(c5)
-        upsampled_p5 = F.interpolate(p5, size=c4.shape[2:], mode='nearest')
+        upsampled_p5 = self.top_down_p5(p5)
         
         p4 = self.lateral_p4(c4) + upsampled_p5
         upsampled_p4 = F.interpolate(p4, size=c3.shape[2:], mode='nearest')
@@ -73,8 +72,6 @@ class EFPN(nn.Module):
         # Create the mask for the spatially richest feature map p2_prime
         feature_maps = [p2_prime, p2, p3, p4, p5]
         mask = self.mask(p2_prime)
-        
-        # Create the bounding box for the spatially richest feature map p2_prime
         bounding_box, class_scores = self.bounding_box(p2_prime)
         
         # Return the feature map pyramid and the mask
@@ -98,7 +95,7 @@ class FTT(nn.Module):
         super(FTT, self).__init__()
         self.content_extractor = ContentExtractor(256, 256, num_layers=3)
         self.texture_extractor = TextureExtractor(256, 256, num_layers=3)
-        self.subpixel_conv = SubPixelConv(256, 256, upscale_factor=2)
+        self.subpixel_conv     = SubPixelConv(256, 256, upscale_factor=2)
     
     def forward(self, p2, p3):
         # Apply the content extractor to P3 and upsample the content features
@@ -177,7 +174,7 @@ class BoundingBoxGenerator(nn.Module):
         self.class_head = nn.Conv2d(in_channels, num_classes, kernel_size=1)
         self.bounding_box_head = nn.Conv2d(in_channels, 4, kernel_size=1) # [x_min, y_min, x_max, y_max]
         self.sigmoid = nn.Sigmoid()
-
+ 
     def forward(self, feature_map):
         class_logits = self.class_head(feature_map)
         bounding_box = self.sigmoid(self.bounding_box_head(feature_map))

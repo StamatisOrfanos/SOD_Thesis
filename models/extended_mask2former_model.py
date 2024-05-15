@@ -18,8 +18,13 @@ class ExtendedMask2Former(nn.Module):
     """
     def __init__(self, num_classes, hidden_dim=256, num_queries=100, nheads=8, dim_feedforward=2048, dec_layers=1, mask_dim=100):
         super(ExtendedMask2Former, self).__init__()              
-        self.efpn = EFPN(hidden_dim, hidden_dim, mask_dim, num_classes)
+        self.efpn        = EFPN(hidden_dim, hidden_dim, mask_dim, num_classes)
         self.mask2former = Mask2Former(hidden_dim, num_classes, hidden_dim, num_queries, nheads, dim_feedforward, dec_layers, mask_dim)
+        
+        # Define loss functions
+        self.bounding_box_loss = nn.SmoothL1Loss()
+        self.class_loss        = nn.CrossEntropyLoss()
+        self.mask_loss         = nn.BCEWithLogitsLoss()
         
         
     def forward(self, image):
@@ -27,4 +32,30 @@ class ExtendedMask2Former(nn.Module):
         output = self.mask2former(feature_maps, masks, bounding_box, class_scores)
         return output
     
+    def compute_loss(self, predictions, targets, class_weight=1.0, bounding_box_weight=1.0, mask_weight=1.0):
+        """        
+        Parameters:
+            - predictions (dict): A dictionary containing the model's predictions with keys 'pred_logits', 'pred_masks', and 'bounding_box'.
+            - targets (dict): A dictionary containing the ground truth with keys 'labels', 'boxes', and 'masks'.
+            - class_weight (float): A float value that signifies the significance of the classes in the loss function 
+            - bounding_box_weight (float):  A float value that signifies the significance of the bounding boxes in the loss function
+            - mask_weight (float):  A float value that signifies the significance of the masks in the loss
+        """
+        pred_logits = predictions['pred_logits']
+        pred_masks  = predictions['pred_masks']
+        pred_boxes  = predictions['bounding_box']
+        
+        target_labels = targets['labels']
+        target_masks  = targets['masks']
+        target_boxes  = targets['boxes']
+        
+        # Compute classification loss, bounding bix loss and mask loss
+        class_loss = self.class_loss(pred_logits, target_labels) * class_weight
+        bbox_loss  = self.bounding_box_loss(pred_boxes, target_boxes)  * bounding_box_weight
+        mask_loss  = self.mask_loss(pred_masks, target_masks)  * mask_weight
+        
+        # Combine the losses
+        total_loss = class_loss + bbox_loss + mask_loss
+        
+        return total_loss    
     
