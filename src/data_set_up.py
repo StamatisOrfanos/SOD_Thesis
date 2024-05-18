@@ -1,55 +1,66 @@
-from torch.utils.data import Dataset
-from PIL import Image
 import os
 import torch
-from torchvision.transforms import functional as F
+from torch.utils.data import Dataset, DataLoader
+from PIL import Image
+import numpy as np
 
-
-class SODDataset(Dataset):
-    def __init__(self, root_dir, split='train', transforms=None):
-        self.root_dir = root_dir
-        self.split = split
-        self.transforms = transforms
-        self.images_dir = os.path.join(root_dir, split, 'images')
-        self.annotations_dir = os.path.join(root_dir, split, 'annotations')
-        self.images = sorted(os.listdir(self.images_dir))
+class SOD_Data(Dataset):
+    
+    def __init__(self, images_directory, annotations_directory, transform):
+        """
+        Args:
+            - images_directory (string): Path of the directory containing the images 
+            - annotations_directory (string): Path of the directory containing the annotations
+            - transform (pytorch.transform, optional): t
+        """
+        self.images_dir = images_directory
+        self.annotations_dir = annotations_directory 
+        self.transform = transform
+        self.image_files = [f for f in os.listdir(images_directory) if f.endswith('.jpg') or f.endswith('.png')]
 
     def __len__(self):
-        return len(self.images)
+        return len(self.image_files)
 
     def __getitem__(self, idx):
-        img_name = self.images[idx]
-        img_path = os.path.join(self.images_dir, img_name)
-        annotation_path = os.path.join(self.annotations_dir, img_name.replace('.jpg', '.txt'))
+        image_file      = self.image_files[idx] 
+        image_path      = os.path.join(self.images_dir, image_file)
+        annotation_path = os.path.join(self.annotations_dir, image_file.replace('.jpg', '.txt').replace('.png', '.txt'))
 
-        image = Image.open(img_path).convert("RGB")
-        boxes, masks = self.parse_annotations(annotation_path)
-
-        if self.transforms:
-            image, boxes, masks = self.transforms(image, boxes, masks)
-
-        return image, boxes, masks
-
-    def parse_annotations(self, annotation_path):
+        image = Image.open(image_path).convert("RGB")
         with open(annotation_path, 'r') as file:
-            data = file.read().strip().split(',')
-            boxes = torch.tensor([float(x) for x in data[:4]]).reshape(-1, 4)
-            mask_points = eval('[' + ','.join(data[5:]) + ']')  # This assumes the format [(x1, y1), (x2, y2), ...]
-            masks = self.points_to_mask(mask_points)
-        return boxes, masks
+            lines = file.readlines()
+        
+        boxes  = []
+        labels = []
+        masks  = []
+        
+        for line in lines:
+            parts = line.strip().split(',')
+            x_min, y_min, x_max, y_max, class_code = map(int, parts[:5])
+            box = [x_min, y_min, x_max, y_max]
+            mask_points = eval(parts[5])
+            mask = self.create_mask_from_points(mask_points, image.size)
 
-    def points_to_mask(self, points):
-        # Implementation to convert points to a binary mask of shape [600, 600]
-        mask = torch.zeros((600, 600))
-        # Assuming points form a polygon
-        # Use a library like PIL or OpenCV to draw the polygon on the mask
-        return mask
-    
+            boxes.append(box)
+            labels.append(class_code)
+            masks.append(mask)
+        
+        boxes  = torch.as_tensor(boxes, dtype=torch.int64)
+        labels = torch.as_tensor(labels, dtype=torch.int64)
+        masks  = torch.stack(masks)
 
+        target = {
+            'boxes': boxes,
+            'labels': labels,
+            'masks': masks
+        }
 
-def transform(image, boxes, mask):
-    # Resize, to tensor, etc.
-    image = F.to_tensor(image)
-    return image, boxes, mask
+        if self.transform:
+            image = self.transform(image)
+        
+        return image, target
 
-
+    def create_mask_from_points(self, points, image_size):
+        mask = Image.new('L', image_size, 0)
+        points = [(int(x), int(y)) for x, y in points]
+        return torch.as_tensor(np.array(mask), dtype=torch.uint8)
