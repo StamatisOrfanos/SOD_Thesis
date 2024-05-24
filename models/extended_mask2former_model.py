@@ -16,7 +16,7 @@ class ExtendedMask2Former(nn.Module):
         efpn (EFPN): The Enhanced Feature Pyramid Network model used as the backbone for feature and mask feature extraction.
         mask2former (Mask2Former): The Mask2Former model used for predicting object instances and their masks based on the features provided by EFPN.
     """
-    def __init__(self, num_classes, hidden_dim=256, num_queries=100, nheads=8, dim_feedforward=2048, dec_layers=1, mask_dim=100):
+    def __init__(self, num_classes, hidden_dim=256, num_queries=100, nheads=8, dim_feedforward=2048, dec_layers=1, mask_dim=256):
         super(ExtendedMask2Former, self).__init__()              
         self.efpn        = EFPN(hidden_dim, hidden_dim, mask_dim, num_classes)
         self.mask2former = Mask2Former(hidden_dim, num_classes, hidden_dim, num_queries, nheads, dim_feedforward, dec_layers, mask_dim)
@@ -41,21 +41,30 @@ class ExtendedMask2Former(nn.Module):
             - bounding_box_weight (float):  A float value that signifies the significance of the bounding boxes in the loss function
             - mask_weight (float):  A float value that signifies the significance of the masks in the loss
         """
-        pred_logits = predictions['pred_logits']
-        pred_masks  = predictions['pred_masks']
-        pred_boxes  = predictions['bounding_box']
+        predicted_logits = predictions['pred_logits']
+        predicted_masks  = predictions['pred_masks']
+        predicted_boxes  = predictions['bounding_box']
         
-        target_labels = targets['labels']
-        target_masks  = targets['masks']
-        target_boxes  = targets['boxes']
+        total_class_loss = 0
+        total_bbox_loss  = 0
+        total_mask_loss  = 0
         
-        # Compute classification loss, bounding bix loss and mask loss
-        class_loss = self.class_loss(pred_logits, target_labels) * class_weight
-        bbox_loss  = self.bounding_box_loss(pred_boxes, target_boxes)  * bounding_box_weight
-        mask_loss  = self.mask_loss(pred_masks, target_masks)  * mask_weight
+        for i, target in enumerate(targets):
+            target_labels = target['labels']
+            target_masks  = target['masks']
+            target_boxes  = target['boxes']
+            
+            # Match the shape of predicted_logits with target_labels
+            num_objects = target_labels.shape[0]
+            pred_logits_resized = predicted_logits[i, :num_objects]
+            
+            # Compute classification loss, bounding box loss, and mask loss for each target
+            total_class_loss += self.class_loss(pred_logits_resized, target_labels) * class_weight
+            total_bbox_loss  += self.bounding_box_loss(predicted_boxes[i], target_boxes) * bounding_box_weight
+            total_mask_loss  += self.mask_loss(predicted_masks[i], target_masks) * mask_weight
         
         # Combine the losses
-        total_loss = class_loss + bbox_loss + mask_loss
+        total_loss = total_class_loss + total_bbox_loss + total_mask_loss
         
-        return total_loss    
+        return total_loss  
     

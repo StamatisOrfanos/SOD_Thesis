@@ -163,13 +163,10 @@ def plot_images_and_annotations(base_dir):
             for annotation in annotations:
                 try:
                     # Properly extract parts avoiding issues with commas inside the tuple list
-                    bbox_data, polygon_data = annotation.strip().rsplit(',', 1)
-                    parts = bbox_data.split(',')
-                    x_min, y_min, x_max, y_max = map(int, parts[:4])
-                    class_code = parts[4].strip()
-                    
-                    # Safely evaluate polygon data
-                    polygon = ast.literal_eval(polygon_data.strip())
+                    bbox_class_part = annotation.split("[")[0].split(",")
+                    x_min, y_min, x_max, y_max = bbox_class_part[0:4]
+                    class_code = bbox_class_part[4]
+                    polygon = eval("[" + annotation.split("[")[1])
 
                     # Draw bounding box and annotate class code
                     rect = patches.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, linewidth=1, edgecolor='red', facecolor='none')

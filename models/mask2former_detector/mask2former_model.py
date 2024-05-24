@@ -219,8 +219,7 @@ class Mask2Former(nn.Module):
 
         if self.mask_classification:
             # Include both logits and masks for auxiliary losses if mask classification is enabled
-            aux_losses = [{"pred_logits": logits, "pred_masks": masks}
-                          for logits, masks in zip(outputs_class[:-1], outputs_seg_masks[:-1])]
+            aux_losses = [{"pred_logits": logits, "pred_masks": masks} for logits, masks in zip(outputs_class[:-1], outputs_seg_masks[:-1])]
         else:
             # Include only masks for auxiliary losses if mask classification is not enabled
             aux_losses = [{"pred_masks": masks} for masks in outputs_seg_masks[:-1]]
