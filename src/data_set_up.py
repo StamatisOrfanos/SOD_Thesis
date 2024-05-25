@@ -3,11 +3,12 @@ import torch
 from torch.utils.data import Dataset
 import cv2
 import numpy as np
-from PIL.Image import Image
+import torchvision.transforms as transforms
+
 
 class SOD_Data(Dataset):
     
-    def __init__(self, images_directory, annotations_directory, transform):
+    def __init__(self, images_directory, annotations_directory, transform, mean, standard_deviation, data_type):
         """
         Args:
             - images_directory (string): Path of the directory containing the images 
@@ -18,6 +19,8 @@ class SOD_Data(Dataset):
         self.annotation_dir = annotations_directory
         self.image_files = [f for f in os.listdir(images_directory) if f.endswith(('.jpg', '.png'))]
         self.transform = transform
+        self.images = sorted(os.listdir(images_directory))
+        self.annotations = sorted(os.listdir(annotations_directory))
 
     def __len__(self):
         return len(self.image_files)
@@ -43,13 +46,11 @@ class SOD_Data(Dataset):
                 box = [int(x_min), int(y_min), int(x_max), int(y_max)]
                 
                 masks_part = eval("[" + line.split("[")[1])
-                masks_part = [tuple(map(int, point.split())) for point in masks_part]
-                mask = np.zeros((600, 600), dtype=np.uint8)
-                cv2.fillPoly(mask, [np.array(masks_part)], 1)
+                masks = create_binary_mask((600, 600), masks_part)
                 
                 boxes.append(box)
                 labels.append(class_code)
-                masks.append(mask)
+                masks.append(masks)
 
         
         boxes  = torch.as_tensor(boxes, dtype=torch.int64)
@@ -65,4 +66,39 @@ class SOD_Data(Dataset):
         if self.transform: image = self.transform(image)
         
         return image, target
+    
+    
+
+
+def create_binary_mask(image_size, polygons):
+    """
+    Parameters:
+        - image_size: tuple of (height, width)
+        - polygons: list of lists of tuples [(x_1, y_1), ...., (x_n, y_n)]
+    """
+    mask = np.zeros(image_size, dtype=np.uint8)
+    for polygon in polygons:
+        polygon = np.array(polygon, dtype=np.int32)
+        cv2.fillPoly(mask, [polygon], 1)
+    return mask
+
+
+
+def data_transform(data_type, mean , standard_deviation):
+    data_transform = {
+        "train": transforms.Compose([
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=mean, std=standard_deviation)]),
+
+        "test": transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean=mean, std=standard_deviation)]), 
+        
+        "validation": transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean=mean, std=standard_deviation)]) 
+    }
+    
     

@@ -55,33 +55,67 @@
 #     main()
 
 # Function to parse the list from string
-import ast
+# import ast
 
-def parse_list_from_string(list_str):
-    return ast.literal_eval(list_str)
+# def parse_list_from_string(list_str):
+#     return ast.literal_eval(list_str)
 
-file_path = 'test.txt'
+# file_path = 'test.txt'
 
-with open(file_path, 'r') as file:
-    lines = file.readlines()
+# with open(file_path, 'r') as file:
+#     lines = file.readlines()
 
-extracted_lists = []
+# extracted_lists = []
 
-# Process each line
-for line in lines:
-    # Split the line by commas and strip any whitespace
-    bbox_class_part = line.split("[")[0].split(",")
-    x_min, y_min, x_max, y_max = bbox_class_part[0:4]
-    class_code = bbox_class_part[4]
-    masks_part = eval("[" + line.split("[")[1])
-    print("(" + x_min + ", " +  y_min + ")")
-    print("(" + x_max + ", " +  y_max + ")")
-    print(class_code)
-    print(type(masks_part))
+# # Process each line
+# for line in lines:
+#     # Split the line by commas and strip any whitespace
+#     bbox_class_part = line.split("[")[0].split(",")
+#     x_min, y_min, x_max, y_max = bbox_class_part[0:4]
+#     class_code = bbox_class_part[4]
+#     masks_part = eval("[" + line.split("[")[1])
+#     print("(" + x_min + ", " +  y_min + ")")
+#     print("(" + x_max + ", " +  y_max + ")")
+#     print(class_code)
+#     print(type(masks_part))
     
-    # extracted_list = parse_list_from_string(list_str)
-    # extracted_lists.append(extracted_list)
+#     # extracted_list = parse_list_from_string(list_str)
+#     # extracted_lists.append(extracted_list)
 
-# Print the extracted lists
-for lst in extracted_lists:
-    print(lst)
+# # Print the extracted lists
+# for lst in extracted_lists:
+#     print(lst)
+    
+    
+    
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import cv2
+import numpy as np
+
+class MaskFeatureGenerator(nn.Module):
+    def __init__(self, in_channels, hidden_dim, mask_dim):
+        super(MaskFeatureGenerator, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels, hidden_dim, kernel_size=3, padding=1)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv2 = nn.Conv2d(hidden_dim, mask_dim, kernel_size=1)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.relu(x)
+        x = self.conv2(x)
+        return x
+
+    def generate_mask_from_points(self, image_size, points):
+        mask = np.zeros(image_size, dtype=np.uint8)
+        points = np.array(points, dtype=np.int32)
+        cv2.fillPoly(mask, [points], 1)
+        return mask
+
+# Usage example for mask conversion
+points = [(50, 50), (50, 150), (150, 150), (150, 50)]
+image_size = (600, 600)
+mask_generator = MaskFeatureGenerator(in_channels=256, hidden_dim=256, mask_dim=100)
+binary_mask = mask_generator.generate_mask_from_points(image_size, points)
+print(binary_mask)
