@@ -19,7 +19,7 @@ def load_image(image_path):
 image = load_image("/Users/stamatiosorphanos/Documents/MCs_Thesis/SOD_Thesis/docs/Extended_Mask2Former/1.jpg")
 
 # Step 2: Instantiate the model
-model = EFPN(in_channels=256, hidden_dim=256, num_boxes=100, num_classes=10)
+model = EFPN(in_channels=256, hidden_dim=256,  num_classes=10)
 model.eval()  # Set the model to evaluation mode
 
 
@@ -40,16 +40,16 @@ for fm in feature_maps:
 
     
 # Step 6: Visualize the masks of each feature map
-print("\nThe feature map mask with shape: {} created is the following:\n".format(mask.shape))
-print(mask)
+# print("\nThe feature map mask with shape: {} created is the following:\n".format(mask.shape))
+# print(mask)
     
 # Step 7: Visualize the bounding box
 print("\nThe bounding box with shape: {} created is the following:\n".format(bounding_box.shape))
-print(bounding_box)
+# print(bounding_box)
 
 # Step 8: Visualize the class scores
-print("\nThe class scores with shape: {} created are the following:\n".format(class_scores.shape))
-print(class_scores)
+# print("\nThe class scores with shape: {} created are the following:\n".format(class_scores.shape))
+# print(class_scores)
 
 # Step 9: Get the summary of the EFPN model
 print("\n\nThe summary of the EFPN model is the following: \n", model) 
