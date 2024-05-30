@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from torch.nn import functional as F
 from models.efpn_backbone.efpn_model import EFPN
 from models.mask2former_detector.mask2former_model import Mask2Former
 
@@ -44,7 +45,10 @@ class ExtendedMask2Former(nn.Module):
         predicted_logits = predictions['pred_logits']
         predicted_masks  = predictions['pred_masks']
         predicted_boxes  = predictions['bounding_box']
-        
+                
+        # print("The predicted masks are the following: {}, with shape: {} and type: {}".format(predicted_masks, predicted_masks.size(), type(predicted_masks)))
+        print("The predicted bounding boxes are the following: {}, with shape: {} and type: {}".format(predicted_boxes, predicted_boxes.size(), type(predicted_boxes)))
+
         total_class_loss = 0
         total_bbox_loss  = 0
         total_mask_loss  = 0
@@ -54,17 +58,31 @@ class ExtendedMask2Former(nn.Module):
             target_masks  = target['masks']
             target_boxes  = target['boxes']
             
+
+            # print("The actual/target masks are the following: {}, with shape: {} and type: {}".format(target_masks, target_masks.size(), type(target_masks)))
+            print("The actual/target bounding boxes are the following: {}, with shape: {} and type: {}".format(target_boxes, target_boxes.size(), type(target_boxes)))
+            
             # Match the shape of predicted_logits with target_labels
             num_objects = target_labels.shape[0]
             pred_logits_resized = predicted_logits[i, :num_objects]
             
+            
+
+            # Ensure predicted_boxes[i] and target_boxes have the same shape
+            pred_boxes_resized = predicted_boxes[i, :num_objects, :4]
+            
+            # Reshape the bounding boxes correctly if needed
+            if pred_boxes_resized.shape[-1] != 4:
+                pred_boxes_resized = pred_boxes_resized.view(-1, 4)
+        
+
             # Compute classification loss, bounding box loss, and mask loss for each target
             total_class_loss += self.class_loss(pred_logits_resized, target_labels) * class_weight
-            total_bbox_loss  += self.bounding_box_loss(predicted_boxes[i], target_boxes) * bounding_box_weight
-            total_mask_loss  += self.mask_loss(predicted_masks[i], target_masks) * mask_weight
+            total_bbox_loss  += self.bounding_box_loss(pred_boxes_resized, target_boxes) * bounding_box_weight
+            total_mask_loss  += self.mask_loss(predicted_masks[i, :num_objects], target_masks) * mask_weight
         
         # Combine the losses
         total_loss = total_class_loss + total_bbox_loss + total_mask_loss
         
-        return total_loss  
+        return total_loss 
     

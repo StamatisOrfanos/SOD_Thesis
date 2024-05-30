@@ -11,7 +11,7 @@ class EFPN(nn.Module):
            -  The model uses a Feature  Texture Transfer (FTT) module to enrich feature maps with both content and texture 
               details, aiming to improve performance on instance segmentation tasks.
     """
-    def __init__(self, in_channels, hidden_dim, num_boxes,  num_classes):
+    def __init__(self, in_channels, hidden_dim, num_classes):
         super(EFPN, self).__init__()
         # Load EfficientNet with pre-trained weights
         self.backbone = EfficientNet.from_pretrained('efficientnet-b7')
@@ -72,10 +72,10 @@ class EFPN(nn.Module):
         # Create the mask for the spatially richest feature map p2_prime
         feature_maps = [p2_prime, p2, p3, p4, p5]
         mask = self.mask(p2_prime)
-        bounding_box, class_scores = self.bounding_box(p2_prime)
+        bounding_box_regressions, class_scores = self.bounding_box(feature_maps)
         
         # Return the feature map pyramid and the mask
-        return feature_maps, mask, bounding_box, class_scores
+        return feature_maps, mask, bounding_box_regressions, class_scores
 
 
     def backbone_features(self, image):
@@ -171,15 +171,19 @@ class MaskFeatureGenerator(nn.Module):
 class BoundingBoxGenerator(nn.Module):
     def __init__(self, in_channels, num_classes):
         super(BoundingBoxGenerator, self).__init__()
-        self.class_head = nn.Conv2d(in_channels, num_classes, kernel_size=1)
-        self.bounding_box_head = nn.Conv2d(in_channels, 4, kernel_size=1) # [x_min, y_min, x_max, y_max]
-        self.sigmoid = nn.Sigmoid()
- 
-    def forward(self, feature_map):
-        class_logits = self.class_head(feature_map)
-        bounding_box = self.sigmoid(self.bounding_box_head(feature_map))
-        return  bounding_box, class_logits
-
+        self.num_classes = num_classes        
+        self.bbox_regressor = nn.Conv2d(in_channels, 4, kernel_size=3, padding=1)        
+        self.classifier = nn.Conv2d(in_channels, num_classes, kernel_size=3, padding=1)
+    
+    def forward(self, feature_maps):
+        bbox_regressions = []
+        class_scores = []
+        
+        for feature_map in feature_maps:
+            bbox_regressions.append(self.bbox_regressor(feature_map))
+            class_scores.append(self.classifier(feature_map))
+        
+        return bbox_regressions, class_scores
 
 # --------------------------------------------------------------------------------------------------------------------
 # These are the Bounding Box classes that we tried to create for the bounding boxes
