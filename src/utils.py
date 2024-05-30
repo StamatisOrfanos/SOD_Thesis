@@ -1,77 +1,71 @@
-from sklearn.metrics import precision_recall_curve, auc
+import numpy as np
 import torch
-import torch.nn as nn
-from torch.nn import L1Loss as l1_loss
-from torch.nn import BCELoss as binary_cross_entropy_loss
-from torch.nn import CrossEntropyLoss as cross_entropy_loss
-from torchmetrics.classification import Dice as dice_loss
-import torch.nn.functional as F
+
+    
+def generate_anchors(self, feature_map_shapes, scales, aspect_ratios):
+    anchors = []
+    for shape in feature_map_shapes:
+        for scale in scales:
+            for ratio in aspect_ratios:
+                # Compute anchor box dimensions
+                anchor_width = scale * np.sqrt(ratio)
+                anchor_height = scale / np.sqrt(ratio)
+                for y in range(shape[0]):
+                    for x in range(shape[1]):
+                        cx = (x + 0.5) / shape[1]
+                        cy = (y + 0.5) / shape[0]
+                        # Convert to (x_min, y_min, x_max, y_max)
+                        x_min = cx - anchor_width / 2
+                        y_min = cy - anchor_height / 2
+                        x_max = cx + anchor_width / 2
+                        y_max = cy + anchor_height / 2
+                        anchors.append([x_min, y_min, x_max, y_max])
+    return np.array(anchors)
 
 
-class metrics():
-    def __init__(self,):
-        super(self).__init__()
-        
+def calculate_iou(anchor, ground_truth_boxes):
+    """
+    Parameters:
+        - anchor (list): List of the anchor coordinates for (x_min, y_min, x_max, y_max)
+        - ground_truth_boxes (list): List of the bounding box coordinates for (x_min, y_min, x_max, y_max)
+    """
+    # Anchor box corners
+    anchor_x1, anchor_y1, anchor_x2, anchor_y2 = anchor
+    # Ground truth box corners
+    ground_truth_xmin  = ground_truth_boxes[:, 0]
+    ground_truth_ymin  = ground_truth_boxes[:, 1]
+    ground_truth__xmax = ground_truth_boxes[:, 2]
+    ground_truth_ymax  = ground_truth_boxes[:, 3]
+    inter_x1 = torch.max(anchor_x1, ground_truth_xmin)
+    inter_y1 = torch.max(anchor_y1, ground_truth_ymin)
+    inter_x2 = torch.min(anchor_x2, ground_truth__xmax)
+    inter_y2 = torch.min(anchor_y2, ground_truth_ymax)
+    inter_area        = torch.clamp(inter_x2 - inter_x1, min=0) * torch.clamp(inter_y2 - inter_y1, min=0)
+    anchor_area       = (anchor_x2 - anchor_x1) * (anchor_y2 - anchor_y1)
+    ground_truth_area = (ground_truth__xmax - ground_truth_xmin) * (ground_truth_ymax - ground_truth_ymin)
+    union_area = anchor_area + ground_truth_area - inter_area
+    iou        = inter_area / union_area
+    return iou
 
-    def calculate_loss(outputs_efpn, outputs_mask2former, targets, lambda_fg_bg=1, lambda_ce=5.0, lambda_dice=5.0, lambda_cls=2.0):
-        # Foreground-Background-Balanced Loss for EFPN output
-        loss_global = l1_loss(outputs_efpn['global'], targets['global'])
-        loss_position = l1_loss(outputs_efpn['position'], targets['position'])  # Assuming targets are appropriately defined
-        loss_efpn = loss_global + lambda_fg_bg * loss_position
-        
-        # Mask Loss for Mask2Former output
-        loss_mask_ce = binary_cross_entropy_loss(outputs_mask2former['pred_masks'], targets['masks'])  # Implement sampling as needed
-        loss_mask_dice = dice_loss(outputs_mask2former['pred_masks'], targets['masks'])  # Implement sampling as needed
-        loss_mask = lambda_ce * loss_mask_ce + lambda_dice * loss_mask_dice
-        
-        # Classification Loss for Mask2Former output
-        loss_cls = cross_entropy_loss(outputs_mask2former['pred_logits'], targets['labels'])
-        
-        # Combine losses
-        total_loss = loss_efpn + loss_mask + lambda_cls * loss_cls
-        
-        return total_loss
+
     
     
-    def average_precision(self, y_true, y_scores):
-        """Calculate the average precision for a class."""
-        precision, recall, _ = precision_recall_curve(y_true, y_scores)
-        # Calculate area under the curve to get average precision
-        return auc(recall, precision)
-
-    def mean_average_precision(self, y_trues, y_scores):
-        """
-        Parameters:
-            y_trues: A list of arrays, where each array contains the true binary labels for a class.
-            y_scores: A list of arrays, where each array contains the predicted scores for a class.
-        """
-        aps = []
-        for y_true, y_score in zip(y_trues, y_scores):
-            aps.append(self.average_precision(y_true, y_score))
-        return sum(aps) / len(aps)
-
-
-    def intersection_over_union(self, actual_bounding_box, predicted_bounding_box):
-        """
-            boxA (_type_): _description_
-            boxB (_type_): _description_
-        """
-        xA = max(actual_bounding_box[0], predicted_bounding_box[0])
-        yA = max(actual_bounding_box[1], predicted_bounding_box[1])
-        xB = min(actual_bounding_box[0] + actual_bounding_box[2], predicted_bounding_box[0] + predicted_bounding_box[2])
-        yB = min(actual_bounding_box[1] + actual_bounding_box[3], predicted_bounding_box[1] + predicted_bounding_box[3])
-        interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
-        boxAArea = (actual_bounding_box[2] + 1) * (actual_bounding_box[3] + 1)
-        boxBArea = (predicted_bounding_box[2] + 1) * (predicted_bounding_box[3] + 1)
-        iou = interArea / float(boxAArea + boxBArea - interArea)
-        return iou
-    
-    
-    def calculate_loss(predictions, targets):
-        # Assuming `predictions` and `targets` include both masks and bounding boxes
-        mask_loss = F.binary_cross_entropy_with_logits(predictions['masks'], targets['masks'])
-        bbox_loss = F.smooth_l1_loss(predictions['bounding_boxes'], targets['bounding_boxes'])
-        
-        # Combine the losses, potentially with different weights
-        loss = mask_loss + bbox_loss
-        return loss
+def match_anchors_to_ground_truth(anchors, gt_boxes, gt_labels, num_classes):
+    num_anchors = anchors.shape[0]
+    num_gt_boxes = gt_boxes.shape[0]
+    # Initialize matched labels and boxes
+    matched_labels = torch.zeros((num_anchors,), dtype=torch.long)
+    matched_boxes = torch.zeros((num_anchors, 4))
+    # Compute IoUs
+    ious = torch.zeros((num_anchors, num_gt_boxes))
+    for i, anchor in enumerate(anchors):
+        ious[i, :] = calculate_iou(anchor, gt_boxes)
+    # Find the best match for each anchor
+    max_ious, max_indices = ious.max(dim=1)
+    for i in range(num_anchors):
+        if max_ious[i] > 0.5:  # IoU threshold
+            matched_labels[i] = gt_labels[max_indices[i]]
+            matched_boxes[i, :] = gt_boxes[max_indices[i], :]
+        else:
+            matched_labels[i] = num_classes - 1  # Background class
+    return matched_boxes, matched_labels
