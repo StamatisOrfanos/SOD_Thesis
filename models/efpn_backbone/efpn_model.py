@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -169,6 +170,10 @@ class MaskFeatureGenerator(nn.Module):
 
 
 class BoundingBoxGenerator(nn.Module):
+    """
+    Parameters:
+        nn (_type_): _description_
+    """
     def __init__(self, in_channels, num_classes):
         super(BoundingBoxGenerator, self).__init__()
         self.num_classes = num_classes        
@@ -184,4 +189,3 @@ class BoundingBoxGenerator(nn.Module):
             class_scores.append(self.classifier(feature_map))
         
         return bbox_regressions, class_scores
-
