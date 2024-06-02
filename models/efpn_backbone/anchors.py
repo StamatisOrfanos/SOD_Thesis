@@ -2,7 +2,7 @@ import numpy as np
 
 
 class Anchors():
-    def generate_anchors(feature_map_shapes, scales, aspect_ratios):
+    def generate_anchors(feature_map_shapes, scales, aspect_ratios, image_size=600):
         """
         Parameters:
             - feature_map_shapes (list): List of different down-sampling levels
@@ -10,24 +10,26 @@ class Anchors():
             - aspect_ratios (list): Aspect ratios to cover different object shapes.
         """
         anchors = []
-        
         for shape in feature_map_shapes:
-            for scale in scales:
-                for ratio in aspect_ratios:
-                    # Compute anchor box dimensions
-                    anchor_width = scale * np.sqrt(ratio)
-                    anchor_height = scale / np.sqrt(ratio)
+            fm_height, fm_width = shape
+            stride_height = image_size / fm_height
+            stride_width = image_size / fm_width
+            
+            for y in range(fm_height):
+                for x in range(fm_width):
+                    cy = (y + 0.5) * stride_height
+                    cx = (x + 0.5) * stride_width
                     
-                    for y in range(shape[0]):
-                        for x in range(shape[1]):
-                            cx = (x + 0.5) / shape[1]
-                            cy = (y + 0.5) / shape[0]
+                    for scale in scales:
+                        for ratio in aspect_ratios:
+                            anchor_height = scale * np.sqrt(ratio) * stride_height
+                            anchor_width = scale / np.sqrt(ratio) * stride_width
                             
-                            # Convert to (x_min, y_min, x_max, y_max)
                             x_min = cx - anchor_width / 2
                             y_min = cy - anchor_height / 2
                             x_max = cx + anchor_width / 2
                             y_max = cy + anchor_height / 2
+                            
                             anchors.append([x_min, y_min, x_max, y_max])
-
+        
         return np.array(anchors)

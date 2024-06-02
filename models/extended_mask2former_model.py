@@ -34,23 +34,28 @@ class ExtendedMask2Former(nn.Module):
         return output
     
     def decode_boxes(self, predicted_offsets, anchors):
+        print("\n\n\n Decode boxes: \n\n\n")
+        print("Anchors are of type:{}, size:{} and values: {}".format(type(anchors), anchors.size(), anchors))    
         anchors = anchors.to(predicted_offsets.device)
         pred_boxes = torch.zeros_like(predicted_offsets)
-        pred_boxes[:, 0] = anchors[:, 0] + predicted_offsets[:, 0] * anchors[:, 2]
-        pred_boxes[:, 1] = anchors[:, 1] + predicted_offsets[:, 1] * anchors[:, 3]
+
+        pred_boxes[:, 0] = anchors[:, 0] + predicted_offsets[:, 0] * (anchors[:, 2] - anchors[:, 0])
+        pred_boxes[:, 1] = anchors[:, 1] + predicted_offsets[:, 1] * (anchors[:, 3] - anchors[:, 1])
         pred_boxes[:, 2] = anchors[:, 2] * torch.exp(predicted_offsets[:, 2])
         pred_boxes[:, 3] = anchors[:, 3] * torch.exp(predicted_offsets[:, 3])
+        
         return pred_boxes
     
     def compute_loss(self, predictions, targets, anchors, class_weight=1.0, bounding_box_weight=1.0, mask_weight=1.0):
         predicted_logits = predictions['pred_logits']
         predicted_masks = predictions['pred_masks']
+        
+        # The predicted offsets include one tensor for each of the feature maps [p2_prime, p2, p3, p4, p5]
         predicted_offsets = predictions['bounding_box']
         
-        print("Loss function: \n\n\n")
         
         # print("Predicted masks have type: {}, shape:{} and values: {} \n\n".format(type(predicted_masks), predicted_masks.size(), predicted_masks))
-        print("Predicted offsets have type: {}, shape:{} and values: {} \n\n\n".format(type(predicted_offsets), len(predicted_offsets), predicted_offsets))
+        print("Predicted offsets have type: {}, shape:{} and values: {} \n\n\n".format(type(predicted_offsets[0]), predicted_offsets[0].size(), predicted_offsets[0]))
 
         
         total_class_loss = 0
@@ -64,17 +69,23 @@ class ExtendedMask2Former(nn.Module):
                         
             # print("Target masks have type:{}, size:{} and values: {}\n\n\n".format(type(target_masks), target_masks.size(), target_masks))
             print("Target boxes have type:{}, size:{} and values: {}\n\n\n".format(type(target_boxes), target_boxes.size(), target_boxes))
-
+            
+            
             # Match the shape of predicted_logits with target_labels
             num_objects = target_labels.shape[0]
-            pred_logits_resized = predicted_logits[i, :num_objects]            
+            pred_logits_resized = predicted_logits[i, :num_objects]   
+            
+                        
+            print("\n\n\n\n First Parameter: {}\n\n\n".format(predicted_offsets))
+            print("\n\n\n\n Anchor data have the size: {} and the values: {}\n\n\n".format(anchors.size(), anchors))
             
             # Decode the predicted bounding box offsets using the anchors
-            pred_boxes_resized = self.decode_boxes(predicted_offsets[i, :num_objects], anchors[:num_objects])
+            # pred_boxes_resized = self.decode_boxes(predicted_offsets[i, :num_objects], anchors[:num_objects])
+
 
             # Compute classification loss, bounding box loss, and mask loss for each target
             total_class_loss += self.class_loss(pred_logits_resized, target_labels) * class_weight
-            total_bbox_loss += self.bounding_box_loss(pred_boxes_resized, target_boxes) * bounding_box_weight
+            # total_bbox_loss += self.bounding_box_loss(pred_boxes_resized, target_boxes) * bounding_box_weight
             total_mask_loss += self.mask_loss(predicted_masks[i, :num_objects], target_masks) * mask_weight
 
         # Combine the losses

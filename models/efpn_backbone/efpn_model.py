@@ -176,7 +176,7 @@ class BoundingBoxGenerator(nn.Module):
     """
     def __init__(self, in_channels, num_classes):
         super(BoundingBoxGenerator, self).__init__()
-        self.num_classes = num_classes        
+        self.num_classes = num_classes
         self.bbox_regressor = nn.Conv2d(in_channels, 4, kernel_size=3, padding=1)        
         self.classifier = nn.Conv2d(in_channels, num_classes, kernel_size=3, padding=1)
     
