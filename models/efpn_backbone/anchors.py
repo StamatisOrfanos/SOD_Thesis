@@ -2,6 +2,7 @@ import numpy as np
 
 
 class Anchors():
+    @staticmethod
     def generate_anchors(feature_map_shapes, scales, aspect_ratios, image_size=600):
         """
         Parameters:
