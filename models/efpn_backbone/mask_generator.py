@@ -2,8 +2,6 @@ import numpy as np
 import torch
 from torch import nn
 
-
-
 class MaskFeatureGenerator(nn.Module):
     def __init__(self, in_channels, hidden_dim, mask_dim):
         super(MaskFeatureGenerator, self).__init__()
