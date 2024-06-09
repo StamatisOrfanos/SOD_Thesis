@@ -24,6 +24,6 @@ class MaskGenerationNet(nn.Module):
         x3 = self.pool(F.relu(self.conv3(x2)))
         x4 = self.up(F.relu(self.conv4(x3)))
         x5 = self.up(F.relu(self.conv5(x4)))
-        mask = torch.sigmoid(self.conv6(x5))  # Binary mask output
+        mask = torch.sigmoid(self.conv6(x5))
         return mask
 
