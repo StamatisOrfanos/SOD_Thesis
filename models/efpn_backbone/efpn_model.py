@@ -43,7 +43,7 @@ class EFPN(nn.Module):
         self.top_down_p2 = nn.Upsample(scale_factor=2, mode='nearest')
 
         # Define the bounding box and masks for the spatially richest feature map
-        self.mask = MaskGenerationNet(in_channels)        
+        self.mask = MaskGenerationNet(hidden_dim)        
         self.bounding_box = BoundingBoxGenerator(in_channels, num_classes)
 
 

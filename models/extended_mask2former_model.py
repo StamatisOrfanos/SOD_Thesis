@@ -3,7 +3,7 @@ from torch import nn
 from torch.nn import functional as F
 from models.efpn_backbone.efpn_model import EFPN
 from models.mask2former_detector.mask2former_model import Mask2Former
-from models.efpn_backbone.bounding_box import encode_bounding_boxes, match_anchors_to_gt_boxes, compute_iou
+from models.efpn_backbone.bounding_box import encode_bounding_boxes, match_anchors_to_gt_boxes
 
 
 
@@ -54,6 +54,10 @@ class ExtendedMask2Former(nn.Module):
         predicted_masks = predictions['pred_masks']
         predicted_bounding_boxes = predictions['bounding_box']
         
+        
+        print("The predicted masks shape is: {} and are of type: {}".format(predicted_masks.size(), type(predicted_masks)))
+        
+        
         total_class_loss = 0
         total_bbox_loss = 0
         total_mask_loss = 0
@@ -61,7 +65,11 @@ class ExtendedMask2Former(nn.Module):
         for i, target in enumerate(targets):
             target_labels = target['labels']
             target_masks = target['masks']
-            target_boxes = target['boxes']            
+            target_boxes = target['boxes']
+            
+            
+            print("The actual masks shape is: {} and are of type: {}".format(target_masks.size(), type(target_masks)))
+ 
             
             # Match the shape of predicted_logits with target_labels
             num_objects = target_labels.shape[0]
@@ -72,8 +80,9 @@ class ExtendedMask2Former(nn.Module):
             encoded_gt_boxes = encode_bounding_boxes(matched_gt_boxes, anchors)
             num_anchors = anchors.shape[0]          
             predicted_boxes_resized = self.decode_boxes(predicted_bounding_boxes[i].view(-1, 4)[:num_anchors], anchors)
-                      
-            # Ensure predicted_masks has the correct dimensions
+
+            
+            # Resize the masks created by the EFPN
             predicted_masks_resized = F.interpolate(predicted_masks[i], size=target_masks.shape[1:], mode='bilinear', align_corners=False)
             predicted_masks_resized = predicted_masks_resized.permute(1, 2, 0).contiguous()
             target_masks_resized = target_masks.permute(1, 2, 0).contiguous()
