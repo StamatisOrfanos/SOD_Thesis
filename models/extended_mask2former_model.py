@@ -65,11 +65,7 @@ class ExtendedMask2Former(nn.Module):
         for i, target in enumerate(targets):
             target_labels = target['labels']
             target_masks = target['masks']
-            target_boxes = target['boxes']
-            
-            
-            print("The actual masks shape is: {} and are of type: {}".format(target_masks.size(), type(target_masks)))
- 
+            target_boxes = target['boxes'] 
             
             # Match the shape of predicted_logits with target_labels
             num_objects = target_labels.shape[0]
@@ -81,22 +77,31 @@ class ExtendedMask2Former(nn.Module):
             num_anchors = anchors.shape[0]          
             predicted_boxes_resized = self.decode_boxes(predicted_bounding_boxes[i].view(-1, 4)[:num_anchors], anchors)
 
-            
+            # Reshape target masks to have the correct dimensions (N, C, H, W)
+            print(f"Target masks shape before resizing: {target_masks.shape}")
+            target_masks_resized = F.interpolate(target_masks.unsqueeze(1).float(), size=(300, 300), mode='bilinear', align_corners=False)
+            print(f"Target masks shape after resizing: {target_masks_resized.shape}")
+
             # Resize the masks created by the EFPN
-            predicted_masks_resized = F.interpolate(predicted_masks[i], size=target_masks.shape[1:], mode='bilinear', align_corners=False)
-            predicted_masks_resized = predicted_masks_resized.permute(1, 2, 0).contiguous()
-            target_masks_resized = target_masks.permute(1, 2, 0).contiguous()
+            print(f"Predicted masks shape before resizing: {predicted_masks[i].shape}")
+            predicted_masks_resized = F.interpolate(predicted_masks[i].float(), size=(300, 300), mode='bilinear', align_corners=False)
+            print(f"Predicted masks shape after resizing: {predicted_masks_resized.shape}")
+
+            # Permute dimensions to match (N, H, W, C)
+            predicted_masks_resized = predicted_masks_resized.permute(0, 2, 3, 1).contiguous()
+            target_masks_resized = target_masks_resized.permute(0, 2, 3, 1).contiguous()
+
+            print(f"Predicted masks final shape: {predicted_masks_resized.shape}")
+            print(f"Target masks final shape: {target_masks_resized.shape}")
             
             if predicted_masks_resized.shape != target_masks_resized.shape:
                 raise ValueError(f"Shape mismatch: predicted_masks_resized {predicted_masks_resized.shape}, target_masks_resized {target_masks_resized.shape}")
             
-            # Compute classification loss, bounding box loss, and mask loss for each target
             total_class_loss += self.class_loss(pred_logits_resized, target_labels) * class_weight
             total_bbox_loss += self.bounding_box_loss(predicted_boxes_resized, encoded_gt_boxes) * bounding_box_weight
-            total_mask_loss += self.mask_loss(predicted_masks_resized, target_masks_resized.unsqueeze(0)) * mask_weight
+            total_mask_loss += self.mask_loss(predicted_masks_resized, target_masks_resized) * mask_weight
             print("Class loss: {}, Bounding box: {} and mask loss: {}".format(total_class_loss, total_bbox_loss, total_mask_loss))
 
-        # Combine the losses
         total_loss = total_class_loss + total_bbox_loss + total_mask_loss
 
         return total_loss

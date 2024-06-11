@@ -40,7 +40,7 @@ class SOD_Data(Dataset):
                 box = [int(x_min), int(y_min), int(x_max), int(y_max)]
                 
                 masks_part = eval("[" + line.split("[")[1])
-                masks = self.create_binary_mask((300, 300), masks_part)
+                masks = self.create_binary_mask((600, 600), masks_part) 
                 
                 boxes.append(box)
                 labels.append(class_code)
@@ -58,16 +58,20 @@ class SOD_Data(Dataset):
         return image, target
     
 
-    def create_binary_mask(self, image_size, polygons):
-        """
-        Parameters:
-            - image_size (tuple) : Tuple of the size of the image (height, width)
-            - polygons (list) : List of tuples where is tuple is a point 
-        """
-        mask = Image.new('L', image_size, 0)
-        for polygon in polygons:
-            if polygon and len(polygon) >= 3:
-                ImageDraw.Draw(mask).polygon(polygon, outline=1, fill=1)
-        return np.array(mask)
-
+    def create_binary_mask(self, original_size, polygons):
+            """
+            Parameters:
+                - original_size (tuple): Tuple of the original size of the image (height, width)
+                - polygons (list): List of tuples where each tuple is a point
+            """
+            mask = np.zeros(original_size, dtype=np.uint8)
+            for polygon in polygons:
+                if polygon:
+                    polygon = ()
+                    polygon = np.array(polygon, dtype=np.int32)
+                    if polygon.shape[0] >= 3:
+                        mask = Image.fromarray(mask)
+                        mask.polygon(polygon, fill=1, outline=1)
+                        mask = np.array(mask)
+            return mask
 
