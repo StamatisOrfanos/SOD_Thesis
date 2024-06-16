@@ -4,12 +4,6 @@ from torch.nn import functional as F
 
 class MaskHandler(nn.Module):
     def __init__(self, in_channels, hidden_dim, num_classes):
-        """
-        Parameters:
-            - in_channels (int): Number of channels 
-            - hidden_dim (int): Number of hidden dimensions of the tensor we create
-            - num_classes (int): Number of classes of the dataset
-        """
         super(MaskHandler, self).__init__()
         self.mask_head = self._mask_head(in_channels, hidden_dim)
         self.mask_predictor = self._mask_predictor(hidden_dim, num_classes)

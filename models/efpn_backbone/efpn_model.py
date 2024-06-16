@@ -44,7 +44,7 @@ class EFPN(nn.Module):
 
         # Define the bounding box and masks for the spatially richest feature map
         # Define mask head and predictor
-        self.mask= MaskHandler(256, hidden_dim, num_classes)
+        self.mask = MaskHandler(256, hidden_dim, num_classes)
         self.bounding_box = BoundingBoxGenerator(in_channels, num_classes)
         
 
