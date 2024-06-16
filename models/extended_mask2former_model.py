@@ -31,11 +31,8 @@ class ExtendedMask2Former(nn.Module):
         
     def forward(self, image):
         feature_maps, masks, bounding_box, class_scores = self.efpn(image)
-        
-         # Ensure masks are downsampled to match feature map resolutions if needed
         if masks.size(2) != feature_maps[0].size(2) or masks.size(3) != feature_maps[0].size(3):
             masks = F.interpolate(masks, size=(feature_maps[0].size(2), feature_maps[0].size(3)), mode='bilinear', align_corners=False)
-        
         output = self.mask2former(feature_maps, masks, bounding_box, class_scores)
         return output
     
@@ -77,22 +74,10 @@ class ExtendedMask2Former(nn.Module):
             num_anchors = anchors.shape[0]          
             predicted_boxes_resized = self.decode_boxes(predicted_bounding_boxes[i].view(-1, 4)[:num_anchors], anchors)
 
-            # Reshape target masks to have the correct dimensions (N, C, H, W)
-            print(f"Target masks shape before resizing: {target_masks.shape}")
             target_masks_resized = F.interpolate(target_masks.unsqueeze(1).float(), size=(300, 300), mode='bilinear', align_corners=False)
-            print(f"Target masks shape after resizing: {target_masks_resized.shape}")
-
-            # Resize the masks created by the EFPN
-            print(f"Predicted masks shape before resizing: {predicted_masks[i].shape}")
             predicted_masks_resized = F.interpolate(predicted_masks[i].float(), size=(300, 300), mode='bilinear', align_corners=False)
-            print(f"Predicted masks shape after resizing: {predicted_masks_resized.shape}")
-
-            # Permute dimensions to match (N, H, W, C)
             predicted_masks_resized = predicted_masks_resized.permute(0, 2, 3, 1).contiguous()
             target_masks_resized = target_masks_resized.permute(0, 2, 3, 1).contiguous()
-
-            print(f"Predicted masks final shape: {predicted_masks_resized.shape}")
-            print(f"Target masks final shape: {target_masks_resized.shape}")
             
             if predicted_masks_resized.shape != target_masks_resized.shape:
                 raise ValueError(f"Shape mismatch: predicted_masks_resized {predicted_masks_resized.shape}, target_masks_resized {target_masks_resized.shape}")
@@ -100,7 +85,6 @@ class ExtendedMask2Former(nn.Module):
             total_class_loss += self.class_loss(pred_logits_resized, target_labels) * class_weight
             total_bbox_loss += self.bounding_box_loss(predicted_boxes_resized, encoded_gt_boxes) * bounding_box_weight
             total_mask_loss += self.mask_loss(predicted_masks_resized, target_masks_resized) * mask_weight
-            print("Class loss: {}, Bounding box: {} and mask loss: {}".format(total_class_loss, total_bbox_loss, total_mask_loss))
 
         total_loss = total_class_loss + total_bbox_loss + total_mask_loss
 

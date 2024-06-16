@@ -83,10 +83,8 @@ class MaskedAttentionLayer(nn.Module):
         target_tensor = self.norm(target_tensor)
         
         return target_tensor
-   
 
-   
-   
+
 def get_activation_fn(activation):
     """Return an activation function given a string"""
     if activation == "relu":

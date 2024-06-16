@@ -4,7 +4,7 @@ from torch import nn
 from torch.nn import functional as F
 from efficientnet_pytorch import EfficientNet
 from models.efpn_backbone.bounding_box import BoundingBoxGenerator
-from models.efpn_backbone.mask_generator import MaskGenerationNet
+from models.efpn_backbone.mask_handler import MaskHandler
 
 class EFPN(nn.Module):
     """
@@ -43,9 +43,10 @@ class EFPN(nn.Module):
         self.top_down_p2 = nn.Upsample(scale_factor=2, mode='nearest')
 
         # Define the bounding box and masks for the spatially richest feature map
-        self.mask = MaskGenerationNet(hidden_dim)        
+        # Define mask head and predictor
+        self.mask= MaskHandler(256, hidden_dim, num_classes)
         self.bounding_box = BoundingBoxGenerator(in_channels, num_classes)
-
+        
 
     def forward(self, image):
         # Pass input through EfficientNet backbone
@@ -74,7 +75,7 @@ class EFPN(nn.Module):
             
         # Create the mask for the spatially richest feature map p2_prime
         feature_maps = [p2_prime, p2, p3, p4, p5]
-        mask = self.mask(image)
+        mask = self.mask(p2_prime)
         bounding_box_regressions, class_scores = self.bounding_box(p2_prime)
         
         # Return the feature map pyramid and the mask
