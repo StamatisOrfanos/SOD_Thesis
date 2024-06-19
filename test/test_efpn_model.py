@@ -19,7 +19,7 @@ def load_image(image_path):
 image = load_image("/Users/stamatiosorphanos/Documents/MCs_Thesis/SOD_Thesis/docs/Extended_Mask2Former/1.jpg")
 
 # Step 2: Instantiate the model
-model = EFPN(in_channels=256, hidden_dim=256,  num_classes=10)
+model = EFPN(in_channels=256, hidden_dim=256,  num_classes=10, num_decoders=5)
 model.eval()  # Set the model to evaluation mode
 
 
@@ -30,7 +30,7 @@ print("The total number of EFPN parameters are: ", total_params)
 
 # Step 4: Pass the image through the model
 with torch.no_grad():
-    feature_maps, mask, bounding_box, class_scores = model(image)
+    feature_maps, masks, bounding_box, class_scores = model(image)
 
 
 # Step 5: Visualize the feature maps
@@ -40,17 +40,15 @@ for fm in feature_maps:
 
     
 # Step 6: Visualize the masks of each feature map
-# print("\nThe feature map mask with shape: {} created is the following:\n".format(mask.shape))
-# print(mask)
+print("\nThe masks of the feature maps created are the following:\n")
+for mask in masks:
+    print(mask.shape)
+
     
 # Step 7: Visualize the bounding box
 print("\nThe bounding box with shape: {} created is the following:\n".format(bounding_box.shape))
-# print(bounding_box)
 
-# Step 8: Visualize the class scores
-# print("\nThe class scores with shape: {} created are the following:\n".format(class_scores.shape))
-# print(class_scores)
 
-# Step 9: Get the summary of the EFPN model
+# Step 8: Get the summary of the EFPN model
 print("\n\nThe summary of the EFPN model is the following: \n", model) 
 # ------------------------------------------------------------------------------------------------------------------------------

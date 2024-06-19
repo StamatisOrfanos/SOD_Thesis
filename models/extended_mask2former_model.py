@@ -30,11 +30,7 @@ class ExtendedMask2Former(nn.Module):
 
         
     def forward(self, image):
-        feature_maps, masks, bounding_box, class_scores = self.efpn(image)
-        # Ensure masks are downsampled to match feature map resolutions if needed
-        if masks.size(2) != feature_maps[0].size(2) or masks.size(3) != feature_maps[0].size(3):
-            masks = F.interpolate(masks, size=(feature_maps[0].size(2), feature_maps[0].size(3)), mode='bilinear', align_corners=False)
-        
+        feature_maps, masks, bounding_box, class_scores = self.efpn(image)    
         output = self.mask2former(feature_maps, masks, bounding_box, class_scores)
         return output
     
@@ -52,7 +48,6 @@ class ExtendedMask2Former(nn.Module):
         predicted_logits = predictions['pred_logits']
         predicted_masks = predictions['pred_masks']
         predicted_bounding_boxes = predictions['bounding_box']
-        
         
         print("The predicted masks shape is: {} and are of type: {}".format(predicted_masks.size(), type(predicted_masks)))
         

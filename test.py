@@ -299,3 +299,6 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
     # batch_loss.backward()
     # optimizer.step()
     # print(f'Epoch {epoch+1}, Loss: {batch_loss.item()}')
+
+
+
