@@ -75,7 +75,7 @@ class EFPN(nn.Module):
             
         # Create the mask for the spatially richest feature map p2_prime
         feature_maps = [p2_prime, p2, p3, p4, p5]
-        masks = self.mask_processor(feature_maps)
+        masks = self.mask_processor(p2_prime)
         bounding_box_regressions, class_scores = self.bounding_box(p2_prime)
         
         # Return the feature map pyramid and the mask
