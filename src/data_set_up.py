@@ -1,6 +1,7 @@
 import os
 import torch
 from torch.utils.data import Dataset
+import cv2
 import numpy as np
 from PIL import Image, ImageDraw
 
@@ -33,18 +34,19 @@ class SOD_Data(Dataset):
         boxes, labels, masks_list  = [], [], []
         
         with open(annotation_path, 'r') as f:
-            for line in f:            
+            for line in f:
                 bbox_class_part = line.split("[")[0].split(",")
                 x_min, y_min, x_max, y_max = bbox_class_part[0:4]
                 class_code = int(bbox_class_part[4])
                 box = [int(x_min), int(y_min), int(x_max), int(y_max)]
                 
                 masks_part = eval("[" + line.split("[")[1])
-                masks = self.create_binary_mask((600, 600), masks_part) 
+                masks = self.create_binary_mask((600, 600), masks_part)
+                mask_resized = cv2.resize(masks, (300,300), interpolation=cv2.INTER_NEAREST)
                 
                 boxes.append(box)
                 labels.append(class_code)
-                masks_list.append(masks)
+                masks_list.append(mask_resized)
 
         
         boxes  = torch.as_tensor(boxes, dtype=torch.int64)

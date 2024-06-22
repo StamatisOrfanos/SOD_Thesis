@@ -59,28 +59,35 @@ class ExtendedMask2Former(nn.Module):
         for i, target in enumerate(targets):
             target_labels = target['labels']
             target_masks = target['masks']
-            target_boxes = target['boxes'] 
+            target_boxes = target['boxes']
             
-            # Match the shape of predicted_logits with target_labels
-            num_objects = target_labels.shape[0]
-            pred_logits_resized = predicted_logits[i, :num_objects]
+            print("The target masks shape is: {} and are of type: {}".format(target_masks.size(), type(target_masks)))
+            # # Match the shape of predicted_logits with target_labels
+            # num_objects = target_labels.shape[0]
+            # pred_logits_resized = predicted_logits[i, :num_objects]
             
-            # Decode the predicted bounding box offsets using the anchors
-            matched_gt_boxes, _ = match_anchors_to_gt_boxes(anchors, target_boxes)
-            encoded_gt_boxes = encode_bounding_boxes(matched_gt_boxes, anchors)
-            num_anchors = anchors.shape[0]          
-            predicted_boxes_resized = self.decode_boxes(predicted_bounding_boxes[i].view(-1, 4)[:num_anchors], anchors)
+            # # Decode the predicted bounding box offsets using the anchors
+            # matched_gt_boxes, _ = match_anchors_to_gt_boxes(anchors, target_boxes)
+            # encoded_gt_boxes = encode_bounding_boxes(matched_gt_boxes, anchors)
+            # num_anchors = anchors.shape[0]          
+            # predicted_boxes_resized = self.decode_boxes(predicted_bounding_boxes[i].view(-1, 4)[:num_anchors], anchors)
 
+           # Resize target masks to match predicted masks size
             target_masks_resized = F.interpolate(target_masks.unsqueeze(1).float(), size=(predicted_masks.shape[2], predicted_masks.shape[3]), mode='bilinear', align_corners=False)
-            predicted_masks_resized = F.interpolate(predicted_masks[i].float(), size=(target_masks.shape[1], target_masks.shape[2]), mode='bilinear', align_corners=False)
-            predicted_masks_resized = predicted_masks_resized.permute(0, 2, 3, 1).contiguous()
-            target_masks_resized = target_masks_resized.permute(0, 2, 3, 1).contiguous()
+            target_masks_resized = target_masks_resized.squeeze(1)  # Remove the channel dimension added by unsqueeze
             
+            print("The target_masks_resized shape is: {} and are of type: {}".format(target_masks_resized.size(), type(target_masks_resized)))
+            
+            predicted_masks_resized = predicted_masks[i].float()
+            print("The predicted_masks_resized shape is: {} and are of type: {}".format(predicted_masks_resized.size(), type(predicted_masks_resized)))
+            
+            # Ensure the dimensions match
             if predicted_masks_resized.shape != target_masks_resized.shape:
                 raise ValueError(f"Shape mismatch: predicted_masks_resized {predicted_masks_resized.shape}, target_masks_resized {target_masks_resized.shape}")
             
-            total_class_loss += self.class_loss(pred_logits_resized, target_labels) * class_weight
-            total_bbox_loss += self.bounding_box_loss(predicted_boxes_resized, encoded_gt_boxes) * bounding_box_weight
+            
+            # total_class_loss += self.class_loss(pred_logits_resized, target_labels) * class_weight
+            # total_bbox_loss += self.bounding_box_loss(predicted_boxes_resized, encoded_gt_boxes) * bounding_box_weight
             total_mask_loss += self.mask_loss(predicted_masks_resized, target_masks_resized) * mask_weight
 
         total_loss = total_class_loss + total_bbox_loss + total_mask_loss
