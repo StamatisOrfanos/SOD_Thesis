@@ -2,7 +2,7 @@ import numpy as np
 
 class Anchors:
     @staticmethod
-    def generate_anchors(feature_map_shapes, scales, aspect_ratios, image_size=600):
+    def generate_anchors(feature_map_shapes, scales, aspect_ratios, image_size=300):
         anchors = []
         for shape in feature_map_shapes:
             fm_height, fm_width = shape
@@ -16,13 +16,19 @@ class Anchors:
 
                     for scale in scales:
                         for ratio in aspect_ratios:
-                            anchor_height = scale * np.sqrt(ratio) * stride_height
-                            anchor_width = scale / np.sqrt(ratio) * stride_width
+                            anchor_height = scale * np.sqrt(ratio)
+                            anchor_width = scale / np.sqrt(ratio)
 
                             x_min = cx - anchor_width / 2
                             y_min = cy - anchor_height / 2
                             x_max = cx + anchor_width / 2
                             y_max = cy + anchor_height / 2
+
+                            # Ensure anchors are within image bounds
+                            x_min = max(0, x_min)
+                            y_min = max(0, y_min)
+                            x_max = min(image_size, x_max)
+                            y_max = min(image_size, y_max)
 
                             anchors.append([x_min, y_min, x_max, y_max])
 

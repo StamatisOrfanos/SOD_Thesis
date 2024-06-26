@@ -12,11 +12,12 @@ class SOD_Data(Dataset):
         - annotations_directory (string): Path of the directory containing the annotations
         - transform (pytorch.transform, optional): transform function for the images of the dataset
     """
-    def __init__(self, images_directory, annotations_directory, transform):
+    def __init__(self, images_directory, annotations_directory, transform, target_size=300):
         self.image_dir = images_directory
         self.annotation_dir = annotations_directory
         self.image_files = [f for f in os.listdir(images_directory) if f.endswith(('.jpg', '.png'))]
         self.transform = transform
+        self.target_size = target_size
 
     def __len__(self):
         return len(self.image_files)
@@ -42,11 +43,11 @@ class SOD_Data(Dataset):
                 
                 masks_part = eval("[" + line.split("[")[1])
                 masks = self.create_binary_mask((600, 600), masks_part)
-                mask_resized = cv2.resize(masks, (300,300), interpolation=cv2.INTER_NEAREST)
+                masks = self.resize_mask(masks, (self.target_size, self.target_size))
                 
                 boxes.append(box)
                 labels.append(class_code)
-                masks_list.append(mask_resized)
+                masks_list.append(masks)
 
         
         boxes  = torch.as_tensor(boxes, dtype=torch.int64)
@@ -73,7 +74,14 @@ class SOD_Data(Dataset):
                     polygon = np.array(polygon, dtype=np.int32)
                     if polygon.shape[0] >= 3:
                         mask = Image.fromarray(mask)
-                        mask.polygon(polygon, fill=1, outline=1)
+                        mask.polygon(polygon, fill=1, outline=1) # type: ignore
                         mask = np.array(mask)
             return mask
+        
+        
+   
+    def resize_mask(self, mask, target_size):
+        mask_img = Image.fromarray(mask)
+        mask_img = mask_img.resize(target_size, Image.NEAREST) # type: ignore
+        return np.array(mask_img)
 

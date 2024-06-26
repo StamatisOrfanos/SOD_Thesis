@@ -14,12 +14,12 @@ def load_image(image_path):
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalization for EfficientNet
     ])
-    return transform(image).unsqueeze(0)  # Add batch dimension
+    return transform(image).unsqueeze(0)  # type: ignore # Add batch dimension
 
 image = load_image("/Users/stamatiosorphanos/Documents/MCs_Thesis/SOD_Thesis/docs/Extended_Mask2Former/1.jpg")
 
 # Step 2: Instantiate the model
-model = EFPN(in_channels=256, hidden_dim=256,  num_classes=10, num_decoders=5)
+model = EFPN(in_channels=256, hidden_dim=256,  num_classes=10)
 model.eval()  # Set the model to evaluation mode
 
 
@@ -39,7 +39,12 @@ for fm in feature_maps:
     print(fm.shape)
 
     
-# Step 6: Visualize the masks of each feature map
+# Step 6: Visualize the class scores of each feature map
+print("\nThe class scores are the following:\n")
+print(class_scores.size())
+
+    
+# Step 7: Visualize the masks of each feature map
 print("\nThe masks of the feature maps created are the following:\n")
 for mask in masks:
     print(mask.shape)
@@ -49,6 +54,6 @@ for mask in masks:
 print("\nThe bounding box with shape: {} created is the following:\n".format(bounding_box.shape))
 
 
-# Step 8: Get the summary of the EFPN model
+# Step 9: Get the summary of the EFPN model
 print("\n\nThe summary of the EFPN model is the following: \n", model) 
 # ------------------------------------------------------------------------------------------------------------------------------

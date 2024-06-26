@@ -18,6 +18,12 @@ class BoundingBoxGenerator(nn.Module):
         x = F.relu(self.conv2(x))
         class_scores = self.class_convolution(x)
         bounding_box = self.regression_convolution(x)
+
+        # Debugging: Check for invalid values
+        if torch.any(torch.isnan(bounding_box)) or torch.any(torch.isinf(bounding_box)):
+            print("Warning: Invalid values in bounding_box")
+            print(bounding_box)
+
         return bounding_box, class_scores
 
 
@@ -26,6 +32,12 @@ def match_anchors_to_gt_boxes(anchors, gt_boxes, iou_threshold=0.5):
     anchor_max_iou, anchor_max_idx = ious.max(dim=1)
     matched_gt_boxes = gt_boxes[anchor_max_idx]
     matched_gt_boxes[anchor_max_iou < iou_threshold] = -1
+
+    # Debugging: Check for invalid values
+    if torch.any(torch.isnan(matched_gt_boxes)) or torch.any(torch.isinf(matched_gt_boxes)):
+        print("Warning: Invalid values in matched_gt_boxes")
+        print(matched_gt_boxes)
+
     return matched_gt_boxes, anchor_max_idx
 
 
@@ -68,7 +80,18 @@ def encode_bounding_boxes(matched_gt_boxes, anchors):
 
     dx = (gt_cx - anchor_cx) / anchor_w
     dy = (gt_cy - anchor_cy) / anchor_h
-    dw = torch.log(gt_w / anchor_w)
-    dh = torch.log(gt_h / anchor_h)
+    dw = torch.log(gt_w / anchor_w + eps)
+    dh = torch.log(gt_h / anchor_h + eps)
+
+    # Debugging: Check for invalid values
+    if torch.any(torch.isnan(dx)) or torch.any(torch.isinf(dx)) or \
+       torch.any(torch.isnan(dy)) or torch.any(torch.isinf(dy)) or \
+       torch.any(torch.isnan(dw)) or torch.any(torch.isinf(dw)) or \
+       torch.any(torch.isnan(dh)) or torch.any(torch.isinf(dh)):
+        print("Warning: Invalid values in encoded bounding boxes")
+        print("dx:", dx)
+        print("dy:", dy)
+        print("dw:", dw)
+        print("dh:", dh)
 
     return torch.stack([dx, dy, dw, dh], dim=-1)

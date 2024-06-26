@@ -29,25 +29,34 @@ class ExtendedMask2Former(nn.Module):
         self.class_loss        = nn.CrossEntropyLoss()
         self.mask_loss         = nn.BCEWithLogitsLoss()
 
-        
+
     def forward(self, image):
         feature_maps, masks, bounding_box, class_scores = self.efpn(image)    
         output = self.mask2former(feature_maps, masks, bounding_box, class_scores)
         return output
-    
+        
+
     def decode_boxes(self, predicted_offsets, anchors):
         """
         Parameters:
-            - predicted_offsets (torch.Tensor): Tensor of shape (N, 4) representing the predicted offsets for each anchor box. [x_min, y_min, x_max, y_max].
-            - anchors (torch.Tensor): Tensor of shape (N, 4) representing the anchor boxes. [x_min, y_min, x_max, y_max].
+            - predicted_offsets (torch.Tensor): Tensor of shape (N, 4) representing the predicted offsets for each anchor box. [dx, dy, dw, dh].
+            - anchors (torch.Tensor): Tensor of shape (N, 4) representing anchor boxes with values [x_min, y_min, x_max, y_max].
         """
-        anchors = anchors.to(predicted_offsets.device)
+        anchors    = anchors.to(predicted_offsets.device)
         pred_boxes = torch.zeros_like(predicted_offsets)
-        pred_boxes[:, 0] = anchors[:, 0] + predicted_offsets[:, 0] * (anchors[:, 2] - anchors[:, 0])
-        pred_boxes[:, 1] = anchors[:, 1] + predicted_offsets[:, 1] * (anchors[:, 3] - anchors[:, 1])
-        pred_boxes[:, 2] = anchors[:, 2] * torch.exp(predicted_offsets[:, 2])
-        pred_boxes[:, 3] = anchors[:, 3] * torch.exp(predicted_offsets[:, 3])
+
+        anchor_cx = (anchors[:, 0] + anchors[:, 2]) / 2
+        anchor_cy = (anchors[:, 1] + anchors[:, 3]) / 2
+        anchor_w  = anchors[:, 2] - anchors[:, 0]
+        anchor_h  = anchors[:, 3] - anchors[:, 1]
+
+        pred_boxes[:, 0] = anchor_cx + predicted_offsets[:, 0] * anchor_w - (torch.exp(predicted_offsets[:, 2]) * anchor_w) / 2
+        pred_boxes[:, 1] = anchor_cy + predicted_offsets[:, 1] * anchor_h - (torch.exp(predicted_offsets[:, 3]) * anchor_h) / 2
+        pred_boxes[:, 2] = anchor_cx + predicted_offsets[:, 0] * anchor_w + (torch.exp(predicted_offsets[:, 2]) * anchor_w) / 2
+        pred_boxes[:, 3] = anchor_cy + predicted_offsets[:, 1] * anchor_h + (torch.exp(predicted_offsets[:, 3]) * anchor_h) / 2
+        
         return pred_boxes
+    
     
     def compute_cost_matrix(self, predicted_masks, ground_truth_masks):
         """    
@@ -56,18 +65,19 @@ class ExtendedMask2Former(nn.Module):
             - ground_truth_masks (torch.Tensor): Ground truth masks of shape (num_objects, H, W).
         """
         num_queries, H, W = predicted_masks.shape
-        num_objects = ground_truth_masks.shape[0]
+        num_objects       = ground_truth_masks.shape[0]
         
         # Convert masks to float for distance computation
-        predicted_masks = predicted_masks.float()
+        predicted_masks    = predicted_masks.float()
         ground_truth_masks = ground_truth_masks.float()
         
-        # Flatten the masks for ease of computation and compute the cost matrix based on binary cross entropy loss
+        # Flatten masks for ease of computation and compute the cost matrix based on binary cross entropy loss
         pred_masks_flat = predicted_masks.view(num_queries, -1)
-        gt_masks_flat = ground_truth_masks.view(num_objects, -1)
-        cost_matrix = torch.cdist(pred_masks_flat, gt_masks_flat, p=1)
+        gt_masks_flat   = ground_truth_masks.view(num_objects, -1)
+        cost_matrix     = torch.cdist(pred_masks_flat, gt_masks_flat, p=1)
     
         return cost_matrix
+
 
     def hungarian_matching(self, predicted_masks, ground_truth_masks):
         """    
@@ -103,17 +113,18 @@ class ExtendedMask2Former(nn.Module):
         """
         predicted_logits = predictions['pred_logits']
         predicted_masks = predictions['pred_masks']
-        predicted_bounding_boxes = predictions['bounding_box']        
-        
+        predicted_bounding_boxes = predictions['bounding_box']    
+                
         total_class_loss = 0
         total_bbox_loss = 0
         total_mask_loss = 0
+    
 
         for i, target in enumerate(targets):
             target_labels = target['labels']
             target_masks = target['masks']
             target_boxes = target['boxes']
-            
+                        
             # Match the shape of predicted_logits with target_labels
             num_objects = target_labels.shape[0]
             pred_logits_resized = predicted_logits[i, :num_objects]
@@ -123,31 +134,30 @@ class ExtendedMask2Former(nn.Module):
             encoded_gt_boxes = encode_bounding_boxes(matched_gt_boxes, anchors)
             num_anchors = anchors.shape[0]
             predicted_boxes_resized = self.decode_boxes(predicted_bounding_boxes[i].view(-1, 4)[:num_anchors], anchors)
-
-            # Perform Hungarian matching to align predicted and ground truth masks
-            matched_indices = self.hungarian_matching(predicted_masks[i], target_masks)
             
-            # Select matched masks for computing the loss
-            matched_predicted_masks = []
-            matched_ground_truth_masks = []
-            matched_ground_truth_labels = []
-            
-            
-            for pred_idx, gt_idx in matched_indices:
-                matched_predicted_masks.append(predicted_masks[i, pred_idx])
-                matched_ground_truth_masks.append(target_masks[gt_idx])
-                matched_ground_truth_labels.append(target_labels[gt_idx])
-                
-            matched_predicted_masks = torch.stack(matched_predicted_masks)
-            matched_ground_truth_masks = torch.stack(matched_ground_truth_masks)
-            matched_ground_truth_labels = torch.tensor(matched_ground_truth_labels, dtype=torch.int64)
+            # # Perform Hungarian matching to align predicted and ground truth masks
+            # matched_indices = self.hungarian_matching(predicted_masks[i], target_masks)
+            # # Select matched masks for computing the loss
+            # matched_predicted_masks = []
+            # matched_ground_truth_masks = []
+            # matched_ground_truth_labels = []
+            # for prediction_idx, ground_truth_idx in matched_indices:
+            #     matched_predicted_masks.append(predicted_masks[i, prediction_idx])
+            #     matched_ground_truth_masks.append(target_masks[ground_truth_idx])
+            #     matched_ground_truth_labels.append(target_labels[ground_truth_idx])
+            # matched_predicted_masks = torch.stack(matched_predicted_masks)
+            # matched_ground_truth_masks = torch.stack(matched_ground_truth_masks).float()
+            # matched_ground_truth_labels = torch.tensor(matched_ground_truth_labels, dtype=torch.int64)
             
             
             total_class_loss += self.class_loss(pred_logits_resized, target_labels) * class_weight
-            total_bbox_loss += self.bounding_box_loss(predicted_boxes_resized, encoded_gt_boxes) * bounding_box_weight
-            total_mask_loss += self.mask_loss(matched_predicted_masks, matched_ground_truth_masks) * mask_weight
+            total_bbox_loss  += self.bounding_box_loss(predicted_boxes_resized, encoded_gt_boxes) * bounding_box_weight
+            # total_mask_loss += self.mask_loss(matched_predicted_masks, matched_ground_truth_masks) * mask_weight
+            
+            
+            print("Class loss:{}, bounding box loss:{} and mask loss:{}".format(total_class_loss, total_bbox_loss, total_mask_loss))
+
 
         total_loss = total_class_loss + total_bbox_loss + total_mask_loss
-        print("Total loss:{}".format(total_loss))
 
         return total_loss

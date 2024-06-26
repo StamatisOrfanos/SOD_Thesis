@@ -99,7 +99,6 @@ class Mask2Former(nn.Module):
         result = {
             'pred_logits' : predictions_class[-1],
             'pred_masks'  : predictions_mask[-1],
-            'aux_outputs' : self.set_aux_loss(predictions_class if self.mask_classification else None, predictions_mask),
             'bounding_box': bounding_box,
             "class_scores": class_scores
         }
@@ -201,48 +200,3 @@ class Mask2Former(nn.Module):
 
         return outputs_class, outputs_mask, attention_mask
 
-
-
-
-    def set_aux_loss(self, outputs_class: List[torch.Tensor], outputs_seg_masks: List[torch.Tensor]) -> List[Dict[str, Union[torch.Tensor, List[torch.Tensor]]]]:
-        """
-        This method is designed to work around limitations with TorchScript and dictionaries containing non-homogeneous values by creating a list of 
-        dictionaries, each containing either the predicted logits and masks for classification tasks or just the masks for segmentation tasks, depending 
-        on whether mask classification is enabled.
-
-        Parameters:
-            - outputs_class (List[torch.Tensor]): A list of tensors representing the class predictions at each decoder layer.
-            - outputs_seg_masks (List[torch.Tensor]): A list of tensors representing the predicted segmentation masks at each decoder layer.
-        """
-        # Validate input lengths
-        assert len(outputs_class) == len(outputs_seg_masks), "Outputs for class and segmentation masks must have the same length."
-
-        if self.mask_classification:
-            # Include both logits and masks for auxiliary losses if mask classification is enabled
-            aux_losses = [{"pred_logits": logits, "pred_masks": masks} for logits, masks in zip(outputs_class[:-1], outputs_seg_masks[:-1])]
-        else:
-            # Include only masks for auxiliary losses if mask classification is not enabled
-            aux_losses = [{"pred_masks": masks} for masks in outputs_seg_masks[:-1]]
-
-        return aux_losses
-    
-    
-    def instance_segmentation(self, feature_map_list, mask):
-        outputs = self.forward(feature_map_list, mask)
-
-        # Calculate class confidence
-        pred_logits = outputs['pred_logits']  # Shape: [batch_size, num_queries, num_classes + 1]
-        class_confidences = F.softmax(pred_logits, dim=-1)  # Convert logits to probabilities
-        max_class_confidences, _ = class_confidences.max(dim=-1)  # Shape: [batch_size, num_queries]
-
-        # Calculate mask confidence
-        pred_masks = outputs['pred_masks']  # Shape: [batch_size, num_queries, H, W]
-        mask_confidences = pred_masks.mean(dim=[-2, -1])  # Average foreground probability
-
-        # Combine confidences
-        final_confidences = max_class_confidences * mask_confidences  # Element-wise multiplication
-
-        # Update outputs with final confidences
-        outputs['final_confidences'] = final_confidences
-
-        return outputs
