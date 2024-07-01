@@ -19,7 +19,15 @@ class ExtendedMask2Former(nn.Module):
         efpn (EFPN): The Enhanced Feature Pyramid Network model used as the backbone for feature and mask feature extraction.
         mask2former (Mask2Former): The Mask2Former model used for predicting object instances and their masks based on the features provided by EFPN.
     """
-    def __init__(self, num_classes, hidden_dim=256, num_queries=100, nheads=8, dim_feedforward=2048, dec_layers=1, mask_dim=256):
+    
+    
+    
+    
+    # TODO: JULY 2 
+    # TODO: Remember to skip all the images with more than 150 objects in the image, better to keep it low, maybe 100 even.
+    # TODO: Check as fast as possible what bounding box sizes are viable for each dataset 
+    # TODO: Make the checks for the bounding box data 
+    def __init__(self, num_classes, hidden_dim=256, num_queries=300, nheads=8, dim_feedforward=2048, dec_layers=1, mask_dim=256):
         super(ExtendedMask2Former, self).__init__()              
         self.efpn        = EFPN(hidden_dim, hidden_dim, num_classes)
         self.mask2former = Mask2Former(hidden_dim, num_classes, hidden_dim, num_queries, nheads, dim_feedforward, dec_layers, mask_dim)
@@ -113,7 +121,9 @@ class ExtendedMask2Former(nn.Module):
         """
         predicted_logits = predictions['pred_logits']
         predicted_masks = predictions['pred_masks']
-        predicted_bounding_boxes = predictions['bounding_box']    
+        predicted_bounding_boxes = predictions['bounding_box']
+        
+        # print("The predicted classes from the model have shape: {}, type:{} and values: {}".format(predicted_logits.size(), type(predicted_logits), predicted_logits))
                 
         total_class_loss = 0
         total_bbox_loss = 0
@@ -124,16 +134,22 @@ class ExtendedMask2Former(nn.Module):
             target_labels = target['labels']
             target_masks = target['masks']
             target_boxes = target['boxes']
-                        
+            
+            print(f"  Predicted logits shape: {predicted_logits.shape}")
+            print(f"  Target labels shape: {target_labels.shape}")
+            
             # Match the shape of predicted_logits with target_labels
             num_objects = target_labels.shape[0]
             pred_logits_resized = predicted_logits[i, :num_objects]
+            pred_logits_resized = pred_logits_resized[:len(target_labels)]
+            # print("The RESIZED predicted classes from the model have shape: {}, type:{} and values: {}".format(pred_logits_resized.size(), type(pred_logits_resized), pred_logits_resized))
+            
             
             # Decode the predicted bounding box offsets using the anchors
-            matched_gt_boxes, _ = match_anchors_to_gt_boxes(anchors, target_boxes)
-            encoded_gt_boxes = encode_bounding_boxes(matched_gt_boxes, anchors)
-            num_anchors = anchors.shape[0]
-            predicted_boxes_resized = self.decode_boxes(predicted_bounding_boxes[i].view(-1, 4)[:num_anchors], anchors)
+            # matched_gt_boxes, _ = match_anchors_to_gt_boxes(anchors, target_boxes)
+            # encoded_gt_boxes = encode_bounding_boxes(matched_gt_boxes, anchors)
+            # num_anchors = anchors.shape[0]
+            # predicted_boxes_resized = self.decode_boxes(predicted_bounding_boxes[i].view(-1, 4)[:num_anchors], anchors)
             
             # # Perform Hungarian matching to align predicted and ground truth masks
             # matched_indices = self.hungarian_matching(predicted_masks[i], target_masks)
@@ -151,7 +167,7 @@ class ExtendedMask2Former(nn.Module):
             
             
             total_class_loss += self.class_loss(pred_logits_resized, target_labels) * class_weight
-            total_bbox_loss  += self.bounding_box_loss(predicted_boxes_resized, encoded_gt_boxes) * bounding_box_weight
+            # total_bbox_loss  += self.bounding_box_loss(predicted_boxes_resized, encoded_gt_boxes) * bounding_box_weight
             # total_mask_loss += self.mask_loss(matched_predicted_masks, matched_ground_truth_masks) * mask_weight
             
             

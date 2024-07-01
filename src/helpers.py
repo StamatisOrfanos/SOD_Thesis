@@ -18,7 +18,7 @@ def train(model, train_loader, optimizer, device, anchors, num_classes):
     model.train()
     running_loss = 0.0
     all_metrics = {'precision': [], 'recall': [], 'AP': []}
-    for images, targets in train_loader:
+    for batch_idx, (images, targets) in enumerate(train_loader):
         images = torch.stack(images).to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
         optimizer.zero_grad()
@@ -27,6 +27,7 @@ def train(model, train_loader, optimizer, device, anchors, num_classes):
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
+        print(f"Batch {batch_idx}, Loss: {loss.item()}")
 
         precision, recall, ap, mAP = calculate_metrics(outputs, targets, num_classes)
         all_metrics['precision'].append(precision)
