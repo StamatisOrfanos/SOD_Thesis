@@ -50,7 +50,7 @@ def resize_images(image_path, target_size=(600, 600)):
             colors, counts = np.unique(img_np.ravel(), return_counts=True)
         most_common_color = colors[counts.argmax()]
 
-    img.thumbnail((target_size[0], target_size[1]), Image.ANTIALIAS)
+    img.thumbnail((target_size[0], target_size[1]), Image.ANTIALIAS) # type: ignore
 
     # Pad the image if it's not already the target size
     padded_img = ImageOps.pad(img, size=target_size, color=most_common_color)
@@ -169,7 +169,7 @@ def plot_images_and_annotations(base_dir):
                     polygon = eval("[" + annotation.split("[")[1])
 
                     # Draw bounding box and annotate class code
-                    rect = patches.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, linewidth=1, edgecolor='red', facecolor='none')
+                    rect = patches.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, linewidth=1, edgecolor='red', facecolor='none') # type: ignore
                     ax.add_patch(rect)
                     mask_polygon = [tuple(point) for point in polygon]
                     draw.polygon(mask_polygon, outline='lightblue', fill=None)
