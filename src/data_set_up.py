@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 import torch
 from torch.utils.data import Dataset
 import cv2
@@ -12,19 +13,21 @@ class SOD_Data(Dataset):
         - annotations_directory (string): Path of the directory containing the annotations
         - transform (pytorch.transform, optional): transform function for the images of the dataset
     """
-    def __init__(self, images_directory, annotations_directory, transform, target_size=300):
+    def __init__(self, images_directory, annotations_directory, transform, target_size=300, max_annotations=100):
         self.image_dir = images_directory
         self.annotation_dir = annotations_directory
         self.image_files = [f for f in os.listdir(images_directory) if f.endswith(('.jpg', '.png'))]
         self.transform = transform
         self.target_size = target_size
+        self.max_annotations = max_annotations
+        self.valid_image_files = self.filter_images_with_annotations(self.image_files)
 
     def __len__(self):
-        return len(self.image_files)
+        return len(self.valid_image_files)
 
     def __getitem__(self, idx):
         # Image handling
-        image_name = self.image_files[idx]
+        image_name = self.valid_image_files[idx]
         image_path = os.path.join(self.image_dir, image_name)
         image = Image.open(image_path).convert("RGB")
 
@@ -81,7 +84,59 @@ class SOD_Data(Dataset):
         
    
     def resize_mask(self, mask, target_size):
+        """
+        Parameters:
+            - mask (np.array): This is the binary mask that we create for the image
+            - target_size (tuple): Tuple of the image size we want to resize to
+        """
         mask_img = Image.fromarray(mask)
         mask_img = mask_img.resize(target_size, Image.NEAREST) # type: ignore
         return np.array(mask_img)
+    
 
+    def filter_images_with_annotations(self, image_files):
+        """
+        Parameters:
+            - image_files (list<File>): Initial list of images before the filtering
+        """
+        valid_image_files = []
+        for image_name in image_files:
+            annotation_name = image_name.replace('.jpg', '.txt').replace('.png', '.txt')
+            annotation_path = os.path.join(self.annotation_dir, annotation_name)
+            with open(annotation_path, 'r') as f:
+                annotation_lines = f.readlines()
+                if len(annotation_lines) <= self.max_annotations:
+                    valid_image_files.append(image_name)
+        return valid_image_files
+    
+    
+    def analyze_bounding_boxes(self):
+        """
+            Analyze the bounding box sizes and return statistics.
+        """
+        box_widths = []
+        box_heights = []
+        aspect_ratios = defaultdict(int)
+
+        for image_name in self.image_files:
+            annotation_name = image_name.replace('.jpg', '.txt').replace('.png', '.txt')
+            annotation_path = os.path.join(self.annotation_dir, annotation_name)
+            with open(annotation_path, 'r') as f:
+                for line in f:
+                    bbox_class_part = line.split("[")[0].split(",")
+                    x_min, y_min, x_max, y_max = map(int, bbox_class_part[0:4])
+                    width = x_max - x_min
+                    height = y_max - y_min
+                    box_widths.append(width)
+                    box_heights.append(height)
+                    aspect_ratios[width / height] += 1
+
+        return {
+            'box_widths': box_widths,
+            'box_heights': box_heights,
+            'aspect_ratios': aspect_ratios,
+            'mean_width': np.mean(box_widths),
+            'mean_height': np.mean(box_heights),
+            'std_width': np.std(box_widths),
+            'std_height': np.std(box_heights),
+        }
