@@ -27,8 +27,6 @@ def train(model, train_loader, optimizer, device, anchors, num_classes):
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
-        print(f"Batch {batch_idx}, Loss: {loss.item()}")
-
         precision, recall, ap, mAP = calculate_metrics(outputs, targets, num_classes)
         all_metrics['precision'].append(precision)
         all_metrics['recall'].append(recall)

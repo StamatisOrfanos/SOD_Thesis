@@ -4,7 +4,7 @@ from torch import nn
 from torch.nn import functional as F
 from models.efpn_backbone.efpn_model import EFPN
 from models.mask2former_detector.mask2former_model import Mask2Former
-from models.efpn_backbone.bounding_box import encode_bounding_boxes, match_anchors_to_gt_boxes
+from models.efpn_backbone.bounding_box import encode_bounding_boxes, match_anchors_to_ground_truth_boxes
 
 
 
@@ -85,7 +85,6 @@ class ExtendedMask2Former(nn.Module):
             - predicted_masks (torch.Tensor): Predicted masks of shape (num_queries, H, W).
             - ground_truth_masks (torch.Tensor): Ground truth masks of shape (num_objects, H, W).    
         """
-        # Perform Hungarian matching
         cost_matrix = self.compute_cost_matrix(predicted_masks, ground_truth_masks)    
         pred_indices, gt_indices = linear_sum_assignment(cost_matrix.cpu().detach().numpy())
         matched_indices = list(zip(pred_indices, gt_indices))
@@ -114,8 +113,6 @@ class ExtendedMask2Former(nn.Module):
         predicted_logits = predictions['pred_logits']
         predicted_masks = predictions['pred_masks']
         predicted_bounding_boxes = predictions['bounding_box']
-        
-        # print("The predicted classes from the model have shape: {}, type:{} and values: {}".format(predicted_logits.size(), type(predicted_logits), predicted_logits))
                 
         total_class_loss = 0
         total_bbox_loss = 0
@@ -126,22 +123,18 @@ class ExtendedMask2Former(nn.Module):
             target_labels = target['labels']
             target_masks = target['masks']
             target_boxes = target['boxes']
-            
-            print(f"  Predicted logits shape: {predicted_logits.shape}")
-            print(f"  Target labels shape: {target_labels.shape}")
-            
+                        
             # Match the shape of predicted_logits with target_labels
             num_objects = target_labels.shape[0]
             pred_logits_resized = predicted_logits[i, :num_objects]
             pred_logits_resized = pred_logits_resized[:len(target_labels)]
-            # print("The RESIZED predicted classes from the model have shape: {}, type:{} and values: {}".format(pred_logits_resized.size(), type(pred_logits_resized), pred_logits_resized))
             
             
             # Decode the predicted bounding box offsets using the anchors
-            # matched_gt_boxes, _ = match_anchors_to_gt_boxes(anchors, target_boxes)
-            # encoded_gt_boxes = encode_bounding_boxes(matched_gt_boxes, anchors)
-            # num_anchors = anchors.shape[0]
-            # predicted_boxes_resized = self.decode_boxes(predicted_bounding_boxes[i].view(-1, 4)[:num_anchors], anchors)
+            matched_gt_boxes, _ = match_anchors_to_ground_truth_boxes(anchors, target_boxes)
+            encoded_gt_boxes = encode_bounding_boxes(matched_gt_boxes, anchors)
+            num_anchors = anchors.shape[0]
+            predicted_boxes_resized = self.decode_boxes(predicted_bounding_boxes[i].view(-1, 4)[:num_anchors], anchors)
             
             # # Perform Hungarian matching to align predicted and ground truth masks
             # matched_indices = self.hungarian_matching(predicted_masks[i], target_masks)
@@ -159,7 +152,7 @@ class ExtendedMask2Former(nn.Module):
             
             
             total_class_loss += self.class_loss(pred_logits_resized, target_labels) * class_weight
-            # total_bbox_loss  += self.bounding_box_loss(predicted_boxes_resized, encoded_gt_boxes) * bounding_box_weight
+            total_bbox_loss  += self.bounding_box_loss(predicted_boxes_resized, encoded_gt_boxes) * bounding_box_weight
             # total_mask_loss += self.mask_loss(matched_predicted_masks, matched_ground_truth_masks) * mask_weight
             
             
