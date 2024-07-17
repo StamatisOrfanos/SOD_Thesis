@@ -6,12 +6,25 @@ progress achieved but also identifies the gaps that the current model aims to br
 (CNNs) served as the initial models for image analysis, primarily focused on image classification where the entire image is labeled as a single 
 object category. While CNNs had great performance in these tasks, their application to object detection in complex images revealed significant limitations. 
 
+This chapter begins with the foundational R-CNN model, which introduced the use of convolutional networks for robust object detection. The following sections 
+dive into Fast R-CNN and Faster R-CNN, which iteratively refined the integration of region proposal mechanisms with deep learning, significantly 
+enhancing detection efficiency and speed. The exploration continues with Mask R-CNN and Feature Pyramid Networks, which extended capabilities to 
+instance segmentation and improved feature representation at multiple scales, respectively. 
+
+Further advancements are discussed through the Extended Feature Pyramid Network, which brought additional refinements in multi-scale feature integration. 
+The latter sections of the chapter explore cutting-edge developments like the Vision Transformer and Masked-Attention Mask Transformer, which incorporate 
+transformer architectures to push the boundaries of object detection and segmentation. 
 
 
 \section{Region-based Convolution Neural Networks}
 
+The R-CNN family of models represents a fundamental shift in object detection, introducing deep learning to generate high-quality region proposals 
+that are then classified by a convolutional neural network. This evolutionary path not only streamlined the detection pipeline but also improved the 
+scalability and applicability of these models in real-world scenarios, where speed and accuracy are crucial. The successive refinements from R-CNN 
+through Mask R-CNN highlight a trajectory of continuous improvement, with  each iteration bringing more sophisticated integration of features and functionalities.
 
 
+\newpage
 \subsection{Region-based Convolution Neural Networks}
 
 The need for more sophisticated solutions that could accurately identify and locate multiple objects within images led to the development of 
@@ -26,7 +39,7 @@ as region proposal. Each region is then cropped and resized to a fixed size befo
     \label{fig:rcnn}
 \end{figure}
 
-As we can see in the \ref{fig:rcnn} the R-CNN consists of 3 main modules. The first module generates 2,000 region proposals using the Selective Search 
+As presented in the \ref{fig:rcnn} the R-CNN consists of 3 main modules. The first module generates 2,000 region proposals using the Selective Search 
 algorithm. After being resized to a fixed pre-defined size, the second module extracts a feature vector of length 4,096 from each region proposal.
 The third module uses a pre-trained SVM algorithm to classify the region proposal to either the background or one of the object classes.
 
@@ -40,7 +53,7 @@ run R-CNN in real-time.
 
 Fast R-CNN improved upon the original R-CNN's efficiency, where instead of cropping and resizing each region separately, the entire image is passed through the 
 CNN to extract features. Regions of interest (ROIs) are then selected from the feature map using the proposed bounding boxes from the selective search. 
-These ROIs are then pooled into a fixed-size feature map and passed through fully connected layers for classification and bounding box regression as we can see 
+These ROIs are then pooled into a fixed-size feature map and passed through fully connected layers for classification and bounding box regression 
 in the figure \ref{fig:fast-rcnn}.
 
 \begin{figure}[h!]
@@ -53,8 +66,9 @@ in the figure \ref{fig:fast-rcnn}.
 In this model a proposed a new layer called ROI Pooling that extracts equal-length feature vectors from all proposals in the same image, where 
 compared to R-CNN, which has multiple stages, Faster R-CNN builds a network that has only a single stage. 
 
+\newpage
 The RoI pooling layer uses max pooling to convert the features inside any valid region of interest into a small feature map with a fixed spatial 
-extent of \(H × W\) , where $H$ and $W$ are layer hyper-parameters that are independent of any particular RoI. In this paper, an RoI is a rectangular window 
+extent of \(H \times W\) , where $H$ and $W$ are layer hyper-parameters that are independent of any particular RoI. In this paper, an RoI is a rectangular window 
 into a convolution feature map. Each RoI is defined by a four-tuple \((r, c, h, w)\) that specifies its top-left corner \((r, c)\) and its height 
 and width \((h, w)\). Also one of the great inclusions of this model was the implementation of multi-task loss:
 
@@ -75,11 +89,11 @@ The overall loss \(L(p, u, t', v)\) is then a combination of classification and 
 L(p, u, t', v) = L_{cls}(p, u) + \lambda [u \geq 1] L_{loc}(t', v)
 \]
 
-
+\newpage
 \subsection{Faster Region-based Convolution Neural Networks}
 
-While Fast R-CNN improved upon its predecessors in terms of both speed and accuracy, the Faster R-CNN architecture emerged as an even more refined version. 
-Fast R-CNN effectively addressed the inefficiencies of previous models by integrating a region of interest (RoI)[4] pooling layer to connect convolutional 
+While Fast R-CNN improved upon its predecessors in terms of both speed and accuracy, the Faster R-CNN[4] architecture emerged as an even more refined version. 
+Fast R-CNN effectively addressed the inefficiencies of previous models by integrating a region of interest (RoI) pooling layer to connect convolutional 
 feature extraction and region proposal tasks. However, it still relied on external region proposal algorithms, which remained a bottleneck in terms of 
 computational efficiency and speed. 
 
@@ -90,27 +104,103 @@ computational efficiency and speed.
     \label{fig:faster-rcnn}
 \end{figure}
 
-Faster R-CNN resolved this by introducing a novel component, the Region Proposal Network (RPN)[5], which is a fully convolutional network that generates proposals 
-with various scales and aspect ratios. The RPN implements the terminology of neural network with attention to tell the object detection where to look, 
-where rather than using pyramids of images or pyramids of filters, this paper introduced the concept of Anchor Boxes. 
+Faster R-CNN resolved this by introducing a novel component, the Region Proposal Network (RPN)[5]. A Region Proposal Network takes an image
+(of any size) as input and outputs a set of rectangular object proposals, each with an objectness score. This process is modeled with a fully 
+convolutional network, because the ultimate goal is to share its computation with a Fast R-CNN object detection network, as it is assumed that 
+both nets share a common set of convolutional layers, as seen in the Figure \ref{fig:faster-rcnn}.
+
+
+To generate region proposals, a small network slides over the convolutional feature map output by the last shared convolutional layer. This small
+network takes as input an $n \times n$ spatial window of the input convolutional feature map. Each sliding window is mapped to a lower-dimensional feature.
+This feature is fed into two sibling fully-connected layers—a box-regression layer (reg layer) and a box-classification layer (cls layer). This mini-network 
+is illustrated at a single position in the Figure \ref{fig:anchors}. Also since the mini-network operates in a sliding-window fashion, the 
+fully-connected layers are shared across all spatial locations. 
+
+This architecture is naturally implemented with an n×n convolutional layer followed by two sibling $1 \times 1$ convolutional layers. 
+
+\newpage
+At each sliding-window 
+location, there is simultaneously a prediction of multiple region proposals, where the number of maximum possible proposals for each location is
+denoted as k. The k proposals are parameterized relative to k reference boxes, which are called  anchors. An anchor is centered at the sliding window
+in question, and is associated with a scale and aspect ratio as seen again in Figure \ref{fig:anchors}. By default 3 scales and 3 aspect ratios are used, 
+yielding k = 9 anchors at each sliding position. For a convolutional feature map of a size $W \times H$, there are $W \times H \times k$ anchors in total.
 
 \begin{figure}
     \centering
     \includegraphics[scale=0.1]{Figures/anchors.jpeg}
-    \caption{Anchor Boxes Generator}
+    \caption{Region Proposal Network}
     \label{fig:anchors}
 \end{figure}
-
-\newpage
-An anchor box is a reference box of a specific scale and aspect ratio. With multiple reference anchor boxes, then multiple scales and aspect ratios exist 
-for the single region. This can be thought of as a pyramid of reference anchor boxes. 
-
 
 
 \subsection{Masked Region-based Convolution Neural Networks}
 
+Mask R-CNN builds on the ideas and successes of the Faster R-CNN model, which predicts both a class label and a bounding-box offset for each candidate object. 
+To these, Mask R-CNN adds a third branch specifically designed to output the object mask, providing a straightforward and logical extension to the 
+existing framework. This addition allows Mask R-CNN to capture the precise spatial layout of objects, a task that necessitates extracting significantly 
+finer detail than what is required for classifying objects or predicting bounding boxes alone.
+
+Mask R-CNN adopts the same two-stage procedure as Faster R-CNN, with an identical first stage the RPN. In the second stage, in parallel to predicting 
+the class and box offset, Mask R-CNN also outputs a binary mask for each RoI. This is in contrast to most recent systems, where classification 
+depends on mask predictions. This approach follows the spirit of Fast R-CNN that applies bounding-box classification and regression in parallel.
+
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.5]{Figures/mask-r-cnn.png}
+    \caption{Mask Region Convolution Neural Network Architecture}
+    \label{fig:mask-r-cnn}
+\end{figure}
+
+\newpage
+A mask encodes an input object’s spatial layout. Thus, unlike class labels or box offsets that are inevitably collapsed into short output vectors by
+fully-connected layers, extracting the spatial structure of masks can be addressed naturally by the pixel-to-pixel correspondence provided by convolutions.
+Specifically, an $m \times m$ mask is predicted from each RoI using an FCN. This allows each layer in the mask branch to maintain the explicit $m \times m$ object 
+spatial layout without collapsing it into a vector representation that lacks spatial dimensions. Unlike previous methods that resort to fully-connected layers 
+for mask prediction, this fully convolutional representation requires fewer parameters, and is more accurate as demonstrated by experiments.
+
+This pixel-to-pixel behavior requires our RoI features, which themselves are small feature maps, to be well aligned to faithfully preserve the explicit 
+per-pixel spatial correspondence. This motivated us to develop the following RoIAlign layer that plays a key role in mask prediction.
+
+RoIPool is a standard operation for extracting a small feature map like \(7 \times 7\) from each RoI. RoIPool first quantizes a floating-number RoI to the 
+discrete granularity of the feature map, this quantized RoI is then subdivided into spatial bins  which are themselves quantized, and finally feature 
+values covered by each bin are aggregated usually by max pooling. 
+
+Quantization, such as that performed on a continuous coordinate $x$ by calculating \(\frac{x}{16}\), where 16 represents the feature map stride accompanied
+by the rounding. Similarly, this quantization process occurs when coordinates are divided into discrete bins, for example, into a $7x7$ grid. However, these 
+quantization steps can lead to slight misalignments between the Region of Interest (RoI) and the features extracted from it, potentially affecting the accuracy 
+of the model.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.35]{Figures/mask-r-cnn-roi-align.png}
+    \caption{Mask Region Of Interest}
+    \label{fig:roi-align}
+\end{figure}
+
+While this may not impact classification, which is robust to small translations, it has a large negative effect on predicting pixel-accurate masks.
+To address this, a RoIAlign layer is proposed that removes the harsh quantization of RoIPool, properly aligning the extracted features with the input. 
+A bilinear interpolation is used to compute the exact values of the input features at four regularly sampled locations in each RoI bin, and aggregate 
+the result.
+
+\newpage
+Furthermore once again this model utilizes a multi-task loss in order to take into consideration all the outputs of the model.
+\[
+L = L_{cls} + L_{box} + L_{mask} 
+\]
+ 
+The mask branch has a $K \times m^2$-dimensional output for each RoI, which encodes K binary masks of resolution m × m, one for each of the K classes.
+To this a per-pixel sigmoid is applied, and define Lmask as the average binary cross-entropy loss. For an RoI associated with ground-truth class k, 
+$L_{mask}$ is only defined on the k-th mask. This definition of $L_{mask}$ allows the network to generate masks for every class without competition 
+among classes, since on the dedicated classification branch to predict the class label used to select the output mask. This decouples mask and 
+class prediction. This is different from common practice when applying FCNs to semantic segmentation, which typically uses a per-pixel softmax and a 
+multinomial cross-entropy loss. In that case, masks across classes compete; in our case, with a per-pixel sigmoid and a binary
+loss, they do not.
+
 
 \section{Feature Pyramid Networks}
+
+
 
 
 \subsection{Feature Pyramid Network}
