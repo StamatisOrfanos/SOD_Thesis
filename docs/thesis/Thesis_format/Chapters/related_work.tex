@@ -1,22 +1,38 @@
 \chapter{Related Work}
 
-This chapter highlights the foundational theories and recent advancements in the fields of remote sensing and computer vision, particularly in 
-small object detection. By examining previous research that addresses similar challenges, this section not only underscores the technological 
-progress achieved but also identifies the gaps that the current model aims to bridge. In the field of computer vision, Convolutional Neural Networks 
-(CNNs) served as the initial models for image analysis, primarily focused on image classification where the entire image is labeled as a single 
-object category. While CNNs had great performance in these tasks, their application to object detection in complex images revealed significant limitations. 
+This chapter highlights the theories and recent advancements in the fields of remote sensing and computer vision, particularly in small object detection.
+By examining previous research that addresses those challenges, this section not only underscores the technological progress achieved but also identifies 
+the gaps that the current model aims to bridge. In the field of computer vision, Convolutional Neural Networks (CNNs) served as the initial models for 
+image analysis, primarily focused on image classification where the entire image is labeled as a single object category. While CNNs had great performance 
+in these tasks, their application to object detection in complex images revealed significant limitations.
+
+Object detection models can be broadly categorized by annotation method into anchor-based and anchor-free approaches, and by detection method into dense 
+prediction (single-stage) and sparse prediction (multi-stage) techniques. This categorization helps in understanding the diverse strategies employed in 
+detecting objects across different scenarios.
 
 This chapter begins with the foundational R-CNN model, which introduced the use of convolutional networks for robust object detection. The following sections 
-dive into Fast R-CNN and Faster R-CNN, which iteratively refined the integration of region proposal mechanisms with deep learning, significantly 
-enhancing detection efficiency and speed. The exploration continues with Mask R-CNN and Feature Pyramid Networks, which extended capabilities to 
-instance segmentation and improved feature representation at multiple scales, respectively. 
+dive into Fast R-CNN and Faster R-CNN, which iteratively refined the integration of region proposal mechanisms with deep learning, significantly enhancing 
+detection efficiency and speed. The exploration continues with Mask R-CNN and Feature Pyramid Networks, which extended capabilities to instance segmentation 
+and improved feature representation at multiple scales, respectively.
 
-Further advancements are discussed through the Extended Feature Pyramid Network, which brought additional refinements in multi-scale feature integration. 
+Single-stage detection models, or dense prediction models, such as YOLO (You Only Look Once) and SSD (Single Shot MultiBox Detector), streamline the detection 
+process by eliminating the need for a separate region proposal step. These models directly predict object classes and bounding box coordinates from full 
+images in one evaluation, optimizing for speed and efficiency.
+
 The latter sections of the chapter explore cutting-edge developments like the Vision Transformer and Masked-Attention Mask Transformer, which incorporate 
-transformer architectures to push the boundaries of object detection and segmentation. 
+transformer architectures to push the boundaries of object detection and segmentation.
 
 
-\section{Region-based Convolution Neural Networks}
+
+\section{Multi-stage Object Detection Models}
+
+Multi-stage object detection models involve a more complex process that typically includes distinct phases for generating region proposals and then classifying 
+these proposals into specific object categories. These models first isolate potential object locations before applying sophisticated classification and 
+bounding box regression techniques. This separation allows for more precise detections and higher overall accuracy, making multi-stage models adept at 
+handling complex image scenarios with multiple objects and varying scales. The trade-off, however, is usually slower processing speeds compared to 
+single-stage detectors.
+
+\subsection{Region-based Convolution Neural Networks}
 
 The R-CNN family of models represents a fundamental shift in object detection, introducing deep learning to generate high-quality region proposals 
 that are then classified by a convolutional neural network. This evolutionary path not only streamlined the detection pipeline but also improved the 
@@ -25,7 +41,7 @@ through Mask R-CNN highlight a trajectory of continuous improvement, with  each 
 
 
 \newpage
-\subsection{Region-based Convolution Neural Networks}
+\subsubsection{Region-based Convolution Neural Networks}
 
 The need for more sophisticated solutions that could accurately identify and locate multiple objects within images led to the development of 
 Region-based Convolutional Networks[3] (R-CNNs). Starting with the base Region-based Convolution Neural Network This approach combines region proposal 
@@ -49,7 +65,7 @@ trained end-to-end. Also the R-CNN depends on the Selective Search algorithm for
 customized to the detection problem. Lastly each region proposal is fed independently to the CNN for feature extraction, which makes it impossible to 
 run R-CNN in real-time.
 
-\subsection{Fast Region-based Convolution Neural Networks}
+\subsubsection{Fast Region-based Convolution Neural Networks}
 
 Fast R-CNN improved upon the original R-CNN's efficiency, where instead of cropping and resizing each region separately, the entire image is passed through the 
 CNN to extract features. Regions of interest (ROIs) are then selected from the feature map using the proposed bounding boxes from the selective search. 
@@ -90,7 +106,7 @@ L(p, u, t', v) = L_{cls}(p, u) + \lambda [u \geq 1] L_{loc}(t', v)
 \]
 
 \newpage
-\subsection{Faster Region-based Convolution Neural Networks}
+\subsubsection{Faster Region-based Convolution Neural Networks}
 
 While Fast R-CNN improved upon its predecessors in terms of both speed and accuracy, the Faster R-CNN[4] architecture emerged as an even more refined version. 
 Fast R-CNN effectively addressed the inefficiencies of previous models by integrating a region of interest (RoI) pooling layer to connect convolutional 
@@ -133,7 +149,7 @@ yielding k = 9 anchors at each sliding position. For a convolutional feature map
 \end{figure}
 
 
-\subsection{Masked Region-based Convolution Neural Networks}
+\subsubsection{Masked Region-based Convolution Neural Networks}
 
 Mask R-CNN builds on the ideas and successes of the Faster R-CNN model, which predicts both a class label and a bounding-box offset for each candidate object. 
 To these, Mask R-CNN adds a third branch specifically designed to output the object mask, providing a straightforward and logical extension to the 
@@ -198,21 +214,85 @@ multinomial cross-entropy loss. In that case, masks across classes compete; in o
 loss, they do not.
 
 
-\section{Feature Pyramid Networks}
+\subsection{Feature Pyramid Networks}
+
+The concept of Feature Pyramid Networks (FPNs) was a significant advancement in object detection and segmentation, by leveraging the inherent multi-scale, 
+pyramidal hierarchy of deep convolutional networks. The first subsection details the basic Feature Pyramid Network, an architecture that efficiently creates 
+a pyramid of features at multiple levels, enabling the detection of objects at various scales with improved accuracy. This structure uses a top-down approach 
+with lateral connections to combine low-resolution, semantically strong features with high-resolution, semantically weaker features, enhancing the network’s 
+ability to detect objects across different scales. The subsequent subsection explores the Extended Feature Pyramid Network, which builds upon the original FPN 
+by introducing enhancements that further refine feature integration and improve detection performance, particularly in challenging scenarios with complex object 
+orientations and scales.
 
 
+\subsubsection{Feature Pyramid Network}
+
+With Feature Pyramid Networks the objective is to harness the pyramidal feature hierarchy of a Convolutional Networks, which inherently contains semantic 
+information from low to high levels, to construct a feature pyramid that maintains high-level semantics throughout. The method processes a single-scale 
+image of arbitrary size and produces proportionally sized feature maps at multiple levels, utilizing a fully convolutional approach. This procedure is 
+compatible with various backbone convolutional architectures, and this paper demonstrates results using ResNets. The construction of the pyramid incorporates 
+a bottom-up pathway, a top-down pathway, and lateral connections, which are detailed below and seen in the Figure \ref{fig:fpn}.
+
+The bottom-up pathway is the feed forward computation of the ConvNet backbone, which computes a feature hierarchy consisting of feature maps at several scales 
+with a scaling step of 2. There are often many layers producing output maps of the same size and these layers are in the same network stage. For the 
+feature pyramid, one pyramid level for each stage is defined. The output of the last layer of each stage is chosen as the reference set of feature maps, 
+which will be enriched to create the pyramid. This choice is logical because the deepest layer of each stage is expected to have the strongest features.
+
+Specifically, for ResNets, the feature activations output by the last residual block of each stage are utilized. These outputs are denoted as ${C2, C3, C4, C5}$ 
+corresponding to the outputs of conv2, conv3, conv4, and conv5, respectively. It is important to note that these have strides of ${4, 8, 16, 32}$ pixels with 
+respect to the input image. The conv1 output is not included in the pyramid due to its large memory footprint.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.35]{Figures/fpn-base.png}
+    \caption{Feature Pyramid Network}
+    \label{fig:fpn}
+\end{figure}
+
+The top-down pathway hallucinates higher resolution features by up-sampling spatially coarser, but semantically stronger, feature maps from higher pyramid levels. 
+These features are then enhanced with features from the bottom-up pathway via lateral connections. Each lateral connection merges feature maps of the same 
+spatial size from the bottom-up pathway and the top-down pathway. The bottom-up feature map is of lower-level semantics, but its activations are more accurately 
+localized as it was sub-sampled fewer times. With a coarser-resolution feature map, the spatial resolution is up-sampled by a factor of 2. The up-sampled map is 
+then merged with the corresponding bottom-up map (which undergoes a 1×1 convolutional layer to reduce channel dimensions) by element-wise addition 
+as seen in the figure \ref{fig:fpn-top}. This process is iterated until the finest resolution map is generated. To start the iteration, simply attach a 
+1×1 convolutional layer on $C5$ to  produce the coarsest resolution map. 
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.35]{Figures/fpn-top-down.jpg}
+    \caption{}
+    \label{fig:fpn-top}
+\end{figure}
 
 
-\subsection{Feature Pyramid Network}
+Finally a 3×3 convolution is added on each merged map to generate the final feature map, which is to reduce the aliasing effect of up-sampling. 
+This final set of feature maps is called ${P2, P3, P4, P5}$, corresponding to ${C2, C3, C4, C5}$ that are respectively of the same spatial sizes.
+Since all levels of the pyramid use shared classifiers/regressors as in a traditional featurized image pyramid, a fixed feature dimension 
+or numbers of channels is set, with the value being denoted as $d$ in all the feature maps. With $d = 256$ in this paper and thus all extra convolutional 
+layers have 256-channel outputs. Simplicity is central to this design and it has been proven that this model is robust to many design choices. We have 
+experimented with more sophisticated  blocks and observed marginally better results. Designing better connection modules is not the focus of this paper, 
+so we opt for the simple design described above.
 
-
-\subsection{Extended Feature Pyramid Network}
-
-
-
-\section{Vision Transformers}
 
 \subsection{Vision Transformers}
 
 
-\subsection{Masked-Attention Mask Vision Transformer}
+
+
+
+
+
+
+
+\section{Single-stage Object Detection Models}
+
+Single-stage object detection models represent a streamlined approach to identifying and localizing objects within an image. Unlike multi-stage models, 
+single-stage models, such as YOLO (You Only Look Once) and SSD (Single Shot MultiBox Detector), operate in a direct manner by predicting object classes and 
+bounding box coordinates in a single forward pass through the network. This methodology not only simplifies the detection pipeline but also enhances the 
+speed of detection, making single-stage models particularly well-suited for real-time applications. However, this increase in speed can sometimes come at 
+the cost of lower accuracy, especially in detecting small or overlapping objects.
+
+\subsection{You Only Look Once}
+
+\subsection{Single Shot MultiBox Detector}
+
