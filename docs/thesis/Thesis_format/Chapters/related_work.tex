@@ -40,7 +40,6 @@ scalability and applicability of these models in real-world scenarios, where spe
 through Mask R-CNN highlight a trajectory of continuous improvement, with  each iteration bringing more sophisticated integration of features and functionalities.
 
 
-\newpage
 \subsubsection{Region-based Convolution Neural Networks}
 
 The need for more sophisticated solutions that could accurately identify and locate multiple objects within images led to the development of 
@@ -65,6 +64,7 @@ trained end-to-end. Also the R-CNN depends on the Selective Search algorithm for
 customized to the detection problem. Lastly each region proposal is fed independently to the CNN for feature extraction, which makes it impossible to 
 run R-CNN in real-time.
 
+\newpage
 \subsubsection{Fast Region-based Convolution Neural Networks}
 
 Fast R-CNN improved upon the original R-CNN's efficiency, where instead of cropping and resizing each region separately, the entire image is passed through the 
@@ -82,7 +82,6 @@ in the figure \ref{fig:fast-rcnn}.
 In this model a proposed a new layer called ROI Pooling that extracts equal-length feature vectors from all proposals in the same image, where 
 compared to R-CNN, which has multiple stages, Faster R-CNN builds a network that has only a single stage. 
 
-\newpage
 The RoI pooling layer uses max pooling to convert the features inside any valid region of interest into a small feature map with a fixed spatial 
 extent of \(H \times W\) , where $H$ and $W$ are layer hyper-parameters that are independent of any particular RoI. In this paper, an RoI is a rectangular window 
 into a convolution feature map. Each RoI is defined by a four-tuple \((r, c, h, w)\) that specifies its top-left corner \((r, c)\) and its height 
@@ -189,7 +188,7 @@ of the model.
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.35]{Figures/mask-r-cnn-roi-align.png}
+    \includegraphics[scale=0.30]{Figures/mask-r-cnn-roi-align.png}
     \caption{Mask Region Of Interest}
     \label{fig:roi-align}
 \end{figure}
@@ -199,7 +198,6 @@ To address this, a RoIAlign layer is proposed that removes the harsh quantizatio
 A bilinear interpolation is used to compute the exact values of the input features at four regularly sampled locations in each RoI bin, and aggregate 
 the result.
 
-\newpage
 Furthermore once again this model utilizes a multi-task loss in order to take into consideration all the outputs of the model.
 \[
 L = L_{cls} + L_{box} + L_{mask} 
@@ -227,7 +225,7 @@ orientations and scales.
 
 \subsubsection{Feature Pyramid Network}
 
-With Feature Pyramid Networks the objective is to harness the pyramidal feature hierarchy of a Convolutional Networks, which inherently contains semantic 
+With Feature Pyramid Networks[] the objective is to harness the pyramidal feature hierarchy of a Convolutional Networks, which inherently contains semantic 
 information from low to high levels, to construct a feature pyramid that maintains high-level semantics throughout. The method processes a single-scale 
 image of arbitrary size and produces proportionally sized feature maps at multiple levels, utilizing a fully convolutional approach. This procedure is 
 compatible with various backbone convolutional architectures, and this paper demonstrates results using ResNets. The construction of the pyramid incorporates 
@@ -244,7 +242,7 @@ respect to the input image. The conv1 output is not included in the pyramid due 
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.35]{Figures/fpn-base.png}
+    \includegraphics[scale=0.5]{Figures/fpn-base.png}
     \caption{Feature Pyramid Network}
     \label{fig:fpn}
 \end{figure}
@@ -259,8 +257,8 @@ as seen in the figure \ref{fig:fpn-top}. This process is iterated until the fine
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.35]{Figures/fpn-top-down.jpg}
-    \caption{}
+    \includegraphics[scale=0.5]{Figures/fpn-top-down.jpg}
+    \caption{Feature Pyramid Network Top-Down path}
     \label{fig:fpn-top}
 \end{figure}
 
@@ -276,14 +274,79 @@ so we opt for the simple design described above.
 
 \subsection{Vision Transformers}
 
+The Vision Transformer (ViT)[] model represents a significant shift in the approach to image recognition, applying architectures originally developed for 
+natural language processing (NLP) to computer vision tasks. The ViT moves away from traditional convolutional neural networks (CNNs) to embrace transformers, 
+a model type that leverages self-attention mechanisms originally designed for text data. Like NLP systems, ViT treats an image as a sequence of 
+fixed-size patches, akin to words in a sentence, and processes these patches through a series of transformer layers to capture complex inter-patch 
+relationships and contextual information.
+
+In a transformer model for NLP, the encoder processes the input text by mapping it into a high-dimensional space to capture contextual relationships, while the 
+decoder generates the output text sequentially, using the encoder's context-rich representations along with its own input to predict the next word or 
+sequence, thereby facilitating tasks like translation, summarization, and text generation. The architecture of a transformer model can be seen in the 
+figure \ref{fig:tr-base}, where the left part is the transformer encoder and the right part is the decoder.
+
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.2]{Figures/transformer_basis.jpg}
+    \caption{NLP Transformer Architecture}
+    \label{fig:tr-base}
+\end{figure}
+
+\newpage
+On the other hand, the ViT encoder processes the input image, which is divided into patches and linearly embedded. The encoder's self-attention mechanism 
+allows the model to consider each patch in the context of others, capturing the global context of the image. This is crucial for tasks like image 
+classification or object detection, where understanding the entire image context is important. The encoder is responsible for understanding the content and 
+context of the image, learning to identify features and patterns relevant to the task at hand. Furthermore ViTs typically do not use a decoder because their 
+primary tasks do not involve generating sequential data as is the case in machine translation or text generation in NLP. Instead, the output of the ViT 
+encoder is directly connected to task-specific heads like linear layers for classification or additional layers for object detection that interpret the 
+encoder's representations to make predictions.
+
+In the pre-transformer encoder stage of processing an image, the initial input, typically of size \(H \times W \times D\) (height, width, depth), 
+is segmented into \(N\) non-overlapping patches. Each patch has dimensions \(P \times P \times D\) and is extracted in a grid-like pattern across 
+the image. These patches are then flattened and undergo a linear projection to transform them into a higher-dimensional space, with each patch represented 
+as a one-dimensional array. To ensure that spatial information is not lost during this transformation, positional encodings of the same dimension, 
+\(D'\), are added to these patch embeddings. This results in each patch embedding maintaining a sequence of vectors, each with dimension \(D'\). 
+The linear projection itself is facilitated by a learnable matrix that the flattened patches are multiplied with, culminating in an array of size 
+\(N \times D'\), where each row represents the embedded representation of a patch. This structured approach allows the model to retain a detailed 
+understanding of the original image’s spatial layout as it processes through the transformer encoder.
+
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.45]{Figures/vision-transformer.jpg}
+    \caption{Vision Transformer Architecture}
+    \label{fig:tr-vit}
+\end{figure}
+
+
+The transformer encoder in image processing is composed of several transformer blocks arranged in sequence, each designed to refine the representation of image 
+patches through a series of specialized sub-components. Each block starts with Layer Normalization, which is applied before self-attention and MLP operations 
+to stabilize the training process and facilitate model convergence. Unlike batch normalization, layer normalization is preferred in transformers as they handle 
+sequential data, ensuring that the size of the data remains at \(N \times D'\).
+
+Following normalization, the Multi-Head Self-Attention (MHA) mechanism is used, accepting queries, keys, and values as inputs. This allows 
+the model to simultaneously focus on different parts of the image, enhancing the contextual understanding of the image by computing attention scores and 
+updating embeddings without altering the initial data size of \(N \times D'\).
+
+Residual Connections are employed after MHA and MLP within each transformer block, where the input to the block is added back to its output. 
+This practice helps preserve information across the layers, combating the vanishing gradient problem and facilitating deeper model architectures by 
+improving gradient flow.
+
+Additionally, each block contains an MLP (Multi-Layer Perceptron) segment, which includes fully connected layers featuring a GELU activation function 
+and often incorporates dropout to prevent overfitting. This component further processes the output of the self-attention mechanism before it passes 
+through another round of residual connections.The cumulative effect of these operations in each transformer block is to continuously refine the embeddings, 
+with the input and output of each block being arrays of size \(N \times D'\), effectively updating the representation at each step of the sequence.
+
+
+In the post-transformer encoder phase of image processing, several critical modules refine the processed features for specific tasks such as object detection 
+and classification. The MLP Head is employed immediately after the transformer encoder to project the encoded features into a lower-dimensional space that 
+is more suitable for object detection tasks. The dimensionality of the MLP head's output varies depending on its architecture and the specifics of the object 
+detection task being performed, adapting the complex, high-dimensional data into a form that can be effectively used for the subsequent steps.
 
 
 
-
-
-
-
-
+\newpage
 \section{Single-stage Object Detection Models}
 
 Single-stage object detection models represent a streamlined approach to identifying and localizing objects within an image. Unlike multi-stage models, 
