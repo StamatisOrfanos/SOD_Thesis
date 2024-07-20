@@ -1,3 +1,90 @@
 \chapter{Methodology}
+
+In our exploration of various object detection architectures, it became clear that single-stage detector models, while notable for their efficiency, did not 
+meet the accuracy demands required for small object detection. Given the challenges associated with detecting smaller objects, we considered multi-stage models
+as a more viable solution, because these models are known for their enhanced precision and adeptness at handling intricate detection tasks. Through our research, 
+a potential model combination emerged as a great candidate. The Feature Pyramid Network family of models excels in multi-scale representation essential for 
+resolving objects of varying sizes, while the Vision Transformers family provides an exceptional ability to grasp global contextual dependencies within images
+through the attention modules. 
+
+By integrating these models, as a backbone and a detector we found that we can leverage the complementary strengths of both frameworks, thus creating a 
+robust multi-stage model specifically made to achieve the best possible results in small object detection.
+
 \section{Architecture}
-In this chapter, we demonstrate the overall design that is based on the two-stage model PANet, the framework is illustrated in Figure 18. In our design, we add a Split Stage between the backbone and the “top-down” path of the neck. The purpose of this stage is to split the feature maps of the equivalent levels of the backbone. This is achieved with a 1x1 Convolution layer which reduces the channel dimension of each level to 256-d, which means that we will have 2 × 128-d feature maps for each level. ...
+
+Choosing a multi-stage model for small object detection does not necessarily imply that the model will be heavy in terms of trainable parameters or challenging 
+to train. Our approach strategically combines the two types of models in order to harness their individual strengths while maintaining manageable complexity 
+and training efficiency. This integration ensures that our multi-stage detector not only achieves an elevated accuracy but also remains practical in terms of 
+computational resources and training time, making it a viable solution for real-world applications where both performance and efficiency are critical.
+
+In this section we are going to describe and explain the model we developed in detail with the aim of successfully tackling the Small Object Detection challenge. 
+The model we created is named Extended Masked-Attention Mask Transformer, a name based on the models we decided to integrate being the Extended Feature Pyramid 
+Network[] and the Masked-Attention Mask Transformer (MAMT)[].
+
+A very interesting finding in the EFPN article is that over the past years, rapid development of deep learning has boosted the popularity of 
+CNN-based detectors and the improved overall accuracy and efficiency. Unfortunately they still perform poorly when detecting small objects with a few pixels. 
+Since CNN uses pooling layers repeatedly to extract advanced semantics, the pixels of small objects can be filtered out during the down-sampling process.
+
+\newpage
+Utilization of low-level features is one way to pick up information about small objects. The FPN is the first method to enhance features 
+by fusing features from different levels and constructing feature pyramids, where upper feature maps are responsible for larger object detection, and lower 
+feature maps are responsible for smaller object detection. Despite FPN's improvement multi-scale detection performance, the heuristic mapping mechanism 
+between pyramid level and proposal size in FPN detectors may confuse small object detection, since small-sized objects must share the same feature map with 
+medium-sized objects and some large-sized objects.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.55]{Figures/efpn-sod-mapping.jpg}
+    \caption{Small Object Detection Mapping}
+    \label{fig:efpn-sod-mapping}
+\end{figure}
+
+
+\newpage
+\subsection{Extended Feature Pyramid Network}
+
+The implementation of the Extended Feature Pyramid follows closely an FPN-like framework embedded with a feature Super Resolution (SR)[] module. 
+This pipeline directly generates high resolution features from low-resolution images to support small object detection, while stays in low computational 
+cost. The top four pyramid layers are constructed by top-down pathways for medium and large object detection. 
+
+The bottom extension of the EFPN  contains the very important FTT module, the top-down pathway and the purple pyramid layer in \ref{fig:efpn}, that aims to 
+capture regional details for small objects. More specifically, in the extension, the third and fourth pyramid layers of EFPN which are denoted by green 
+and yellow layers respectively in \ref{fig:efpn}, are mixed up in the feature super resolution module, the FTT with the aim of producing the intermediate 
+feature $P'_{3}$ with selected regional information, which is denoted by a blue diamond in Figure \ref{fig:efpn}. Finally the top-down pathway merges $P'_{3}$ 
+with a tailor-made high-resolution CNN feature map $C'2$, producing the final extended pyramid layer $P'2$.
+
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.15]{Figures/efpn.jpg}
+    \caption{Extended Feature Pyramid Network}
+    \label{fig:efpn}
+\end{figure}
+
+The current FTT output as seen in the figure  synthesizes strong semantics in upper low-resolution features and critical local details in lower high-resolution 
+reference features, but discards disturbing noises in reference. As shown in Figure \ref{fig:ftt}, the main input of FTT module is the feature map P3
+from the 3rd layer of EFPN, and the reference is the feature map P2 from the 4th layer of EFPN. 
+
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.18]{Figures/fft.png}
+    \caption{Feature Texture Transfer}
+    \label{fig:ftt}
+\end{figure}
+
+\newpage
+The output $P'_3$ can be defined as:
+\[P'_3 = E_t(P_2 \Vert E_c(P_3)_{\uparrow 2}) + E_c(P_3)_{\uparrow 2}\]
+
+,where where $E_t(·)$ denotes texture extractor component, $E_c(·)$ denotes content extractor component, $\uparrow 2\times$ here denotes double up-scaling by 
+sub-pixel convolution and k denotes feature concatenation. The content extractor and texture extractor are both composed of residual blocks. In the main stream, 
+a sub-pixel convolution is applied to upscale spatial resolution of the content features from the main input $P3$ considering its efficiency.
+Sub-pixel convolution augments pixels on the dimensions of width and height via diverting pixels on the dimension of channel.
+
+
+\subsection{Masked-Attention Mask Transformer}
+
+
+
+
+\subsection{Extended Masked-Attention Mask Transformer}
