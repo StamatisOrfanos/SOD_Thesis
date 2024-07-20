@@ -267,9 +267,8 @@ Finally a 3×3 convolution is added on each merged map to generate the final fea
 This final set of feature maps is called ${P2, P3, P4, P5}$, corresponding to ${C2, C3, C4, C5}$ that are respectively of the same spatial sizes.
 Since all levels of the pyramid use shared classifiers/regressors as in a traditional featurized image pyramid, a fixed feature dimension 
 or numbers of channels is set, with the value being denoted as $d$ in all the feature maps. With $d = 256$ in this paper and thus all extra convolutional 
-layers have 256-channel outputs. Simplicity is central to this design and it has been proven that this model is robust to many design choices. We have 
-experimented with more sophisticated  blocks and observed marginally better results. Designing better connection modules is not the focus of this paper, 
-so we opt for the simple design described above.
+layers have 256-channel outputs. Simplicity is central to this design and it has been proven that this model is robust to many design choices.
+Experiments with more sophisticated blocks have been made and observed marginally better results.
 
 
 \subsection{Vision Transformers}
@@ -357,5 +356,74 @@ the cost of lower accuracy, especially in detecting small or overlapping objects
 
 \subsection{You Only Look Once}
 
+YOLO (You Only Look Once)[] represents a shift in object detection techniques through its simple and highly efficient approach. Unlike traditional 
+object detection methods that involve a multi-step process, YOLO employs a single convolutional network that simultaneously predicts multiple bounding boxes 
+and class probabilities for those boxes. This process is followed by a non-maximum suppression step to finalize the detections. The architecture is based on a 
+standard high-quality image classification network truncated before any classification layers, known as the base network, which is then augmented with additional 
+layers to detect objects at multiple scales.
+
+One of the primary benefits of YOLO is its speed, achieving real-time processing rates of up to 45 frames per second on a Titan X GPU, and a fast 
+version that exceeds 150 fps. This capability allows YOLO to handle streaming video in real-time with close to no latency, significantly outperforming other 
+real-time systems in mean average precision. Moreover, YOLO reasons globally about the image during both training and testing phases, which helps it encode 
+contextual information about object classes and their appearances. This global perspective reduces background errors significantly compared to methods like 
+Fast R-CNN, which often misclassify background patches as objects.
+
+In addition, YOLO learns generalizable representations of objects, demonstrated by its superior performance when trained on natural images and tested on 
+artwork, outperforming other top detection methods. However, while YOLO excels in identification speed and generalizability, it sometimes struggles with 
+precisely localizing objects, particularly small ones. 
+
+
+\newpage
+The network divides the input image into an \(S \times S\) grid, with each grid cell responsible for 
+detecting objects whose centers fall within the cell. Each cell predicts multiple bounding boxes and confidence scores, which reflect the presence and 
+accuracy of object detection. These predictions are based on the intersection over union (IOU) metric between the predicted boxes and ground truth.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.55]{Figures/yolo.jpg}
+    \caption{YOLO Architecture}
+    \label{fig:yolo}
+\end{figure}
+
+
+The convolutional neural network of YOLO, inspired by the GoogLeNet model for image classification, comprises 24 convolutional layers followed by 2 fully 
+connected layers. This structure utilizes \(1 \times 1\) reduction layers followed by \(3 \times 3\) convolutional layers to efficiently predict bounding 
+boxes and class probabilities. Despite its strengths, YOLO imposes certain spatial constraints on bounding box predictions due to each grid cell predicting 
+only two boxes and one class, which can limit its effectiveness in scenarios with small or clustered objects. Additionally, YOLO's simpler architecture 
+struggles with unusual object aspect ratios and configurations and is less forgiving of localization errors in smaller bounding boxes due to its coarse 
+feature predictions and the uniform treatment of errors across all box sizes in its loss function.
+
+In conclusion, YOLO’s innovative approach integrates the components of object detection into a single neural network, leveraging features from the entire 
+image to make global predictions about all objects present. This end-to-end training capability and real-time processing speed maintain high average 
+precision, making YOLO a groundbreaking model in the field of object detection, despite some challenges with small and closely spaced objects.
+
+\newpage
 \subsection{Single Shot MultiBox Detector}
+
+The Single Shot MultiBox Detector (SSD)[] employs a streamlined architecture that integrates detection and classification into a single pass through a 
+feed-forward convolutional network, thereby enhancing speed without compromising accuracy. This model produces a fixed collection of bounding boxes and 
+class scores for each object instance identified, followed by a non-maximum suppression step to finalize the detections. The foundation of SSD is a 
+base network derived from standard high-quality image classification architectures, which is truncated before any classification layers. 
+
+To adapt this base network for object detection, SSD incorporates multiple convolutional feature layers at the end of the network. These additional layers 
+decrease progressively in size, allowing for the detection of objects at various scales—a notable improvement over models like Overfeat and YOLO, which 
+are limited to single scale feature maps. Each feature layer in SSD employs a unique set of convolutional filters to predict detection outcomes at that scale, 
+thus enhancing the model's responsiveness to objects of varying dimensions as seen in the Figure \ref{fig:tr-ssmd}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.55]{Figures/ssmbd.jpg}
+    \caption{Single Shot MultiBox Detector Architecture}
+    \label{fig:ssmd}
+\end{figure}
+
+SSD further refines its detection capabilities through the use of convolutional predictors at each feature layer. These predictors apply a 3×3×p 
+convolutional kernel to each feature map location, generating scores for category presence or box shape offsets relative to predefined default boxes. 
+These default boxes, similar to the anchor boxes used in Faster R-CNN but applied across multiple resolutions, are associated with each feature map cell. 
+For each default box, the model computes class scores and spatial offsets, improving detection precision. This mechanism results in an extensive set of outputs 
+for each feature map cell, ensuring robust detection across a diverse array of object types and sizes.
+
+
+
+
 
