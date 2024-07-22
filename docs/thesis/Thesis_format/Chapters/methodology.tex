@@ -76,7 +76,7 @@ from the 3rd layer of EFPN, and the reference is the feature map P2 from the 4th
 The output $P'_3$ can be defined as:
 \[P'_3 = E_t(P_2 \Vert E_c(P_3)_{\uparrow 2}) + E_c(P_3)_{\uparrow 2}\]
 
-,where where $E_t(·)$ denotes texture extractor component, $E_c(·)$ denotes content extractor component, $\uparrow 2\times$ here denotes double up-scaling by 
+,where where $E_t()$ denotes texture extractor component, $E_c()$ denotes content extractor component, $\uparrow 2\times$ here denotes double up-scaling by 
 sub-pixel convolution and k denotes feature concatenation. The content extractor and texture extractor are both composed of residual blocks. In the main stream, 
 a sub-pixel convolution is applied to upscale spatial resolution of the content features from the main input $P3$ considering its efficiency.
 Sub-pixel convolution augments pixels on the dimensions of width and height via diverting pixels on the dimension of channel.
@@ -84,7 +84,78 @@ Sub-pixel convolution augments pixels on the dimensions of width and height via 
 
 \subsection{Masked-Attention Mask Transformer}
 
+Mask classification architectures group pixels into N segments by predicting N binary masks, along with N corresponding category labels. 
+Mask classification is general enough to address any segmentation or object detection task by assigning different semantics.
+However, the  challenge is to find good representations for each segment. Inspired by DETR [], each segment in an image can be represented as a 
+C-dimensional feature vector know as object query and can be processed by a Transformer decoder, trained with a set prediction objective. A simple meta 
+architecture would consist of three components. 
+
+A backbone that extracts low resolution features from an image. A pixel decoder that gradually up-samples low-resolution features from the output of the 
+backbone to generate high-resolution per-pixel embeddings. And finally a Transformer decoder that operates on image features to process object queries. 
+The final binary mask predictions are decoded from per-pixel embeddings with object queries. One successful instantiation of such a meta architecture is 
+MaskFormer [].
 
 
+Mask2Former adopts this kind meta architecture, with the proposed Transformer decoder in the Figure \ref{fig:mamt} replacing the standard one. The key 
+components of the Transformer decoder include a masked attention operator, which extracts localized features by constraining cross attention to within the 
+foreground region of the predicted mask for each query, instead of attending to the full feature map. 
 
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.8]{Figures/MaskAttentionMaskTransformer.jpg}
+    \caption{Masked-Attention Mask Transformer}
+    \label{fig:mamt}
+\end{figure}
+
+
+\newpage
+To handle small objects, an efficient multi-scale strategy 
+is proposed to utilize high-resolution features. It feeds successive feature maps from the pixel decoder’s feature pyramid into successive Transformer 
+decoder layers in a round robin fashion. 
+Context features have been shown to be important for image segmentation. However, recent studies [] suggest that the slow convergence of 
+Transformer-based models is due to global context in the cross-attention layer, as it takes many training epochs for cross-attention to learn to attend to 
+localized object regions. 
+
+There is the hypothesize that local features are enough to update query features and context information can be gathered through self-attention. 
+For this a masked attention was proposed, a variant of cross attention that only attends within the foreground region of the predicted mask for each query. 
+Standard cross-attention computes:
+
+\[X_l = \text{softmax}(Q_l K_l^T) V_l + X_{l-1}\]
+
+Here, $l$ is the layer index, $X_l \epsilon R^{N \times C}$ refers to N C-dimensional query features at the $l$th layer and 
+$Q_l = f_Q(X_l-1) \epsilon R^{N \times C} $. Here $X_0$ denotes input query features to the Transformer decoder. $K_l, V_l \epsilon R^{H_l W_l \times C}$ are the 
+image features under transformation $f_K()$ and $f_{V}()$ respectively, and $H_l$ and $W_l$ are the spatial resolution of image features, $f_Q$, $f_K$ and $f_V$ are 
+linear transformations
+
+
+Our masked attention modulates the attention matrix via
+\[X_l = \text{softmax}(\mathcal{M}_{l-1} + Q_l K_l^T) V_l + X_{l-1}\]
+
+Moreover, the attention mask $M_{l-1}$ at feature location (x, y) is:
+\[
+    \mathcal{M}_{l-1}(x, y) = 
+    \begin{cases} 
+    0 & \text{if } \mathcal{M}_{l-1}(x, y) = 1 \\
+    -\infty & \text{otherwise} 
+    \end{cases}    
+\]
+
+Here, $M_{l-1} \epsilon \{0, 1\}^{N \times H_l W_l}$  is the binarized output, thresholded at 0.5 of the resized mask prediction of the previous $(l - 1)$-th 
+Transformer decoder layer. It is resized to the same resolution of $K_l$. $M_0$ is the binary mask prediction obtained from $X_0$, before feeding query features
+into the Transformer decoder.
+
+High-resolution features improve model performance, especially for small objects [], however, this is computationally demanding. 
+Thus the solution being an efficient multi-scale strategy to introduce high-resolution features while controlling the increase in computation. 
+Instead of always using the high-resolution feature map, a feature pyramid which consists of both low- and high-resolution features is utilized and 
+feed one resolution of the  multi-scale feature to one Transformer decoder layer at a time. Specifically, the feature pyramid produced by the 
+pixel decoder with resolution $1/32, 1/16$ and $1/8$ of the original image. For each resolution, both a sinusoidal positional embedding 
+$e_{pos} \epsilon R^{HlWl×C}$ and a learnable scale-level embedding $e_{lvl} \epsilon R^{1 \times C}$ is added. 
+
+We use those, from lowest-resolution to highest-resolution for the corresponding Transformer decoder layer as shown in Figure \ref{fig:mamt}. This is 
+repeated for a 3-layer Transformer decoder L times. In this case the final Transformer decoder hence has 3L layers. 
+
+More specifically, the first three layers receive a feature map of resolution $H1 = H/32, H2 = H/16, H3 = H/8, W1 = W/32, W2 = W/16, W3 = W/8$, 
+where $H$ and $W$ are the original image resolution. This pattern is repeated in a round robin fashion for all following layers.
+
+\newpage
 \subsection{Extended Masked-Attention Mask Transformer}
