@@ -61,7 +61,7 @@ with a tailor-made high-resolution CNN feature map $C'2$, producing the final ex
     \label{fig:efpn}
 \end{figure}
 
-The current FTT output as seen in the figure  synthesizes strong semantics in upper low-resolution features and critical local details in lower high-resolution 
+The current Feature Texture Transfer (FTT) output as seen in the figure  synthesizes strong semantics in upper low-resolution features and critical local details in lower high-resolution 
 reference features, but discards disturbing noises in reference. As shown in Figure \ref{fig:ftt}, the main input of FTT module is the feature map P3
 from the 3rd layer of EFPN, and the reference is the feature map P2 from the 4th layer of EFPN. 
 
@@ -82,7 +82,7 @@ a sub-pixel convolution is applied to upscale spatial resolution of the content 
 Sub-pixel convolution augments pixels on the dimensions of width and height via diverting pixels on the dimension of channel.
 
 
-\subsection{Masked-Attention Mask Transformer}
+\subsection{Masked-Attention Mask Transformer} \label{mamt}
 
 Mask classification architectures group pixels into N segments by predicting N binary masks, along with N corresponding category labels. 
 Mask classification is general enough to address any segmentation or object detection task by assigning different semantics.
@@ -109,9 +109,8 @@ foreground region of the predicted mask for each query, instead of attending to 
 
 
 \newpage
-To handle small objects, an efficient multi-scale strategy 
-is proposed to utilize high-resolution features. It feeds successive feature maps from the pixel decoder’s feature pyramid into successive Transformer 
-decoder layers in a round robin fashion. 
+To handle small objects, an efficient multi-scale strategy is proposed to utilize high-resolution features. It feeds successive feature maps from the 
+pixel decoder’s feature pyramid into successive Transformer  decoder layers in a round robin fashion. 
 Context features have been shown to be important for image segmentation. However, recent studies [] suggest that the slow convergence of 
 Transformer-based models is due to global context in the cross-attention layer, as it takes many training epochs for cross-attention to learn to attend to 
 localized object regions. 
@@ -159,3 +158,70 @@ where $H$ and $W$ are the original image resolution. This pattern is repeated in
 
 \newpage
 \subsection{Extended Masked-Attention Mask Transformer}
+
+Throughout our extensive research into advanced object detection models and architectures, it became an interesting idea that a hybrid approach would 
+yield the most effective results, especially for the task of small object detection. The detailed analysis of various architectures led us to the strategic 
+combination of two highly effective models: the Extended Feature Pyramid Network (EFPN) and the Masked-Attention Mask Transformer (MAMT). 
+This integration leverages the EFPN’s robust capability in generating precise multi-scale feature maps and initial bounding boxes and masks with great efficiency, 
+with the MAMT’s advanced attention mechanisms that refine these masks for superior accuracy that is vital for the Small Object Detection task. 
+
+In this section we are going to analyze our model, the Extended Masked-Attention Mask Transformer or EMAMT starting with the models architecture in the Figure
+\ref{fig:emamt}.
+
+\begin{figure}[h!]
+    \includegraphics[scale=0.05]{Figures/EMAMT.png}
+    \caption{Extended Masked-Attention Mask Transformer}
+    \label{fig:emamt}
+\end{figure}
+
+Firstly we are going to analyze the EFPN part of the model in the lower left part of the Figure \ref{fig:emamt}, where the EFPN model has as a input,
+an image of size $600 \times 600$. The reason for the selection of that size is the backbone we use to generate the rich feature maps for the model.
+In our architecture we decided that a pre-trained feature extractor that combines great performance and light design was vital. This combination of characteristics
+led us to the choice of EfficientNet [] model and more specifically the EfficientNet-B7 model that uses an input size of $600 \times 600$. Furthermore we decided 
+to create five feature maps that have the sizes $(300, 300), (150, 150), (75, 75), (38, 38), (19, 19)$ in order to have a wide range of data for the model to use. 
+
+Alongside the feature maps the EFPN also produces the bounding boxes and the initial binary masks that are going to be used by the MAMT detector. The 
+bounding boxes and the masks are implemented on the most detailed feature map $P'2$ that is the result of the addition of the richest spatial map $C'2$ 
+and the richest feature map created by the feature texture transfer $P'3$. At the same time we have included a anchor generator model that creates anchors, 
+informed based on the mean and standard deviation of the size of the bounding boxes of each dataset in order to conclude the first cycle of detection, between the 
+actual data, the anchors and the bounding boxes. In this way we are able to train the EFPN model in parallel to the MAMT model, achieving better convergence.
+With the end of the EFPN model we are expecting a set of five  feature maps, a set of bounding boxes and the corresponding classed for each object 
+and the initial binary masks. 
+
+The next part of the EMAMT model is the patch and positional embedding we use in order to add to the model the  sense of spatial arrangement among the input 
+image patches. Since transformers inherently lack any mechanism to recognize order or position, positional embeddings are crucial for providing this spatial 
+context. The creation of the positional embeddings follows the exact same idea as the original paper of MAMT, since it was the implementation of the
+sinusoidal positional embedding for images, adapted from the concept originally used in the transformer architecture for natural language processing.
+This type of embedding generates position encodings based on sine and cosine functions of different frequencies.
+
+
+At this point we have a set of five embeddings of the feature maps, a set of bounding boxes and the corresponding classes and the binary masks. Along all
+that information the detector of this model we use a set number of queries that in this case is set to $100$, because we wanted to focus on reliable 
+detecting a sensible number of objects. For images that contain more than $100$ objects and the annotations we decided to only use the first $100$ of them 
+to train the model. Provided all of this data the Vision Transformer architecture can be seen in the Figure \ref{fig:emamt}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.1]{Figures/emamt-encoder.png}
+    \caption{Extended Masked-Attention Mask Transformer - Transformer Module}
+    \label{fig:emamt-trm}
+\end{figure}
+
+As mentioned in the section \ref{mamt} we have the hypothesis that local features are enough to update query features and context information can be 
+gathered through self-attention. For this reason we use masked attention, a variant of cross-attention that only attends within the foreground region of 
+the predicted mask for each query with the aim of better performance and faster convergence. More specifically the masked attention layer is used to focus 
+the model’s attention selectively based on certain predefined or learned criteria like the object queries, typically aligning with relevant areas of the 
+input image. For instance, in tasks like image segmentation, the masked attention layer might concentrate processing on areas within a specific region of 
+interest (ROI), such as the foreground of an image versus the background. This selective attention helps the model to efficiently process only the most 
+informative parts of the image, thereby optimizing computational cost.
+
+
+Following the masked attention, the cross-attention layer has to integrate additional context or features from another source into the transformer’s workflow. 
+When placed after a masked attention layer, the cross-attention layer can leverage the focused localized features processed by the masked attention and enrich 
+these features with further contextual or supplementary data. 
+
+Lastly after the attention mechanisms—both masked and cross-attention—the FFN acts as a point of non-linear transformation that further processes the refined, 
+attention-focused features. This structure allows the FFN to introduce additional complexity and abstraction capabilities into the feature representations.
+
+
+
