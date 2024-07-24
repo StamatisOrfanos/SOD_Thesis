@@ -198,7 +198,7 @@ This type of embedding generates position encodings based on sine and cosine fun
 At this point we have a set of five embeddings of the feature maps, a set of bounding boxes and the corresponding classes and the binary masks. Along all
 that information the detector of this model we use a set number of queries that in this case is set to $100$, because we wanted to focus on reliable 
 detecting a sensible number of objects. For images that contain more than $100$ objects and the annotations we decided to only use the first $100$ of them 
-to train the model. Provided all of this data the Vision Transformer architecture can be seen in the Figure \ref{fig:emamt}.
+to train the model. Provided all of this data the Vision Transformer architecture can be seen in the Figure \ref{fig:emamt-trm}.
 
 \begin{figure}[h!]
     \centering
@@ -207,6 +207,7 @@ to train the model. Provided all of this data the Vision Transformer architectur
     \label{fig:emamt-trm}
 \end{figure}
 
+\newpage
 As mentioned in the section \ref{mamt} we have the hypothesis that local features are enough to update query features and context information can be 
 gathered through self-attention. For this reason we use masked attention, a variant of cross-attention that only attends within the foreground region of 
 the predicted mask for each query with the aim of better performance and faster convergence. More specifically the masked attention layer is used to focus 

@@ -19,7 +19,12 @@
 \contentsline {subsection}{\numberline {3.1.3}Extended Masked-Attention Mask Transformer}{22}{subsection.3.1.3}%
 \contentsline {chapter}{\numberline {4}Experiments}{26}{chapter.4}%
 \contentsline {section}{\numberline {4.1}Datasets}{26}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Data Pre-Processing}{26}{section.4.2}%
-\contentsline {chapter}{\numberline {5}Discussion}{27}{chapter.5}%
-\contentsline {chapter}{\numberline {6}Conclusion}{28}{chapter.6}%
-\contentsline {chapter}{\numberline {A}Appendix A}{29}{appendix.A}%
+\contentsline {subsection}{\numberline {4.1.1}Microsoft Common Object in COntext (MS COCO)}{26}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Aerial Images Tiny Object Detection (AI-TOD)}{27}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}VisDrone}{27}{subsection.4.1.3}%
+\contentsline {section}{\numberline {4.2}Data Pre-Processing}{27}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Evaluation Metrics}{27}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Training}{27}{section.4.4}%
+\contentsline {chapter}{\numberline {5}Discussion}{28}{chapter.5}%
+\contentsline {chapter}{\numberline {6}Conclusion}{29}{chapter.6}%
+\contentsline {chapter}{\numberline {A}Appendix A}{30}{appendix.A}%
