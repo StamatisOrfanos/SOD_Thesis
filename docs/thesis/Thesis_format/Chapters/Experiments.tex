@@ -2,11 +2,10 @@
 
 In the experimental phase, we selected datasets that have previously been utilized in well-recognized competitions. This allows us to benchmark the 
 performance of our model against established baselines and leading-edge results within the field, helping us make meaningful comparisons with our model. 
-Each dataset employed in our experiments represents a distinct scenario, encompassing diverse environments and perspective urban life captured through 
-ground-level cameras, aerial views provided by drones, and wide-ranging perspectives from satellites. 
+Each dataset employed in our experiments represents a common scenario in the field of object detection, encompassing diverse environments and perspective 
+urban life captured through ground-level cameras, aerial views provided by drones, and wide-ranging perspectives from satellites. 
 
 \section{Datasets}
-
 For the benchmarking of our model we decided to use three very well known datasets, and we are going to analyze in this section.
 
 
@@ -25,20 +24,35 @@ mask for each object instance, making it suitable for more granular segmentation
 The dataset is divided into training, validation, and test splits to facilitate the training and fine-tuning of models in a structured manner. 
 This split ensures that models can be trained on a large set of images and parameters can be fine-tuned on the validation set before final evaluations 
 are performed on the test set. The use of MS COCO for competition and research has helped advance the field of computer vision by providing a challenging 
-and diverse set of images and annotations that test the limits of both existing and novel visual recognition models."
+set of images and annotations that test the limits of both existing and novel visual recognition models.
 
+Class Distribution in COCO 2017:
 
-\subsection{Aerial Images Tiny Object Detection (AI-TOD)}
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.55]{Figures/coco2017_class_distribution.png}
+    \caption{Class Distribution in COCO 2017}
+    \label{fig:coco-class}
+\end{figure}
 
-AI-TOD is a specialized satellite dataset designed to enhance the detection of tiny objects within aerial images. This dataset comprises a total of 
-$28,036$ high-resolution images, each measuring $800 \times 800$ pixels, and features approximately $700,621$ instances across eight distinct categories. 
-The AI-TOD dataset focuses on objects that are notably smaller in scale compared to those in existing aerial image datasets, with an average object size 
-of about $12.8$ pixels this dataset fits perfectly for our Small Object Detection model. This characteristic makes AI-TOD particularly challenging and 
-valuable for developing and benchmarking object detection algorithms aimed at identifying minute objects from satellite imagery. 
-The dataset's emphasis on tiny objects and its high-resolution imagery provide a testing ground for advancing object detection technologies in satellite 
-and aerial surveillance applications.
+\subsection{Unmanned Aerial Vehicle Small Object Detection}
 
+The UAV-SOD (Unmanned Aerial Vehicle Small Object Detection) dataset is specifically designed for advancing research in the area of object detection using 
+aerial imagery captured by drones. This dataset focuses on the detection of small objects, which presents unique challenges due to the small scale and often 
+complex backgrounds seen in aerial images. Here are the key details about the UAV-SOD dataset. The UAV-SOD dataset includes detailed annotations for each image, 
+essential for supervised machine learning models such as object detectors. Annotations are provided in XML format compatible with the PASCAL VOC annotation 
+format, which is widely used in object detection tasks. These annotations include bounding boxes that specify the coordinates of each object in the image. 
+The objects in this dataset are annotated with their class labels, enabling not only object detection tasks but also potential use for object classification 
+and segmentation challenges.
 
+Class Distribution in UAV Small Object Detection:
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.55]{Figures/uav_sod_data_class_distribution.png}
+    \caption{Class Distribution in UAV Small Object Detection}
+    \label{fig:uav-class}
+\end{figure}
 
 
 \subsection{VisDrone}
@@ -50,10 +64,19 @@ diverse set of ten object classes, such as pedestrians, cars, vans, buses, truck
 range of categories, combined with the diverse aerial perspectives provided by drone capture, makes VisDrone an ideal resource for developing and 
 benchmarking deep learning models focused on enhancing object detection capabilities in drone surveillance systems.
 
+Class Distribution in VIS Drone:
 
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.55]{Figures/vis_drone_data_class_distribution.png}
+    \caption{Class Distribution in VIS Drone }
+    \label{fig:vis-class}
+\end{figure}
 
 
 \section{Data Pre-Processing}
+
+
 
 
 
