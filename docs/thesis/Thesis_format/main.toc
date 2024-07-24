@@ -17,8 +17,9 @@
 \contentsline {subsection}{\numberline {3.1.1}Extended Feature Pyramid Network}{19}{subsection.3.1.1}%
 \contentsline {subsection}{\numberline {3.1.2}Masked-Attention Mask Transformer}{20}{subsection.3.1.2}%
 \contentsline {subsection}{\numberline {3.1.3}Extended Masked-Attention Mask Transformer}{22}{subsection.3.1.3}%
-\contentsline {chapter}{\numberline {4}Experiments}{25}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Datasets}{25}{section.4.1}%
-\contentsline {chapter}{\numberline {5}Discussion}{26}{chapter.5}%
-\contentsline {chapter}{\numberline {6}Conclusion}{27}{chapter.6}%
-\contentsline {chapter}{\numberline {A}Appendix A}{28}{appendix.A}%
+\contentsline {chapter}{\numberline {4}Experiments}{26}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Datasets}{26}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Data Pre-Processing}{26}{section.4.2}%
+\contentsline {chapter}{\numberline {5}Discussion}{27}{chapter.5}%
+\contentsline {chapter}{\numberline {6}Conclusion}{28}{chapter.6}%
+\contentsline {chapter}{\numberline {A}Appendix A}{29}{appendix.A}%

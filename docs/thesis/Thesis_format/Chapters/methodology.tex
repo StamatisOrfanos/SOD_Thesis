@@ -224,4 +224,35 @@ Lastly after the attention mechanisms—both masked and cross-attention—the FF
 attention-focused features. This structure allows the FFN to introduce additional complexity and abstraction capabilities into the feature representations.
 
 
+\textbf{Add loss function here:}
 
+
+
+
+
+\newpage
+
+The table below, sorted by the number of parameters, provides a comparative look at various popular object detection models that we have presented in the 
+section above. This table highlights models ranging from YOLOv3, known for its balance of speed and accuracy, to more complex architectures like Mask R-CNN, 
+which provides high precision at the cost of increased computational resources. Notably, the Extended Masked-Attention Mask Transformer shows how recent 
+advancements aim to reduce parameter counts while potentially enhancing model capabilities. This spectrum illustrates the trade-offs between model complexity 
+and operational efficiency, guiding decisions in model selection based on specific application needs.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|}
+    \hline
+    \textbf{Model}                                 & \textbf{Number of Parameters (millions)} \\ \hline
+    YOLO (You Only Look Once)                      & 62                                      \\ \hline
+    Extended Masked-Attention Mask Transformer     & 76.6                                    \\ \hline
+    Single Shot    Multibox Detector (SSD)         & Typically around 100                    \\ \hline
+    Fast R-CNN                                     & Typically around 150                    \\ \hline
+    Faster R-CNN                                   & Typically around 200                    \\ \hline
+    FPN with Basic Detector                        & Typically around 200                    \\ \hline
+    Mask R-CNN                                     & Typically around 250                    \\ \hline
+    R-CNN                                          & Varies, typically less than 250         \\ \hline
+    \end{tabular}
+    \caption{Comparison of Object Detection Models Sorted by Number of Parameters}
+    \label{tab:model_parameters}
+    \end{table}
+    
