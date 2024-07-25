@@ -1,1 +1,77 @@
-\chapter{Introduction} \label{introduction}
+\chapter{Introduction}
+
+Remote sensing imaging is a process used to gather information about objects or areas from a distance, typically using aircraft or satellites. 
+This process is essential in various fields due to its ability to detect and monitor the physical characteristics of an area by measuring its 
+reflected and emitted radiation.
+
+Remote sensing imaging starts with data acquisition through sensors, that are mounted on platforms like satellites or aircraft, capture 
+electromagnetic radiation and can range from simple cameras to complex radar systems. After capturing this data, it is transmitted to ground 
+stations for processing. The processing stage often involves correcting any image distortions, enhancing details, and converting the raw data 
+into usable formats. 
+
+Remote sensing imaging has applications across a broad spectrum of fields. Starting with environmental monitoring is one of the primary uses, enabling the 
+observation and analysis of environmental changes like deforestation and the health of aquatic ecosystems. In agriculture, it helps monitor 
+crop health and soil conditions, aiding in the efficient management of resources. The technique is also crucial in disaster management, where it 
+is used to assess damage from natural disasters and plan effective responses. Urban planning benefits from remote sensing by providing data for 
+the development and monitoring of infrastructure and urban growth. In the military and intelligence sectors, remote sensing is key for surveillance and 
+reconnaissance, providing critical information for national security.
+
+Provided the numerous applications of remote sensing images, the computer vision research community is continually pushing to develop object detection models 
+that can effectively parse and interpret the vast amount of data captured by remote sensors. In remote sensing images the objects are small fraction of 
+the pixels of the image, qualifying this process as Small Object Detection.
+
+Even though impressive results have been achieved on large and medium objects in large-scale detection benchmarks, the performance on small or tiny objects 
+is far from satisfactory. Compared with large and medium objects, the small objects are more difficult to detect accurately, because of four main difficulties.
+Firstly, small objects have low resolution and insufficient features. Secondly, the span of object-scale is large and multiple scales coexist. Thirdly, the 
+examples of small objects are scarce and lastly the categories for small objects are imbalanced for the majority of datasets.The concept of small or tiny objects 
+seeks to elucidate the scale of these objects or the proportion of pixels they occupy within the entire image. There are two main ways to define small objects. 
+
+\newpage
+The first way is the use relative size. According to the definition of Society of Photo-Optical 
+Instrumentation Engineers [SPIE], if the object size is less than 0.12\% of the original image, it is regarded as a small object. Following the same 
+principle Krishna and Jawahar [1] showed that an object is considered small if it occupies only a tiny portion of the image, which is less than 
+1\% of the image area. Namely, the bounding box of a small object should cover less than 1\% of the original image. The second way of defining a small 
+object by using the absolute size, where a small object has size less than 32x32 pixels defined in MS-COCO dataset or 16x16 pixels defined in 
+USC-GRAD- STDdb [2].
+
+There have been some improvements of the models using different techniques, but all these improvements come at a increased complexity and size of the model. 
+This complexity can be prohibitive for applications in a satellite or an Unmanned Aerial Vehicle since their computation capabilities are limited. 
+Driven by the need for more precise object detection models, this thesis proposes a novel methodology to reduce the computation cost of the detection model 
+for utilization in such cases.
+
+This thesis aims to explore the combination of two successful models from two different approaches in object detection, while maintaining a smaller
+model size. The evaluation process utilizes datasets that have been parts of employed in the original research papers of these models. 
+Furthermore, this thesis extends its scope to the field of Remote Sensing Images (RSI). Both the original and modified versions 
+of the models will be evaluated using a common RSI dataset. This will facilitate a comprehensive comparison of all model results within a consistent dataset, 
+thereby providing valuable insights into their performance in real-world scenarios.
+
+
+The remainder of the thesis is organized as follows:
+
+Chapter 2 contains related work surrounding the scope of the thesis. It starts with an explanation of the architecture of Recurrent Convolutional Neural Networks
+(R-CNNs) alongside the Feature Pyramid Networks and analyzes the distinct role and functionality of each component. It follows with the explanation of the 
+architecture of the Vision Transformers that were used as a basis for the detector of our model. It continues by explaining the difficulties of detecting 
+small objects in remote sensing images.
+
+Chapter 3 introduces the architecture of the suggested model and is presented, providing an extensive description of its design and 
+functionality. It also highlights the significant publications and research that have been a major help in advancing and improving the model's design.
+
+Chapter 4 offers an in-depth overview of the datasets used to evaluate the proposed model. It states the specific parameters used throughout the training
+phase to ensure a thorough knowledge of the model's learning process. The experimental findings are presented at the end of the chapter, providing a
+concrete indicator of the model's effectiveness.
+
+
+Chapter 5 analyzes the experimental findings and discuss the implications of the differences that were observed across different models and datasets. 
+This aims to unravel the underlying implications of these differences, thereby enhancing the understanding of the models’ performance across different 
+datasets.
+
+
+Chapter 6 provides an overview of the future work which aims at investigating performance differences, enhancing the model's performance and 
+testing the method’s generalizability across various datasets and domains.
+
+
+
+
+
+
+

@@ -1,0 +1,100 @@
+\documentclass[12pt, a4paper]{report}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tabularx}
+
+% Adjust the header and footer size
+\geometry{
+  a4paper,
+  left=25mm,
+  right=25mm,
+  top=25mm,
+  bottom=25mm,
+  headheight=10pt, % Height of the header
+  headsep=5pt,     % Distance between header and text
+  footskip=15pt    % Distance from bottom of text to footer
+}
+
+% Redefine \chapter command to suppress number in the document but keep in TOC
+\makeatletter
+\def\@makechapterhead#1{%
+  \vspace*{50\p@}%
+  {\parindent \z@ \raggedright \normalfont
+    \ifnum \c@secnumdepth >\m@ne
+      \huge\bfseries \thechapter\quad #1\par\nobreak
+      \vskip 20\p@
+    \fi}}
+\def\@makeschapterhead#1{%
+  \vspace*{50\p@}%
+  {\parindent \z@ \raggedright \normalfont
+    \interlinepenalty\@M
+    \huge\bfseries #1\par\nobreak
+    \vskip 20\p@}}
+\makeatother
+
+
+\begin{document}
+
+% Title Page
+\include{Chapters/title}
+\clearpage
+
+
+% Signature Page
+\include{Chapters/signature}
+\clearpage
+
+% Set Roman page numbering for preliminary pages
+\pagenumbering{roman}
+\setcounter{page}{1}
+
+% Abstract
+\include{Chapters/abstract}
+
+% Table of Contents
+\tableofcontents
+\clearpage
+
+% List of Figures
+\listoffigures
+\clearpage
+
+% List of Tables
+\listoftables
+\clearpage
+
+% Set Arabic page numbering for main content
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% Introduction
+\include{Chapters/introduction}
+
+% Related Work
+\include{Chapters/related_work}
+
+% Methodology
+\include{Chapters/methodology}
+
+% Experiments
+\include{Chapters/experiments}
+
+% Discussion
+\include{Chapters/discussion}
+
+% Conclusion
+\include{Chapters/conclusion}
+
+% References
+\bibliographystyle{plain}
+\bibliography{references}
+
+% Appendix
+\appendix
+\include{Chapters/appendix_a}
+
+\end{document}
