@@ -74,17 +74,148 @@ Class Distribution in VIS Drone:
 \end{figure}
 
 
+
+As we can understand from the class distribution, we can understand that class imbalance is present in the datasets. Class imbalance poses a significant 
+challenge in training because models trained on such data may develop a bias towards more common classes and perform poorly on rare classes. 
+We have to take this into consideration when choosing the evaluation metrics that give a more nuanced view of class-specific performance, such as 
+per-class accuracy or the F1-score, are crucial for assessing a model’s true effectiveness across the varied classes present in these datasets.
+
+
+
+\newpage
 \section{Data Pre-Processing}
 
+To ensure that the object detection models are trained on well-structured and uniform data, pre-processing steps are applied to standardize and enhance the 
+raw dataset inputs. This process is crucial for achieving optimal model performance and is applied consistently across different datasets, such as COCO2017, 
+UAV-SOD Drone, and Vis-Drone datasets, with specific adjustments tailored to each dataset's unique characteristics.
 
+Firstly we have some general pre-processing steps applied across all datasets in order to make the training procedure 
+
+\begin{enumerate}
+    \item Resizing Images and Annotations: All images and corresponding annotations are resized to a uniform size of \(600 \times 600\) pixels. 
+    This standardization helps maintain consistency across the dataset, which is crucial for the feature map creation with the Efficient-B7 model. 
+    The resizing function also handles the segmentation data associated with each image, ensuring that all spatial information (bounding boxes and 
+    segmentation masks) is correctly scaled and translated according to the new image dimensions.
+
+    \item Image Padding: To maintain aspect ratio without distorting the image content, padding is applied using the most common color found in the image. 
+    This approach prevents the introduction of biases that could occur if a non-representative color was used.
+
+    \item Annotation Format: The annotation files for all the datasets have a common format in order to avoid any problems with the training process. The format 
+    is the following: $x_{min}, y_{min}, x_{max}, y_{max}$, class code, $[(x_1, y_1), (x_2, y_2), ..., (x_n, y_n)]$, where the first four 
+    values are the bounding box coordinates following the Pascal VOC format, then we have class code of the object and lastly the 
+    list of coordinates describing the mask of the object.
+
+    \item Mask Creation: The masks are a vital part of the model, since we want to use the functionality of the Masked-Attention Mask Transformer 
+    in combination with the bounding box functionality to get better and more detailed results. The datasets ViS-Drone and 
+    Unmanned Aerial Vehicle datasets do not include masks and in order to have mask data we generate masks from the bounding box 
+    data. More specifically the mask data format is the following: \\
+    $[(x_{min}, y_{min}), (x_{min}, y_{max}), (x_{max}, y_{min}), (x_{max}, y_{max})]$
+
+    \item Calculation of Mean and Standard Deviation: For normalization purposes, the mean and standard deviation of the pixel values across the dataset are 
+    computed. These statistics are essential for normalizing the images during the model training process, 
+    allowing for faster convergence and improved generalization.
+
+    \item Visualization of Data: Functions are included to plot images alongside their annotations for both training and validation sets. This visual check 
+    allows for the verification of the correct processing and annotation of the data, ensuring integrity before training begins.
+
+  \end{enumerate}
+
+
+
+\newpage
+
+Furthermore we make specific changes to each dataset in order to ensure compatibility with the model. These changes are:
+
+\begin{enumerate}
+    \item \textbf{COCO2017 Dataset - } Annotation Conversion: The original COCO annotations are converted into a simpler text format that includes bounding 
+    box coordinates and segmentation data. This conversion facilitates the use of custom training pipelines that may not natively support COCO's complex 
+    annotation format.
+
+    \item \textbf{Vis-Drone Dataset - } Annotation Format Standardization: The annotations provided with the Vis-Drone dataset are standardized to ensure 
+    consistency with other datasets. This process includes recalculating bounding box coordinates from $[x_{min}, y_{min}, width, height]$ to  
+    $[(x_{min}, y_{min}), (x_{min}, y_{max}), (x_{max}, y_{min}), (x_{max}, y_{max})]$
+
+    \item \textbf{UAV-SOD Drone Dataset - } XML to Text Conversion: Given that UAV-SOD annotations might be provided in XML format, a conversion process 
+    is implemented to translate these XML files into a plain text format that is easier to manipulate and integrate into training workflows. The conversion 
+    also involves mapping categorical names to predefined numerical codes, which are crucial for consistent label encoding across different datasets.
+\end{enumerate}
+
+These pre-processing steps are critical for preparing the data, ensuring that it meets the necessary format and quality standards required for effective 
+model training. This comprehensive approach to data preparation helps in minimizing issues during training, leading to more robust and accurate object 
+detection models.
 
 
 
 \section{Evaluation Metrics}
 
 
+Evaluation metrics are vital in object detection as they quantitatively measure a model's accuracy, robustness, and effectiveness in predicting correct 
+object locations and classifications. These metrics enable developers to compare different models, optimize parameters, and ensure that the system performs 
+well across various conditions and datasets, guiding improvements and ensuring that the deployed models meet the required performance standards. Starting 
+with the basic definitions we have:
 
+\begin{enumerate}
+    \item True Positives (TP) are the predictions that correctly match the class of the ground truth AND Confidence and IoU scores are 
+    higher than their thresholds.
+    \item False Positive (FP) are the predictions that incorrectly predict a positive class when the ground truth is actually negative 
+    OR the IoU score is lower than the threshold.
+    \item False Negative (FN) occurs when the model misses positive instances. It predicts a negative class when the ground truth is actually positive.
+    \item True Negative (TN) represents instances where the confidence score of a detection that is not supposed to detect anything is lower than 
+    the threshold. This metric is not used in the object detection field since there are too many boxes that should not detect an object in an image.
+\end{enumerate}
+
+
+The metrics we are going to be using that are object detection specific are the Average Precision (AP), mean Average Precision (mAP), Intersection over 
+Union (IoU), Average Recall (AR) and mean Average Recall (mAR). \\
+
+
+Recall measures the proportion of actual positives that are correctly identified by the model, indicating the model’s ability to detect all relevant instances.
+\[\text{Recall} = \frac{TP}{TP + FN}\]
+
+
+Precision indicates the accuracy of the positive predictions made by the model, measuring the proportion of positive identifications that were actually correct.
+\[\text{Precision} = \frac{TP}{TP + FP}\]
+
+
+F1-Score is the harmonic mean of precision and recall, providing a balance between the two by penalizing extreme values.
+\[F1 = 2 \cdot \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}\]
+
+Intersection Over Union (IoU) assesses the overlap between predicted bounding boxes and ground truth boxes, quantifying the exactness of the location 
+of predictions. It is a fundamental metric for determining whether a detection is a true.
+\[IoU = \frac{\text{Area of Overlap}}{\text{Area of Union}}\]
+
+
+Average Precision (AP) quantifies the precision of an object detector across different recall levels by taking the mean of precisions computed 
+at the point of each of the 11 recall levels. The precision at each recall level $r$ is interpolated by taking the maximum precision measured 
+for a method at any recall level $\geqslant r$
+\[AP = \frac{1}{11} \sum_{r \in \{0.0, 0.1, \ldots, 1.0\}} P_{\text{interp}}(r)\]
+
+
+Mean Average Precision (mAP) is the average of the AP scores for all classes or over different Intersection over Union (IoU) thresholds. 
+This metric gives an overall effectiveness of the detection model across various object categories or detection precisions, making it ideal for 
+scenarios where multiple object types are involved.
+\[mAP = \frac{1}{N} \sum_{i=1}^{N} AP_i\]
+
+
+\newpage
 \section{Training}
 
 
+\subsection{Microsoft Common Object in COntext (MS COCO)}
 
+
+\subsection{Unmanned Aerial Vehicle Small Object Detection}
+
+
+\subsection{VisDrone}
+
+
+\section{Results}
+
+\subsection{Microsoft Common Object in COntext (MS COCO)}
+
+
+\subsection{Unmanned Aerial Vehicle Small Object Detection}
+
+
+\subsection{VisDrone}
