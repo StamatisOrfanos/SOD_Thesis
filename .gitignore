@@ -10,3 +10,7 @@ master_thesis
 .DS_Store
 .vscode
 __pycache__
+*.aux
+*.lof
+*.log
+*.lot
