@@ -19,9 +19,9 @@ class ExtendedMask2Former(nn.Module):
         efpn (EFPN): The Enhanced Feature Pyramid Network model used as the backbone for feature and mask feature extraction.
         mask2former (Mask2Former): The Mask2Former model used for predicting object instances and their masks based on the features provided by EFPN.
     """
-    def __init__(self, num_classes, hidden_dim=256, num_queries=300, nheads=8, dim_feedforward=2048, dec_layers=1, mask_dim=256):
+    def __init__(self, num_classes, num_anchors, hidden_dim=256, num_queries=300, nheads=8, dim_feedforward=2048, dec_layers=1, mask_dim=256):
         super(ExtendedMask2Former, self).__init__()              
-        self.efpn        = EFPN(hidden_dim, hidden_dim, num_classes)
+        self.efpn        = EFPN(hidden_dim, hidden_dim, num_classes, num_anchors)
         self.mask2former = Mask2Former(hidden_dim, num_classes, hidden_dim, num_queries, nheads, dim_feedforward, dec_layers, mask_dim)
         
         # Define loss functions
@@ -112,8 +112,7 @@ class ExtendedMask2Former(nn.Module):
         """
         predicted_logits = predictions['pred_logits']
         predicted_masks = predictions['pred_masks']
-        predicted_bounding_boxes = predictions['bounding_box']
-                
+        predicted_bounding_boxes = predictions['bounding_box']                
         total_class_loss = 0
         total_bbox_loss = 0
         total_mask_loss = 0
@@ -123,7 +122,7 @@ class ExtendedMask2Former(nn.Module):
             target_labels = target['labels']
             target_masks = target['masks']
             target_boxes = target['boxes']
-                        
+                                    
             # Match the shape of predicted_logits with target_labels
             num_objects = target_labels.shape[0]
             pred_logits_resized = predicted_logits[i, :num_objects]
@@ -131,10 +130,20 @@ class ExtendedMask2Former(nn.Module):
             
             
             # Decode the predicted bounding box offsets using the anchors
-            matched_gt_boxes, _ = match_anchors_to_ground_truth_boxes(anchors, target_boxes)
+            matched_gt_boxes, _ = match_anchors_to_ground_truth_boxes(anchors, target_boxes)            
             encoded_gt_boxes = encode_bounding_boxes(matched_gt_boxes, anchors)
             num_anchors = anchors.shape[0]
+            
+            print("1. The anchors  have shape: {} and first value :\n{}\n\n".format(anchors.size(), anchors[10]))
+            # print("2. The predicted bboxes have shape: {} and first value :\n{}\n\n".format(predicted_bounding_boxes.size(), predicted_bounding_boxes[0]))
+            print("3. The target bboxes have shape: {} and first value:\n{}\n\n".format(target_boxes.size(), target_boxes[0]))
+            # print("4. The matched_gt_boxes bboxes have shape: {} and values:\n{}\n\n".format(matched_gt_boxes.size(), matched_gt_boxes))
+            # print("5. The encoded_gt_boxes bboxes have shape: {} and values:\n{}\n\n".format(encoded_gt_boxes.size(), encoded_gt_boxes))
+            
+            
+            
             predicted_boxes_resized = self.decode_boxes(predicted_bounding_boxes[i].view(-1, 4)[:num_anchors], anchors)
+            print("5. The predicted_boxes_resized bboxes have shape: {} and values:\n{}".format(predicted_boxes_resized.size(), predicted_boxes_resized))
             
             # # Perform Hungarian matching to align predicted and ground truth masks
             # matched_indices = self.hungarian_matching(predicted_masks[i], target_masks)

@@ -5,7 +5,7 @@ from torch.nn import functional as F
 
 
 class BoundingBoxGenerator(nn.Module):
-    def __init__(self, in_channels, num_classes):
+    def __init__(self, in_channels, num_classes, num_anchors):
         super(BoundingBoxGenerator, self).__init__()
         self.num_classes = num_classes
         self.conv1 = nn.Conv2d(in_channels, 256, kernel_size=3, padding=1)
@@ -21,19 +21,18 @@ class BoundingBoxGenerator(nn.Module):
         bounding_boxes = self.regression_convolution(x)
         return bounding_boxes, class_scores
 
+
 def match_anchors_to_ground_truth_boxes(anchors, gt_boxes, iou_threshold=0.5):
     ious = compute_iou(anchors, gt_boxes)
     anchor_max_iou, anchor_max_idx = ious.max(dim=1)
     matched_gt_boxes = gt_boxes[anchor_max_idx]
     matched_gt_boxes[anchor_max_iou < iou_threshold] = -1
 
-    # Debugging: Check for invalid values
-    if torch.any(torch.isnan(matched_gt_boxes)) or torch.any(torch.isinf(matched_gt_boxes)):
-        print("Warning: Invalid values in matched_gt_boxes")
-        print(matched_gt_boxes)
+    # Ensure matched_gt_boxes has the same shape as anchors
+    if matched_gt_boxes.size(0) != anchors.size(0):
+        raise ValueError("Mismatch in the number of anchors and matched ground truth boxes")
 
     return matched_gt_boxes, anchor_max_idx
-
 
 def compute_iou(anchors, gt_boxes):
     anchors = anchors.clone().detach().float()
@@ -52,7 +51,6 @@ def compute_iou(anchors, gt_boxes):
     iou = inter / union
 
     return iou
-
 
 def encode_bounding_boxes(matched_gt_boxes, anchors):
     gt_cx = (matched_gt_boxes[:, 0] + matched_gt_boxes[:, 2]) / 2
@@ -77,15 +75,8 @@ def encode_bounding_boxes(matched_gt_boxes, anchors):
     dw = torch.log(gt_w / anchor_w + eps)
     dh = torch.log(gt_h / anchor_h + eps)
 
-    # Debugging: Check for invalid values
-    if torch.any(torch.isnan(dx)) or torch.any(torch.isinf(dx)) or \
-       torch.any(torch.isnan(dy)) or torch.any(torch.isinf(dy)) or \
-       torch.any(torch.isnan(dw)) or torch.any(torch.isinf(dw)) or \
-       torch.any(torch.isnan(dh)) or torch.any(torch.isinf(dh)):
-        print("Warning: Invalid values in encoded bounding boxes")
-        print("dx:", dx)
-        print("dy:", dy)
-        print("dw:", dw)
-        print("dh:", dh)
+    # Ensure the encoded boxes have the same shape as anchors
+    if dx.size(0) != anchors.size(0):
+        raise ValueError("Mismatch in the number of anchors and encoded ground truth boxes")
 
     return torch.stack([dx, dy, dw, dh], dim=-1)
