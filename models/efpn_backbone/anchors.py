@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 class Anchors:
     @staticmethod
@@ -19,10 +20,10 @@ class Anchors:
                             anchor_height = scale * np.sqrt(ratio)
                             anchor_width = scale / np.sqrt(ratio)
 
-                            x_min = cx - anchor_width / 2
-                            y_min = cy - anchor_height / 2
-                            x_max = cx + anchor_width / 2
-                            y_max = cy + anchor_height / 2
+                            x_min = int(cx - anchor_width / 2)
+                            y_min = int(cy - anchor_height / 2)
+                            x_max = int(cx + anchor_width / 2)
+                            y_max = int(cy + anchor_height / 2)
 
                             # Ensure anchors are within image bounds
                             x_min = max(0, x_min)

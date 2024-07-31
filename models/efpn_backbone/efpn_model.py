@@ -14,7 +14,7 @@ class EFPN(nn.Module):
            -  The model uses a Feature  Texture Transfer (FTT) module to enrich feature maps with both content and texture 
               details, aiming to improve performance on instance segmentation tasks.
     """
-    def __init__(self, in_channels, hidden_dim, num_classes):
+    def __init__(self, in_channels, hidden_dim, num_classes, num_anchors):
         super(EFPN, self).__init__()
         # Load EfficientNet with pre-trained weights
         self.backbone = EfficientNet.from_pretrained('efficientnet-b7')
@@ -44,8 +44,8 @@ class EFPN(nn.Module):
 
         # Define the bounding box and masks for the spatially richest feature map
         # Define mask head and predictor
-        self.mask_processor = MaskFeatureExtractor(in_channels, hidden_dim)
-        self.bounding_box = BoundingBoxGenerator(in_channels, num_classes)
+        self.mask_processor = MaskFeatureExtractor(256, hidden_dim)
+        self.bounding_box = BoundingBoxGenerator(256, num_classes, num_anchors)
         
 
     def forward(self, image):
