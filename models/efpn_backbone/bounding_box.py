@@ -3,23 +3,28 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-
 class BoundingBoxGenerator(nn.Module):
     def __init__(self, in_channels, num_classes, num_anchors):
         super(BoundingBoxGenerator, self).__init__()
         self.num_classes = num_classes
+        self.num_anchors = num_anchors
+
         self.conv1 = nn.Conv2d(in_channels, 256, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
-
-        self.class_convolution = nn.Conv2d(256, num_classes, kernel_size=1)
-        self.regression_convolution = nn.Conv2d(256, 4, kernel_size=1)
+        self.class_convolution = nn.Conv2d(256, num_anchors * num_classes, kernel_size=1)
+        self.regression_convolution = nn.Conv2d(256, num_anchors * 4, kernel_size=1)  # Output 4 coordinates per anchor
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
         class_scores = self.class_convolution(x)
-        bounding_boxes = self.regression_convolution(x)
-        return bounding_boxes, class_scores
+        bbox_offsets = self.regression_convolution(x)
+
+        batch_size = x.size(0)
+        bbox_offsets = bbox_offsets.permute(0, 2, 3, 1).contiguous().view(batch_size, -1, 4)
+        class_scores = class_scores.permute(0, 2, 3, 1).contiguous().view(batch_size, -1, self.num_classes)
+
+        return bbox_offsets, class_scores
 
 
 def match_anchors_to_ground_truth_boxes(anchors, gt_boxes, iou_threshold=0.5):
@@ -52,31 +57,14 @@ def compute_iou(anchors, gt_boxes):
 
     return iou
 
+
 def encode_bounding_boxes(matched_gt_boxes, anchors):
-    gt_cx = (matched_gt_boxes[:, 0] + matched_gt_boxes[:, 2]) / 2
-    gt_cy = (matched_gt_boxes[:, 1] + matched_gt_boxes[:, 3]) / 2
-    gt_w = matched_gt_boxes[:, 2] - matched_gt_boxes[:, 0]
-    gt_h = matched_gt_boxes[:, 3] - matched_gt_boxes[:, 1]
+    """
+    Encode ground truth bounding boxes with respect to anchor boxes.
+    """
+    dx_min = matched_gt_boxes[:, 0] - anchors[:, 0]
+    dy_min = matched_gt_boxes[:, 1] - anchors[:, 1]
+    dx_max = matched_gt_boxes[:, 2] - anchors[:, 2]
+    dy_max = matched_gt_boxes[:, 3] - anchors[:, 3]
 
-    anchor_cx = (anchors[:, 0] + anchors[:, 2]) / 2
-    anchor_cy = (anchors[:, 1] + anchors[:, 3]) / 2
-    anchor_w = anchors[:, 2] - anchors[:, 0]
-    anchor_h = anchors[:, 3] - anchors[:, 1]
-
-    # Avoid division by zero and log of zero
-    eps = 1e-6
-    gt_w = torch.clamp(gt_w, min=eps)
-    gt_h = torch.clamp(gt_h, min=eps)
-    anchor_w = torch.clamp(anchor_w, min=eps)
-    anchor_h = torch.clamp(anchor_h, min=eps)
-
-    dx = (gt_cx - anchor_cx) / anchor_w
-    dy = (gt_cy - anchor_cy) / anchor_h
-    dw = torch.log(gt_w / anchor_w + eps)
-    dh = torch.log(gt_h / anchor_h + eps)
-
-    # Ensure the encoded boxes have the same shape as anchors
-    if dx.size(0) != anchors.size(0):
-        raise ValueError("Mismatch in the number of anchors and encoded ground truth boxes")
-
-    return torch.stack([dx, dy, dw, dh], dim=-1)
+    return torch.stack([dx_min, dy_min, dx_max, dy_max], dim=-1)

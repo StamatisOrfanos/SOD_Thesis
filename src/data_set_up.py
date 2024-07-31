@@ -54,7 +54,8 @@ class SOD_Data(Dataset):
                 masks_list.append(masks)
 
         
-        boxes  = torch.as_tensor(boxes, dtype=torch.int64)
+        # boxes  = torch.as_tensor(boxes, dtype=torch.int64)
+        boxes = torch.as_tensor(boxes, dtype=torch.float32) / self.target_size
         labels = torch.as_tensor(labels, dtype=torch.int64)
         masks = torch.stack([torch.tensor(mask, dtype=torch.uint8) for mask in masks_list])
 

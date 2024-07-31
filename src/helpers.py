@@ -23,7 +23,7 @@ def train(model, train_loader, optimizer, device, anchors, num_classes):
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
         optimizer.zero_grad()
         outputs = model(images)
-        loss = model.compute_loss(outputs, targets, anchors)
+        loss = model.compute_loss(outputs, targets, anchors.to(device))
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
