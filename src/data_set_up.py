@@ -43,6 +43,7 @@ class SOD_Data(Dataset):
                 x_min, y_min, x_max, y_max = bbox_class_part[0:4]
                 class_code = int(bbox_class_part[4])
                 box = [int(x_min), int(y_min), int(x_max), int(y_max)]
+                box = self.resize_box(box)
                 
                 masks_part = eval("[" + line.split("[")[1])
                 masks = self.create_binary_mask((600, 600), masks_part)
@@ -53,7 +54,8 @@ class SOD_Data(Dataset):
                 masks_list.append(masks)
 
         
-        boxes  = torch.as_tensor(boxes, dtype=torch.int64)
+        # boxes  = torch.as_tensor(boxes, dtype=torch.int64)
+        boxes = torch.as_tensor(boxes, dtype=torch.float32) / self.target_size
         labels = torch.as_tensor(labels, dtype=torch.int64)
         masks = torch.stack([torch.tensor(mask, dtype=torch.uint8) for mask in masks_list])
 
@@ -63,23 +65,39 @@ class SOD_Data(Dataset):
         
         return image, target
     
+    
+    def resize_box(self, box, original_size=(600,600)):
+        """
+        Parameters:
+            - box (list<int>): List of integers, representing the coordinates of the (x_min, y_min) and (x_max, y_max)
+            - original_size (tuple): Tuple of the original image size (600,600)
+        """
+        x_min, y_min, x_max, y_max = box
+        orig_w, orig_h = original_size
+        new_w, new_h = self.target_size, self.target_size
+        x_min = int(x_min * new_w / orig_w)
+        x_max = int(x_max * new_w / orig_w)
+        y_min = int(y_min * new_h / orig_h)
+        y_max = int(y_max * new_h / orig_h)
+        return [x_min, y_min, x_max, y_max]
+    
 
     def create_binary_mask(self, original_size, polygons):
-            """
-            Parameters:
-                - original_size (tuple): Tuple of the original size of the image (height, width)
-                - polygons (list): List of tuples where each tuple is a point
-            """
-            mask = np.zeros(original_size, dtype=np.uint8)
-            for polygon in polygons:
-                if polygon:
-                    polygon = ()
-                    polygon = np.array(polygon, dtype=np.int32)
-                    if polygon.shape[0] >= 3:
-                        mask = Image.fromarray(mask)
-                        mask.polygon(polygon, fill=1, outline=1) # type: ignore
-                        mask = np.array(mask)
-            return mask
+        """
+        Parameters:
+            - original_size (tuple): Tuple of the original size of the image (height, width)
+            - polygons (list): List of tuples where each tuple is a point
+        """
+        mask = np.zeros(original_size, dtype=np.uint8)
+        for polygon in polygons:
+            if polygon:
+                polygon = ()
+                polygon = np.array(polygon, dtype=np.int32)
+                if polygon.shape[0] >= 3:
+                    mask = Image.fromarray(mask)
+                    mask.polygon(polygon, fill=1, outline=1) # type: ignore
+                    mask = np.array(mask)
+        return mask
         
         
    

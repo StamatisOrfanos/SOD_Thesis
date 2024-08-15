@@ -4,38 +4,40 @@ from sklearn.metrics import precision_recall_curve, average_precision_score
 
 # ------------------------------------------------------------------------
 
-# Create the train, validate and test functions for all the datasets 
-def train(model, train_loader, optimizer, device, anchors, num_classes):
-    """
-    Parameters:
-        - model (nn.Module): The model to be trained.
-        - train_loader (DataLoader): DataLoader for the training data.
-        - optimizer (Optimizer): The optimizer used for training the model.
-        - device (str): The device on which the training will be performed (e.g., 'cpu', 'cuda').
-        - anchors (Tensor): The anchor boxes used for bounding box predictions.
-        - num_classes (int): The number of classes in the dataset.
-    """
-    model.train()
+import torch
+from torch.utils.data import DataLoader
+from torchvision.transforms import Compose, ToTensor, Normalize
+from torchvision import transforms
+
+
+# Assuming transforms and other required modules are already imported
+def train(model, train_loader, device, anchors, optimizer, num_classes):
+    model.train()  # Set the model to training mode
     running_loss = 0.0
     all_metrics = {'precision': [], 'recall': [], 'AP': []}
-    for batch_idx, (images, targets) in enumerate(train_loader):
-        images = torch.stack(images).to(device)
-        targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-        optimizer.zero_grad()
+    anchors = anchors.to(device)
+    
+    for images, targets in train_loader:
+        images = images.to(device)  
+        targets = [{k: v.to(device) for k, v in t.items()} for t in targets] 
+        
+        optimizer.zero_grad() 
         outputs = model(images)
-        loss = model.compute_loss(outputs, targets, anchors)
+        
+        loss = model.compute_loss(outputs, targets)
         loss.backward()
         optimizer.step()
+        
         running_loss += loss.item()
-        print(f"Batch {batch_idx}, Loss: {loss.item()}")
-
-        precision, recall, ap, mAP = calculate_metrics(outputs, targets, num_classes)
-        all_metrics['precision'].append(precision)
-        all_metrics['recall'].append(recall)
-        all_metrics['AP'].append(ap)
-
+        
+        
+        metrics = calculate_metrics(outputs, targets, num_classes)
+        for key, value in metrics.items(): # type: ignore
+            all_metrics[key].append(value)
+    
     epoch_loss = running_loss / len(train_loader)
-    return epoch_loss, all_metrics, mAP
+    return epoch_loss, all_metrics
+
 
 
 
