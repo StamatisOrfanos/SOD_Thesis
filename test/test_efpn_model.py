@@ -119,14 +119,14 @@ data_transform = {
 }
 
 train_dataset = SOD_Data("data/uav_sod_data/train"  + "/images", "data/uav_sod_data/train" + "/annotations", data_transform["train"])
-train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True, collate_fn=lambda x: tuple(zip(*x)))
+train_loader = DataLoader(train_dataset, batch_size=3, shuffle=True, collate_fn=lambda x: tuple(zip(*x)))
 
 
 
 # Define model, loss function, and optimizer
 device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-model = EFPN(in_channels=3, hidden_dim=256, num_classes=20, num_anchors=9).to(device)
-anchors = Anchors.generate_anchors([(38, 38), (19, 19), (10, 10), (5, 5)], scales=[32, 64, 128, 256], aspect_ratios=[0.5, 1, 2])
+anchors = Anchors.generate_anchors([(19, 19)], scales=[32], aspect_ratios=[0.5, 1])
+model = EFPN(in_channels=3, hidden_dim=256, num_classes=20, num_anchors=len(anchors)).to(device)
 loss_fn = DetectionLoss(anchors=anchors).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 

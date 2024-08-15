@@ -98,34 +98,32 @@ class ExtendedMask2Former(nn.Module):
         anchors = anchors.to(device)
         
         # Assume predictions dictionary is structured with 'pred_logits', 'pred_masks', and 'pred_boxes'
-        predicted_classes = predictions['pred_logits']
-        predicted_masks = predictions['pred_masks']
-        predicted_bboxes = predictions['bounding_box']
+        predicted_classes = predictions['pred_logits'][:, :self.anchors.size(0), :]
+        predicted_masks = predictions['pred_masks'][:, :self.anchors.size(0), :]
+        predicted_bboxes = predictions['bounding_box'][:, :self.anchors.size(0), :]  
 
-      
-
-        ground_truth_labels = target['labels'].to(device)
-        ground_truth_masks = target['masks'].to(device)
-        ground_truth_boxes = target['boxes'].to(device)
+        ground_truth_labels = targets['labels'].to(device)
+        ground_truth_masks = targets['masks'].to(device)
+        ground_truth_boxes = targets['boxes'].to(device)
         
-        # Align predictions with ground truths via anchor matching
+        # Match ground truth boxes and generate regression targets
         matched_gt_boxes, anchor_max_idx = match_anchors_to_ground_truth_boxes(anchors, ground_truth_boxes)
-        
-        # Filter predictions that correspond to matched anchors
-        matched_pred_bboxes = predicted_bboxes[i][anchor_max_idx]
-        matched_pred_classes = predicted_classes[i][anchor_max_idx]
-        matched_pred_masks = predicted_masks[i][anchor_max_idx]
-        
-        # Calculate regression and classification losses for matched anchors
-        regression_targets = encode_bounding_boxes(matched_gt_boxes, anchors[anchor_max_idx]).to(device)
-        total_bbox_loss += self.bounding_box_loss(matched_pred_bboxes, regression_targets)
-        
-        classification_targets = ground_truth_labels[anchor_max_idx]
-        total_class_loss += self.class_loss(matched_pred_classes, classification_targets)
-        # # Assuming ground truth masks are available and need to be matched similarly
-        # if 'masks' in target:
-        #     ground_truth_masks = target['masks'][anchor_max_idx].to(device)
-        #     total_mask_loss += self.mask_loss(matched_pred_masks, ground_truth_masks)
+        regression_targets = encode_bounding_boxes(matched_gt_boxes, anchors).to(device)
+        regression_targets = regression_targets.unsqueeze(0).repeat(predicted_bboxes.size(0), 1, 1)
 
-        total_loss = total_class_loss + total_bbox_loss + total_mask_loss
+        # Compute regression loss
+        regression_loss = self.bounding_box_loss(predicted_bboxes, regression_targets)
+
+        # Classification targets need to align with the number of predictions per class
+        classification_targets = ground_truth_labels[anchor_max_idx].to(device)
+        classification_targets = classification_targets.unsqueeze(0).repeat(predicted_classes.size(0), 1)
+
+        # Flatten the scores and targets to calculate classification loss
+        classification_loss = self.classification_loss_fn(
+            predicted_classes.reshape(-1, predicted_classes.size(-1)),
+            classification_targets.reshape(-1) 
+        )
+
+        total_loss = regression_loss + classification_loss
+        
         return total_loss
