@@ -11,32 +11,34 @@ from torchvision import transforms
 
 
 # Assuming transforms and other required modules are already imported
-def train(model, train_loader, device, anchors, optimizer, num_classes):
+def train(model, train_loader, device, anchors, optimizer, num_epochs):
     model.train()  # Set the model to training mode
     running_loss = 0.0
     all_metrics = {'precision': [], 'recall': [], 'AP': []}
     anchors = anchors.to(device)
     
-    for images, targets in train_loader:
-        images = images.to(device)  
-        targets = [{k: v.to(device) for k, v in t.items()} for t in targets] 
+    for epoch in range(num_epochs):
         
-        optimizer.zero_grad() 
-        outputs = model(images)
+        model.train()
         
-        loss = model.compute_loss(outputs, targets)
-        loss.backward()
-        optimizer.step()
-        
-        running_loss += loss.item()
-        
-        
-        metrics = calculate_metrics(outputs, targets, num_classes)
-        for key, value in metrics.items(): # type: ignore
-            all_metrics[key].append(value)
-    
-    epoch_loss = running_loss / len(train_loader)
-    return epoch_loss, all_metrics
+        for images, targets in train_loader:
+            images = torch.stack(images).to(device)
+            targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+
+            gt_bboxes = targets[0]['boxes'].to(device)
+            gt_labels = targets[0]['labels'].to(device)
+            gt_masks  = targets[0]['masks'].to(device)
+            actual = {"boxes": gt_bboxes, "labels": gt_labels, "masks": gt_masks}
+
+            predictions = model(images, gt_masks)
+
+            loss = model.compute_loss(predictions, actual, anchors)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
 
 
 

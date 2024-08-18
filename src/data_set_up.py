@@ -46,12 +46,11 @@ class SOD_Data(Dataset):
                 box = self.resize_box(box)
                 
                 masks_part = eval("[" + line.split("[")[1])
-                masks = self.create_binary_mask((600, 600), masks_part)
-                masks = self.resize_mask(masks, (self.target_size, self.target_size))
+                mask = self.create_and_resize_mask((600, 600), (self.target_size, self.target_size), masks_part)
                 
                 boxes.append(box)
                 labels.append(class_code)
-                masks_list.append(masks)
+                masks_list.append(mask)
 
         
         # boxes  = torch.as_tensor(boxes, dtype=torch.int64)
@@ -82,34 +81,23 @@ class SOD_Data(Dataset):
         return [x_min, y_min, x_max, y_max]
     
 
-    def create_binary_mask(self, original_size, polygons):
+    def create_and_resize_mask(self, original_size, target_size, polygons):
         """
         Parameters:
-            - original_size (tuple): Tuple of the original size of the image (height, width)
-            - polygons (list): List of tuples where each tuple is a point
+            - original_size (tuple): Original dimensions of the image (height, width).
+            - target_size (tuple): Target dimensions to which the mask will be resized.
+            - polygons (list): List of lists of tuples, where each list of tuples represents polygon vertices.
         """
         mask = np.zeros(original_size, dtype=np.uint8)
+        draw = ImageDraw.Draw(Image.fromarray(mask))
         for polygon in polygons:
             if polygon:
-                polygon = ()
-                polygon = np.array(polygon, dtype=np.int32)
-                if polygon.shape[0] >= 3:
-                    mask = Image.fromarray(mask)
-                    mask.polygon(polygon, fill=1, outline=1) # type: ignore
-                    mask = np.array(mask)
-        return mask
-        
-        
-   
-    def resize_mask(self, mask, target_size):
-        """
-        Parameters:
-            - mask (np.array): This is the binary mask that we create for the image
-            - target_size (tuple): Tuple of the image size we want to resize to
-        """
+                draw.polygon(polygon, fill=1, outline=1)
+        mask = np.array(mask)
         mask_img = Image.fromarray(mask)
         mask_img = mask_img.resize(target_size, Image.NEAREST) # type: ignore
         return np.array(mask_img)
+
     
 
     def filter_images_with_annotations(self, image_files):
