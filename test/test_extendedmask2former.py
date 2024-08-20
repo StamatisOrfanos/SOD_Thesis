@@ -96,16 +96,6 @@ test_path = os.path.join(base_dir, "test")
 validation_path = os.path.join(base_dir, "validation")
 
 
-def sod_collate_fn(batch):
-    images = [item[0] for item in batch] 
-    targets = [item[1] for item in batch]
-
-    # Stack images into a single tensor
-    images = torch.stack(images, dim=0)
-
-    return images, targets
-
-
 # Data transform function
 data_transform = {
     "train": transforms.Compose([
@@ -187,13 +177,14 @@ for epoch in range(num_epochs):
         gt_labels = targets[0]['labels'].to(device)
         gt_masks  = targets[0]['masks'].to(device)
 
-        predictions = model(images)
+        predictions = model(images, gt_masks)
         actual = {"boxes": gt_bboxes, "labels": gt_labels}
 
         loss = model.compute_loss(predictions, actual, anchors)
+        print("The loss in this case is: ", loss)
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-    print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+    # print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')

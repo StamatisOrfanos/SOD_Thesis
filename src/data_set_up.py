@@ -56,9 +56,9 @@ class SOD_Data(Dataset):
         # boxes  = torch.as_tensor(boxes, dtype=torch.int64)
         boxes = torch.as_tensor(boxes, dtype=torch.float32) / self.target_size
         labels = torch.as_tensor(labels, dtype=torch.int64)
-        masks = torch.stack([torch.tensor(mask, dtype=torch.uint8) for mask in masks_list])
+        masks_tensor = torch.stack(masks_list)
 
-        target = {'boxes': boxes, 'labels': labels, 'masks': masks }
+        target = {'boxes': boxes, 'labels': labels, 'masks': masks_tensor}
 
         if self.transform: image = self.transform(image)
         
@@ -84,19 +84,21 @@ class SOD_Data(Dataset):
     def create_and_resize_mask(self, original_size, target_size, polygons):
         """
         Parameters:
-            - original_size (tuple): Original dimensions of the image (height, width).
-            - target_size (tuple): Target dimensions to which the mask will be resized.
-            - polygons (list): List of lists of tuples, where each list of tuples represents polygon vertices.
+            original_size (tuple): Original dimensions of the image (height, width).
+            target_size (tuple): Target dimensions to which the mask will be resized.
+            polygons (list of lists of tuples): Each list of tuples represents polygon vertices.
         """
-        mask = np.zeros(original_size, dtype=np.uint8)
-        draw = ImageDraw.Draw(Image.fromarray(mask))
-        for polygon in polygons:
-            if polygon:
-                draw.polygon(polygon, fill=1, outline=1)
-        mask = np.array(mask)
-        mask_img = Image.fromarray(mask)
-        mask_img = mask_img.resize(target_size, Image.NEAREST) # type: ignore
-        return np.array(mask_img)
+        mask = Image.new('L', original_size, 0)
+        draw = ImageDraw.Draw(mask)
+            
+        if len(polygons) >= 3:
+            draw.polygon(polygons, outline=1, fill=1)
+        else:
+            print("Polygon with insufficient points:", polygons)
+
+        mask = mask.resize(target_size, Image.NEAREST) # type: ignore
+        mask_array = np.array(mask)
+        return torch.tensor(mask_array, dtype=torch.uint8)
 
     
 
@@ -106,13 +108,16 @@ class SOD_Data(Dataset):
             - image_files (list<File>): Initial list of images before the filtering
         """
         valid_image_files = []
+        
         for image_name in image_files:
             annotation_name = image_name.replace('.jpg', '.txt').replace('.png', '.txt')
-            annotation_path = os.path.join(self.annotation_dir, annotation_name)
+            annotation_path = os.path.join(self.annotation_dir, annotation_name)  
+             
             with open(annotation_path, 'r') as f:
                 annotation_lines = f.readlines()
                 if len(annotation_lines) <= self.max_annotations:
-                    valid_image_files.append(image_name)
+                    valid_image_files.append(image_name)  
+                                                                                                       
         return valid_image_files
     
     

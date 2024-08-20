@@ -37,7 +37,6 @@ class ExtendedMask2Former(nn.Module):
         feature_maps, bounding_box, class_scores = self.efpn(image)   
         
         # Bring all the data to the correct device
-        feature_maps = feature_maps.to(self.device)
         masks = masks.to(self.device)
         class_scores = class_scores.to(self.device)
         

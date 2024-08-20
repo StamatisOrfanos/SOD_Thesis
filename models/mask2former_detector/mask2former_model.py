@@ -111,6 +111,7 @@ class Mask2Former(nn.Module):
         Parameters:
             - feature_map_list (list): List of multi-scale feature maps from the backbone or previous layer
         """
+        print("The feature map list is: {}", feature_map_list)
         src = []
         positional_embeddings = []
         feature_maps_size_list = []
