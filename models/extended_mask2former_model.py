@@ -61,52 +61,71 @@ class ExtendedMask2Former(nn.Module):
 
         return pred_boxes
     
-    
-    def compute_cost_matrix(self, predicted_masks, ground_truth_masks):
-        """    
-        Parameters:
-            - predicted_masks (torch.Tensor): Predicted masks of shape (num_queries, H, W).
-            - ground_truth_masks (torch.Tensor): Ground truth masks of shape (num_objects, H, W).
-        """
-        num_queries, H, W = predicted_masks.shape
-        num_objects       = ground_truth_masks.shape[0]
+
+    def hungarian_loss(self, predicted_classes, predicted_masks, ground_truth_classes, ground_truth_masks):
+        batch_size = predicted_classes.size(0)
+        total_mask_loss, total_class_loss = [], []
+
+        for idx in range(batch_size):
+            
+            class_cost = self.class_loss(predicted_classes[idx], ground_truth_classes[idx], reduction='none')
+            mask_cost = self.mask_loss(predicted_masks[idx], ground_truth_masks[idx], reduction='none').mean((1, 2))
+            cost_matrix = class_cost + mask_cost
+
+            # Hungarian matching to find minimal cost assignment
+            predicted_indices, ground_truth_indices = linear_sum_assignment(cost_matrix.cpu().detach().numpy())
+            
+            # Calculate matched loss for assigned pairs
+            matched_class_loss = class_cost[predicted_indices, ground_truth_indices].mean()
+            matched_mask_loss = mask_cost[predicted_indices, ground_truth_indices].mean()
+
+            # Accumulate loss for the batch
+            total_mask_loss.append(matched_mask_loss)
+            total_class_loss.append(matched_class_loss)            
         
-        # Convert masks to float for distance computation
-        predicted_masks    = predicted_masks.float()
-        ground_truth_masks = ground_truth_masks.float()
-        
-        # Flatten masks for ease of computation and compute the cost matrix based on binary cross entropy loss
-        pred_masks_flat = predicted_masks.view(num_queries, -1)
-        gt_masks_flat   = ground_truth_masks.view(num_objects, -1)
-        cost_matrix     = torch.cdist(pred_masks_flat, gt_masks_flat, p=1)
+        # Get the mask and class loss for all the batch, so we need to normalize here
+        mask_loss = sum(total_mask_loss) / batch_size
+        class_loss = sum(total_class_loss) / batch_size
+
+        return mask_loss, class_loss
     
-        return cost_matrix
+    
+    import torch
 
 
-    def hungarian_matching(self, predicted_masks, ground_truth_masks):
-        """    
-        Parameters:
-            - predicted_masks (torch.Tensor): Predicted masks of shape (num_queries, H, W).
-            - ground_truth_masks (torch.Tensor): Ground truth masks of shape (num_objects, H, W).    
+    def class_confidence_predictor(self, bounding_box_classes, mask_classes):
         """
-        cost_matrix = self.compute_cost_matrix(predicted_masks, ground_truth_masks)    
-        pred_indices, gt_indices = linear_sum_assignment(cost_matrix.cpu().detach().numpy())
-        matched_indices = list(zip(pred_indices, gt_indices))
+        Parameters:
+        - bounding_box_classes (Tensor): Classes from the bounding box branch [batch_size, num_classes]
+        - mask_classes (Tensor): Classes from the mask branch [batch_size, num_classes]
+        """
+        # Calculate probabilities for classes
+        box_probabilities = torch.softmax(bounding_box_classes, dim=-1)
+        mask_probabilities = torch.softmax(mask_classes, dim=-1)
         
-        return matched_indices
+        # Combine by taking maximum probability across the two
+        combined_probabilities = torch.max(box_probabilities, mask_probabilities)
+        
+        # Resolve to final class predictions
+        final_classes = torch.argmax(combined_probabilities, dim=-1)
+        
+        return final_classes
+
+
     
        
-    def compute_loss(self, predictions, targets, anchors):
+    def compute_loss(self, predictions, targets, anchors, mask_weight=1.0, bounding_box_weight=1.0, class_weight=0.5):
         """
         Refactored loss computation to better align with the DetectionLoss class approach.
         """
         device = predictions.device
         anchors = anchors.to(device)
         
-        # Assume predictions dictionary is structured with 'pred_logits', 'pred_masks', and 'pred_boxes'
-        predicted_classes = predictions['pred_logits'][:, :self.anchors.size(0), :]
+        # Get the predictions from the model. 
+        predicted_classes_masks = predictions['pred_logits'][:, :self.anchors.size(0), :]
         predicted_masks = predictions['pred_masks'][:, :self.anchors.size(0), :]
-        predicted_bboxes = predictions['bounding_box'][:, :self.anchors.size(0), :]  
+        predicted_bounding_boxes = predictions['bounding_box'][:, :self.anchors.size(0), :]  
+        predicted_classes_boxes = predictions['class_scores'][:, :self.anchors.size(0), :]
 
         ground_truth_labels = targets['labels'].to(device)
         ground_truth_masks = targets['masks'].to(device)
@@ -115,21 +134,24 @@ class ExtendedMask2Former(nn.Module):
         # Match ground truth boxes and generate regression targets
         matched_gt_boxes, anchor_max_idx = match_anchors_to_ground_truth_boxes(anchors, ground_truth_boxes)
         regression_targets = encode_bounding_boxes(matched_gt_boxes, anchors).to(device)
-        regression_targets = regression_targets.unsqueeze(0).repeat(predicted_bboxes.size(0), 1, 1)
+        regression_targets = regression_targets.unsqueeze(0).repeat(predicted_bounding_boxes.size(0), 1, 1)
 
-        # Compute regression loss
-        regression_loss = self.bounding_box_loss(predicted_bboxes, regression_targets)
+        # - Compute bounding box loss -
+        bounding_box_loss = self.bounding_box_loss(predicted_bounding_boxes, regression_targets)
 
-        # Classification targets need to align with the number of predictions per class
+        # Classification targets need to align with the number of predictions per class and flatten the scores and targets to calculate bounding classification loss
         classification_targets = ground_truth_labels[anchor_max_idx].to(device)
-        classification_targets = classification_targets.unsqueeze(0).repeat(predicted_classes.size(0), 1)
+        classification_targets = classification_targets.unsqueeze(0).repeat(predicted_classes_boxes.size(0), 1)
+        bounding_box_class_loss = self.class_loss(predicted_classes_boxes.reshape(-1, predicted_classes_boxes.size(-1)), classification_targets.reshape(-1))
+        
+        # - Compute mask and masks class loss with hungarian matching -
+        mask_loss, mask_class_loss = self.hungarian_loss(predicted_classes_masks, predicted_masks, ground_truth_labels, ground_truth_masks)
+        
+        # - Compute final class prediction through confidence vote -
+        final_class_loss = self.class_confidence_predictor(bounding_box_class_loss, mask_class_loss)
+        
 
-        # Flatten the scores and targets to calculate classification loss
-        classification_loss = self.classification_loss_fn(
-            predicted_classes.reshape(-1, predicted_classes.size(-1)),
-            classification_targets.reshape(-1) 
-        )
-
-        total_loss = regression_loss + classification_loss
+        total_loss = mask_weight * mask_loss + bounding_box_weight * bounding_box_loss + class_weight * final_class_loss
         
         return total_loss
+    
