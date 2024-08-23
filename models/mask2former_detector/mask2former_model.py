@@ -49,7 +49,6 @@ class Mask2Former(nn.Module):
         self.query_embeddings = nn.Embedding(num_queries, hidden_dim)
 
         # Define the amount of multi-scale features and create the corresponding level embedding (we use 5 scales from the EFPN)
-        # and the projection layers to align the channel dimensions if necessary.
         self.num_feature_levels = 5
         self.scale_level_embedding = nn.Embedding(self.num_feature_levels, hidden_dim)
         self.input_proj = nn.ModuleList()
@@ -111,7 +110,6 @@ class Mask2Former(nn.Module):
         Parameters:
             - feature_map_list (list): List of multi-scale feature maps from the backbone or previous layer
         """
-        print("The feature map list is: {}", feature_map_list)
         src = []
         positional_embeddings = []
         feature_maps_size_list = []
@@ -173,24 +171,32 @@ class Mask2Former(nn.Module):
             - mask (list): Features to be used for mask prediction.
             - attention_mask_target_size (list): Feature maps size list
         """
-        # Transpose the decoder output to match the expected input shape for the subsequent operations after Normalizing.
         # This changes the shape from [sequence length, batch size, features] to [batch size, sequence length, features].        
-        decoder_output = output
-        decoder_output = decoder_output.transpose(0, 1)
+        decoder_output = output.transpose(0, 1)
         
-        # Pass the transposed decoder output through a linear layer to predict class logits.
-        # Similarly, pass the transposed decoder output through another linear layer to get mask embeddings.
+        # Pass the transposed decoder output through a linear layer to predict class logits and through another linear layer to get mask embeddings.
         outputs_class  = self.class_embedding(decoder_output)
         mask_embedding = self.mask_embedding(decoder_output)
+        mask = mask.unsqueeze(1)
+        
+        print(f"\n\n\n Output size: {output.size()}")
+        print(f"Mask size: {mask.size()}")
+        print(f"Attention mask target size: {attention_mask_target_size}")
+        print(f"Mask embedding size: {mask_embedding.size()}")
         
         
         # Perform a tensor operation to generate the mask predictions. Project the mask embeddings onto the mask features.
         # "bqc,bchw->bqhw" is the einsum operation indicating: batch (b), queries (q), channels (c), height (h) and width (w).
         # It effectively combines mask embeddings (bqc) with mask features (bchw) to produce mask predictions (bqhw).
         outputs_mask = torch.einsum("bqc,bchw->bqhw", mask_embedding, mask)
+        
+        print(f"Outputs mask size before interpolation: {outputs_mask.size()}")
+        
 
         # Interpolate the output masks to match the target size for attention masks. This is used for higher-resolution prediction.
         attention_mask = F.interpolate(outputs_mask, size=attention_mask_target_size, mode="bilinear", align_corners=False)
+        
+        print(f"Attention mask size after interpolation: {attention_mask.size()}")
         
         # Apply sigmoid to the interpolated attention mask, flatten it, repeat it for each attention head, and then flatten the first two dimensions.
         # The threshold (< 0.5) determines which positions are allowed to attend: values below 0.5 after sigmoid are set to `True` (meaning they cannot attend).
@@ -198,6 +204,8 @@ class Mask2Former(nn.Module):
         
         # Detach the attention mask from the computation graph to prevent gradients from flowing into it.
         attention_mask = attention_mask.detach()
+        
+        print(f"Final attention mask size: {attention_mask.size()}\n\n\n")
 
         return outputs_class, outputs_mask, attention_mask
 

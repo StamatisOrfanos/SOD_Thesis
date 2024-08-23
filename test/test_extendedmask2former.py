@@ -118,7 +118,7 @@ train_dataset      = SOD_Data(train_path +"/images", train_path + "/annotations"
 test_dataset       = SOD_Data(test_path + "/images", test_path  + "/annotations", data_transform["test"])
 validation_dataset = SOD_Data(validation_path + "/images", validation_path + "/annotations", data_transform["validation"])
 
-train_loader      = DataLoader(train_dataset, batch_size=3, shuffle=True, collate_fn=lambda x: tuple(zip(*x)))
+train_loader      = DataLoader(train_dataset, batch_size=1, shuffle=True, collate_fn=lambda x: tuple(zip(*x)))
 test_loader       = DataLoader(test_dataset, batch_size=3, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
 validation_loader = DataLoader(validation_dataset, batch_size=3, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
 
@@ -181,7 +181,6 @@ for epoch in range(num_epochs):
         actual = {"boxes": gt_bboxes, "labels": gt_labels}
 
         loss = model.compute_loss(predictions, actual, anchors)
-        print("The loss in this case is: ", loss)
 
         optimizer.zero_grad()
         loss.backward()

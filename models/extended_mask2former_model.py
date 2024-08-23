@@ -19,7 +19,7 @@ class ExtendedMask2Former(nn.Module):
         efpn (EFPN): The Enhanced Feature Pyramid Network model used as the backbone for feature extraction and bounding box training.
         mask2former (Mask2Former): The Mask2Former model used for predicting object instances and their masks based on the features provided by EFPN.
     """
-    def __init__(self, num_classes, num_anchors, device, hidden_dim=256, num_queries=300, nheads=8, dim_feedforward=2048, dec_layers=1, mask_dim=256):
+    def __init__(self, num_classes, num_anchors, device, hidden_dim=256, num_queries=300, nheads=16, dim_feedforward=2048, dec_layers=1, mask_dim=256):
         super(ExtendedMask2Former, self).__init__()
         self.device = device              
         self.efpn        = EFPN(hidden_dim, hidden_dim, num_classes, num_anchors)
@@ -40,10 +40,8 @@ class ExtendedMask2Former(nn.Module):
         masks = masks.to(self.device)
         class_scores = class_scores.to(self.device)
         
-        
         # Get the output of the Mask2Former model that contains the masks, classes
         output = self.mask2former(feature_maps, masks, bounding_box, class_scores)
-        output = output.to(self.device)
         
         return output
         
@@ -90,26 +88,23 @@ class ExtendedMask2Former(nn.Module):
         return mask_loss, class_loss
     
     
-    import torch
 
 
     def class_confidence_predictor(self, bounding_box_classes, mask_classes):
-        """
+        """        
         Parameters:
-        - bounding_box_classes (Tensor): Classes from the bounding box branch [batch_size, num_classes]
-        - mask_classes (Tensor): Classes from the mask branch [batch_size, num_classes]
+        - bounding_box_classes (Tensor): Class logits from the bounding box branch [batch_size, num_queries, num_classes]
+        - mask_classes (Tensor): Class logits from the mask branch [batch_size, num_queries, num_classes]
+    
         """
-        # Calculate probabilities for classes
+        # Softmax to convert logits to probabilities
         box_probabilities = torch.softmax(bounding_box_classes, dim=-1)
         mask_probabilities = torch.softmax(mask_classes, dim=-1)
         
-        # Combine by taking maximum probability across the two
-        combined_probabilities = torch.max(box_probabilities, mask_probabilities)
+        # Combine by taking the maximum across probabilities from both predictions
+        combined_probabilities = torch.max(box_probabilities, mask_probabilities, dim=0) # type: ignore
         
-        # Resolve to final class predictions
-        final_classes = torch.argmax(combined_probabilities, dim=-1)
-        
-        return final_classes
+        return combined_probabilities
 
 
     
@@ -121,12 +116,13 @@ class ExtendedMask2Former(nn.Module):
         device = predictions.device
         anchors = anchors.to(device)
         
-        # Get the predictions from the model. 
+        # Extract predictions
         predicted_classes_masks = predictions['pred_logits'][:, :self.anchors.size(0), :]
         predicted_masks = predictions['pred_masks'][:, :self.anchors.size(0), :]
         predicted_bounding_boxes = predictions['bounding_box'][:, :self.anchors.size(0), :]  
         predicted_classes_boxes = predictions['class_scores'][:, :self.anchors.size(0), :]
 
+        # Ground truth
         ground_truth_labels = targets['labels'].to(device)
         ground_truth_masks = targets['masks'].to(device)
         ground_truth_boxes = targets['boxes'].to(device)
@@ -148,8 +144,12 @@ class ExtendedMask2Former(nn.Module):
         mask_loss, mask_class_loss = self.hungarian_loss(predicted_classes_masks, predicted_masks, ground_truth_labels, ground_truth_masks)
         
         # - Compute final class prediction through confidence vote -
-        final_class_loss = self.class_confidence_predictor(bounding_box_class_loss, mask_class_loss)
+        final_class_loss = self.class_loss(self.class_confidence_predictor(predicted_classes_boxes, predicted_classes_masks))
         
+        # print("\n\n\n The class loss from the bounding box is of type: {}, size:{} and values:{}".format(type(bounding_box_class_loss),bounding_box_class_loss.size()))
+        # print("\n The class loss from the masks is of type: {}, size:{} and values:{}".format(type(mask_class_loss),mask_class_loss.size()))
+        # print("\n The class loss from the combinations is of type: {}, size:{} and values:{}\n\n\n".format(type(final_class_loss),final_class_loss.size()))
+ 
 
         total_loss = mask_weight * mask_loss + bounding_box_weight * bounding_box_loss + class_weight * final_class_loss
         
