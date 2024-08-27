@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 from src.data_set_up import SOD_Data
 from models.extended_mask2former_model import ExtendedMask2Former
 from models.efpn_backbone.anchors import Anchors
+import torch.nn.functional as F
 from src.helpers import train, validate, test
 
 # # ------------------------------------------------------------------------------------------------------------------------------------
@@ -113,12 +114,11 @@ data_transform = {
 }
 
 
-# Dataset and DataLoader
 train_dataset      = SOD_Data(train_path +"/images", train_path + "/annotations", data_transform["train"])
 test_dataset       = SOD_Data(test_path + "/images", test_path  + "/annotations", data_transform["test"])
 validation_dataset = SOD_Data(validation_path + "/images", validation_path + "/annotations", data_transform["validation"])
 
-train_loader      = DataLoader(train_dataset, batch_size=1, shuffle=True, collate_fn=lambda x: tuple(zip(*x)))
+train_loader      = DataLoader(train_dataset, batch_size=2, shuffle=True, collate_fn=lambda x: tuple(zip(*x)))
 test_loader       = DataLoader(test_dataset, batch_size=3, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
 validation_loader = DataLoader(validation_dataset, batch_size=3, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
 

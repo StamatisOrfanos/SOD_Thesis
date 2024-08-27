@@ -38,7 +38,7 @@ class Mask2Former(nn.Module):
                 dropout=0.0,
                 activation="relu"
             )
-            for _ in range(dec_layers)
+            for _ in range(self.num_layers)
         ])
 
         # Learnable query features and learnable query positional embedding
@@ -83,16 +83,32 @@ class Mask2Former(nn.Module):
             - mask: Optional argument, not used in this function but can be used for additional operations like applying masks to features.
         """
         assert len(feature_map_list) == self.num_feature_levels
+        
+        print("\n\n\n")
+        
+        print("The masks size is: {}".format(mask.size()))
                
         # Lists to store    src : [projected feature maps for each scale]
         # positional_embeddings : [positional encodings for each scale]
         # feature_maps_size_list: [sizes (H, W) of feature maps for each scale]
         src, positional_embeddings, feature_maps_size_list = self.generate_info_per_feature_map(feature_map_list)
-
+        
+        for s in src:
+            print("The source map is: {}".format(s.size()))
+            
+        for pos in positional_embeddings:
+            print("The positional embedding is: {}".format(pos.size()))
+        
         # Initialize query embeddings and replicate them for the batch size and create the initial output features for the queries.
         _, batch_size, _ = src[0].shape
+        
+        print("The batch size is:{batch_size}")
+        
+        
+        # QxNxC
         query_embed      = self.query_embeddings.weight.unsqueeze(1).repeat(1, batch_size, 1)
-        output = self.query_features.weight.unsqueeze(1).repeat(1, batch_size, 1)     
+        output = self.query_features.weight.unsqueeze(1).repeat(1, batch_size, 1)
+        print("The query embedding size is: {}, while the output size is: {}".format(batch_size, query_embed.size(), output.size()))
         
         # List of predictions for each class and the corresponding mask and bounding box
         predictions_class, predictions_mask = self.class_mask_predictions(output, src, positional_embeddings, feature_maps_size_list, mask, query_embed) 
@@ -124,7 +140,7 @@ class Mask2Former(nn.Module):
             # Permute the flattened positional encodings, source feature maps for transformer processing.
             positional_embeddings.append(self.positional_embedding_layer(feature_map_list[i], None).flatten(2))         
             src.append(self.input_proj[i](feature_map_list[i]).flatten(2) + self.scale_level_embedding.weight[i][None, :, None])    
-            positional_embeddings[-1] = positional_embeddings[-1].permute(2, 0, 1) 
+            positional_embeddings[-1] = positional_embeddings[-1].permute(2, 0, 1)
             src[-1] = src[-1].permute(2, 0, 1)
             
         return src, positional_embeddings, feature_maps_size_list

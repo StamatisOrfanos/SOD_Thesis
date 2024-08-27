@@ -7,11 +7,7 @@ import torch
 from torch import nn, Tensor
 from torch.nn import functional as F
 
-from detectron2.config import configurable
 from detectron2.layers import Conv2d
-
-from .position_encoding import PositionEmbeddingSine
-from .maskformer_transformer_decoder import TRANSFORMER_DECODER_REGISTRY
 
 
 class SelfAttentionLayer(nn.Module):
@@ -205,44 +201,8 @@ class MLP(nn.Module):
 
 
 class MultiScaleMaskedTransformerDecoder(nn.Module):
-    @configurable
-    def __init__(
-        self,
-        in_channels,
-        mask_classification=True,
-        *,
-        num_classes: int,
-        hidden_dim: int,
-        num_queries: int,
-        nheads: int,
-        dim_feedforward: int,
-        dec_layers: int,
-        pre_norm: bool,
-        mask_dim: int,
-        enforce_input_project: bool,
+    def __init__(self, in_channels, *, num_classes: int, hidden_dim: int, num_queries: int, nheads: int, dim_feedforward: int, dec_layers: int, pre_norm: bool, mask_dim: int, enforce_input_project: bool,
     ):
-        """
-        NOTE: this interface is experimental.
-        Args:
-            in_channels: channels of the input features
-            mask_classification: whether to add mask classifier or not
-            num_classes: number of classes
-            hidden_dim: Transformer feature dimension
-            num_queries: number of queries
-            nheads: number of heads
-            dim_feedforward: feature dimension in feedforward network
-            enc_layers: number of Transformer encoder layers
-            dec_layers: number of Transformer decoder layers
-            pre_norm: whether to use pre-LayerNorm or not
-            mask_dim: mask feature dimension
-            enforce_input_project: add input project 1x1 conv even if input
-                channels and hidden dim is identical
-        """
-        super().__init__()
-
-        assert mask_classification, "Only support mask classification model"
-        self.mask_classification = mask_classification
-
         # positional encoding
         N_steps = hidden_dim // 2
         self.pe_layer = PositionEmbeddingSine(N_steps, normalize=True)
@@ -392,16 +352,3 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
         attn_mask = attn_mask.detach()
 
         return outputs_class, outputs_mask, attn_mask
-
-    @torch.jit.unused
-    def _set_aux_loss(self, outputs_class, outputs_seg_masks):
-        # this is a workaround to make torchscript happy, as torchscript
-        # doesn't support dictionary with non-homogeneous values, such
-        # as a dict having both a Tensor and a list.
-        if self.mask_classification:
-            return [
-                {"pred_logits": a, "pred_masks": b}
-                for a, b in zip(outputs_class[:-1], outputs_seg_masks[:-1])
-            ]
-        else:
-            return [{"pred_masks": b} for b in outputs_seg_masks[:-1]]
