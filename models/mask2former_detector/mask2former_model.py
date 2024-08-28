@@ -48,8 +48,8 @@ class Mask2Former(nn.Module):
         self.decoder_norm = nn.LayerNorm(hidden_dim)
         
         # Learnable embeddings for the decoder queries (provide a fixed number of "slots" for the decoder to focus on different parts of the input)
-        self.query_features = nn.Embedding(num_queries, hidden_dim)
-        self.query_embeddings = nn.Embedding(num_queries, hidden_dim)
+        self.query_features = nn.Embedding(self.num_queries, hidden_dim)
+        self.query_embeddings = nn.Embedding(self.num_queries, hidden_dim)
 
         # Define the amount of multi-scale features and create the corresponding level embedding (we use 5 scales from the EFPN)
         self.num_feature_levels = 5
@@ -88,13 +88,15 @@ class Mask2Former(nn.Module):
         # feature_maps_size_list: [sizes (H, W) of feature maps for each scale]
         src, positional_embeddings, feature_maps_size_list = self.generate_info_per_feature_map(feature_map_list)
         
+        
+        print("\n\n\n")
+        
         # Initialize query embeddings and replicate them for the batch size and create the initial output features for the queries.
         _, batch_size, _ = src[0].shape        
         
         # QxNxC
-        query_embed      = self.query_embeddings.weight.unsqueeze(1).repeat(1, batch_size, 1)
-        output = self.query_features.weight.unsqueeze(1).repeat(1, batch_size, 1)
-        print("The query embedding size is: {}, while the output size is: {}".format(batch_size, query_embed.size(), output.size()))
+        query_embed = self.query_embeddings.weight.unsqueeze(1).repeat(1, batch_size, 1)        
+        output = self.query_features.weight.unsqueeze(1).repeat(1, batch_size, 1)  
         
         # List of predictions for each class and the corresponding mask and bounding box
         predictions_class, predictions_mask = self.class_mask_predictions(output, src, positional_embeddings, feature_maps_size_list, mask, query_embed) 
@@ -146,12 +148,27 @@ class Mask2Former(nn.Module):
         """
         # List to store class predictions at each layer. List to store mask predictions at each layer.
         predictions_class = [] 
-        predictions_mask  = [] 
+        predictions_mask  = []
+        # --------------------------------------------------------------------------------------------------------
+        print("Entering class_mask_predictions...")
+        print(f"Output tensor shape: {output.shape}")
+        print(f"Src list shapes: {[s.shape for s in src]}")
+        print(f"Positional embeddings shapes: {[pe.shape for pe in positional_embeddings]}")
+        print(f"Feature map sizes: {feature_maps_size_list}")
+        print(f"Mask tensor shape: {mask.shape}")
+        print(f"Query embedding tensor shape: {query_embed.shape}")
+        # --------------------------------------------------------------------------------------------------------
 
         # Forward pass through prediction heads to generate initial predictions.
         outputs_class, outputs_mask, attention_mask = self.forward_prediction_heads(output, mask, feature_maps_size_list[0])
         predictions_class.append(outputs_class)
         predictions_mask.append(outputs_mask)
+        
+        # --------------------------------------------------------------------------------------------------------
+        print(f"Initial outputs_class shape: {outputs_class.shape}")
+        print(f"Initial outputs_mask shape: {outputs_mask.shape}")
+        print(f"Initial attention_mask shape: {attention_mask.shape}")
+        # --------------------------------------------------------------------------------------------------------
         
         for i in range(self.num_layers):
             

@@ -57,6 +57,9 @@ class SOD_Data(Dataset):
         boxes = torch.as_tensor(boxes, dtype=torch.float32) / self.target_size
         labels = torch.as_tensor(labels, dtype=torch.int64)
         masks_tensor = torch.stack(masks_list)
+        masks_tensor = self.pad_masks(masks_tensor, max_masks=self.max_annotations)
+        masks_tensor = torch.stack([self.pad_masks(m) for m in masks_list], dim=0)
+
 
         target = {'boxes': boxes, 'labels': labels, 'masks': masks_tensor}
 
@@ -99,7 +102,15 @@ class SOD_Data(Dataset):
         mask = mask.resize(target_size, Image.NEAREST) # type: ignore
         mask_array = np.array(mask)
         return torch.tensor(mask_array, dtype=torch.uint8)
-
+    
+    def pad_masks(self, masks, max_masks=100):
+        """
+            Pads or truncates the mask tensor to have a fixed number of masks
+        """
+        padded_masks = torch.zeros((max_masks, 300, 300))
+        actual_masks = min(max_masks, masks.size(0))
+        padded_masks[:actual_masks] = masks[:actual_masks]
+        return padded_masks
     
 
     def filter_images_with_annotations(self, image_files):
@@ -117,7 +128,7 @@ class SOD_Data(Dataset):
                 annotation_lines = f.readlines()
                 if len(annotation_lines) <= self.max_annotations:
                     valid_image_files.append(image_name)  
-                                                                                                       
+
         return valid_image_files
     
     

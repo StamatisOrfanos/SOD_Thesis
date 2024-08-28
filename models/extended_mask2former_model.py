@@ -19,7 +19,7 @@ class ExtendedMask2Former(nn.Module):
         efpn (EFPN): The Enhanced Feature Pyramid Network model used as the backbone for feature extraction and bounding box training.
         mask2former (Mask2Former): The Mask2Former model used for predicting object instances and their masks based on the features provided by EFPN.
     """
-    def __init__(self, num_classes, num_anchors, device, hidden_dim=256, num_queries=300, nheads=16, dim_feedforward=2048, dec_layers=1, mask_dim=256):
+    def __init__(self, num_classes, num_anchors, device, hidden_dim=256, num_queries=100, nheads=16, dim_feedforward=2048, dec_layers=1, mask_dim=256):
         super(ExtendedMask2Former, self).__init__()
         self.device = device              
         self.efpn        = EFPN(hidden_dim, hidden_dim, num_classes, num_anchors)
