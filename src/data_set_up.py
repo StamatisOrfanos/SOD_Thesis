@@ -53,16 +53,13 @@ class SOD_Data(Dataset):
                 masks_list.append(mask)
 
         
-        # boxes  = torch.as_tensor(boxes, dtype=torch.int64)
         boxes = torch.as_tensor(boxes, dtype=torch.float32) / self.target_size
         labels = torch.as_tensor(labels, dtype=torch.int64)
-        masks_tensor = torch.stack(masks_list)
-        masks_tensor = self.pad_masks(masks_tensor, max_masks=self.max_annotations)
-        masks_tensor = torch.stack([self.pad_masks(m) for m in masks_list], dim=0)
-
-
-        target = {'boxes': boxes, 'labels': labels, 'masks': masks_tensor}
-
+        masks = torch.stack(masks_list) if masks_list else torch.zeros((0, self.target_size, self.target_size), dtype=torch.uint8)
+        masks = self.pad_masks(masks, self.max_annotations)
+        masks = masks.unsqueeze(0)  # Add a batch dimension
+        target = {'boxes': boxes, 'labels': labels, 'masks': masks}
+        
         if self.transform: image = self.transform(image)
         
         return image, target
@@ -107,8 +104,8 @@ class SOD_Data(Dataset):
         """
             Pads or truncates the mask tensor to have a fixed number of masks
         """
-        padded_masks = torch.zeros((max_masks, 300, 300))
-        actual_masks = min(max_masks, masks.size(0))
+        padded_masks = torch.zeros((max_masks, masks.shape[1], masks.shape[2]), dtype=masks.dtype)
+        actual_masks = min(max_masks, masks.shape[0])
         padded_masks[:actual_masks] = masks[:actual_masks]
         return padded_masks
     

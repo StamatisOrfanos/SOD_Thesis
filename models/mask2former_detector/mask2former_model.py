@@ -149,26 +149,11 @@ class Mask2Former(nn.Module):
         # List to store class predictions at each layer. List to store mask predictions at each layer.
         predictions_class = [] 
         predictions_mask  = []
-        # --------------------------------------------------------------------------------------------------------
-        print("Entering class_mask_predictions...")
-        print(f"Output tensor shape: {output.shape}")
-        print(f"Src list shapes: {[s.shape for s in src]}")
-        print(f"Positional embeddings shapes: {[pe.shape for pe in positional_embeddings]}")
-        print(f"Feature map sizes: {feature_maps_size_list}")
-        print(f"Mask tensor shape: {mask.shape}")
-        print(f"Query embedding tensor shape: {query_embed.shape}")
-        # --------------------------------------------------------------------------------------------------------
 
         # Forward pass through prediction heads to generate initial predictions.
         outputs_class, outputs_mask, attention_mask = self.forward_prediction_heads(output, mask, feature_maps_size_list[0])
         predictions_class.append(outputs_class)
         predictions_mask.append(outputs_mask)
-        
-        # --------------------------------------------------------------------------------------------------------
-        print(f"Initial outputs_class shape: {outputs_class.shape}")
-        print(f"Initial outputs_mask shape: {outputs_mask.shape}")
-        print(f"Initial attention_mask shape: {attention_mask.shape}")
-        # --------------------------------------------------------------------------------------------------------
         
         for i in range(self.num_layers):
             
@@ -193,13 +178,22 @@ class Mask2Former(nn.Module):
             - mask (list): Features to be used for mask prediction.
             - attention_mask_target_size (list): Feature maps size list
         """
+        print("\n\n\n")
+        print(f"Output tensor shape: {output.shape}")
+        
+        
         # This changes the shape from [sequence length, batch size, features] to [batch size, sequence length, features].        
         decoder_output = self.decoder_norm(output).transpose(0, 1)
+        print(f"Normalized, transposed Output tensor shape: {output.shape}")
+        
         
         # Pass the transposed decoder output through a linear layer to predict class logits and through another linear layer to get mask embeddings.
         outputs_class  = self.class_embedding(decoder_output)
         mask_embedding = self.mask_embedding(decoder_output)
-        mask = mask.unsqueeze(1)
+        
+        print(f"Mask tensor shape: {mask.shape}")
+        print(f"Mask embedding shape: {mask_embedding.shape}")
+
         
         # Perform a tensor operation to generate the mask predictions. Project the mask embeddings onto the mask features.
         # "bqc,bchw->bqhw" is the einsum operation indicating: batch (b), queries (q), channels (c), height (h) and width (w).

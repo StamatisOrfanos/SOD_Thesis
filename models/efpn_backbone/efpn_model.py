@@ -13,27 +13,27 @@ class EFPN(nn.Module):
            -  The model uses a Feature  Texture Transfer (FTT) module to enrich feature maps with both content and texture 
               details, aiming to improve performance on instance segmentation tasks.
     """
-    def __init__(self, in_channels, hidden_dim, num_classes, num_anchors):
+    def __init__(self, in_channels, num_classes, num_anchors):
         super(EFPN, self).__init__()
         # Load EfficientNet with pre-trained weights
         self.backbone = EfficientNet.from_pretrained('efficientnet-b7')
 
         # Initialize FTTModule
-        self.ftt_model = FTT()
+        self.ftt_model = FTT(in_channels)
 
         # Define FPN convolution layers to match channel dimensions if necessary
-        self.conv_c2_prime = nn.Conv2d(32, 256, kernel_size=1)  
-        self.conv_c2       = nn.Conv2d(48, 256, kernel_size=1)  
-        self.conv_c3       = nn.Conv2d(80, 256, kernel_size=1)  
-        self.conv_c4       = nn.Conv2d(224, 256, kernel_size=1) 
-        self.conv_c5       = nn.Conv2d(640, 256, kernel_size=1) 
+        self.conv_c2_prime = nn.Conv2d(32,  in_channels, kernel_size=1)  
+        self.conv_c2       = nn.Conv2d(48,  in_channels, kernel_size=1)  
+        self.conv_c3       = nn.Conv2d(80,  in_channels, kernel_size=1)  
+        self.conv_c4       = nn.Conv2d(224, in_channels, kernel_size=1) 
+        self.conv_c5       = nn.Conv2d(640, in_channels, kernel_size=1) 
 
         # Define FPN lateral layers
-        self.lateral_p5       = nn.Conv2d(640, 256, kernel_size=1)
-        self.lateral_p4       = nn.Conv2d(224, 256, kernel_size=1)
-        self.lateral_p3       = nn.Conv2d(80, 256, kernel_size=1) 
-        self.lateral_p2       = nn.Conv2d(48, 256, kernel_size=1) 
-        self.lateral_p2_prime = nn.Conv2d(32, 256, kernel_size=1) 
+        self.lateral_p5       = nn.Conv2d(640, in_channels, kernel_size=1)
+        self.lateral_p4       = nn.Conv2d(224, in_channels, kernel_size=1)
+        self.lateral_p3       = nn.Conv2d(80,  in_channels, kernel_size=1) 
+        self.lateral_p2       = nn.Conv2d(48,  in_channels, kernel_size=1) 
+        self.lateral_p2_prime = nn.Conv2d(32,  in_channels, kernel_size=1) 
 
         # Define FPN top-down pathway
         self.top_down_p5 = nn.Upsample(scale_factor=2, mode='nearest')
@@ -42,7 +42,7 @@ class EFPN(nn.Module):
         self.top_down_p2 = nn.Upsample(scale_factor=2, mode='nearest')
 
         # Define the bounding box for the spatially richest feature map
-        self.bounding_box = BoundingBoxGenerator(256, num_classes, num_anchors)
+        self.bounding_box = BoundingBoxGenerator(in_channels, num_classes, num_anchors)
         
 
     def forward(self, image):
@@ -92,11 +92,11 @@ class EFPN(nn.Module):
 
 class FTT(nn.Module):
     # Define the FTT module of the Extended Feature Pyramid Network
-    def __init__(self):
+    def __init__(self, in_channels):
         super(FTT, self).__init__()
-        self.content_extractor = ContentExtractor(256, 256, num_layers=3)
-        self.texture_extractor = TextureExtractor(256, 256, num_layers=3)
-        self.subpixel_conv     = SubPixelConv(256, 256, upscale_factor=2)
+        self.content_extractor = ContentExtractor(in_channels, in_channels, num_layers=3)
+        self.texture_extractor = TextureExtractor(in_channels, in_channels, num_layers=3)
+        self.subpixel_conv     = SubPixelConv(in_channels, in_channels, upscale_factor=2)
     
     def forward(self, p2, p3):
         # Apply the content extractor to P3 and upsample the content features

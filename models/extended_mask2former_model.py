@@ -22,7 +22,7 @@ class ExtendedMask2Former(nn.Module):
     def __init__(self, num_classes, num_anchors, device, hidden_dim=256, num_queries=100, nheads=16, dim_feedforward=2048, dec_layers=1, mask_dim=256):
         super(ExtendedMask2Former, self).__init__()
         self.device = device              
-        self.efpn        = EFPN(hidden_dim, hidden_dim, num_classes, num_anchors)
+        self.efpn        = EFPN(hidden_dim, num_classes, num_anchors)
         self.mask2former = Mask2Former(hidden_dim, num_classes, hidden_dim, num_queries, nheads, dim_feedforward, dec_layers, mask_dim)
         
         # Define loss functions
