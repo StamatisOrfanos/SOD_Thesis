@@ -24,10 +24,11 @@ class ExtendedMask2Former(nn.Module):
         self.device = device              
         self.efpn        = EFPN(hidden_dim, num_classes, num_anchors)
         self.mask2former = Mask2Former(hidden_dim, num_classes, hidden_dim, num_queries, nheads, dim_feedforward, dec_layers, mask_dim)
+        self.num_anchors = num_anchors
         
         # Define loss functions
         self.bounding_box_loss = nn.SmoothL1Loss(reduction="mean")
-        self.class_loss        = nn.CrossEntropyLoss(reduction="mean")
+        self.class_loss        = nn.CrossEntropyLoss()
         self.mask_loss         = nn.BCEWithLogitsLoss()
 
 
@@ -66,7 +67,7 @@ class ExtendedMask2Former(nn.Module):
 
         for idx in range(batch_size):
             
-            class_cost = self.class_loss(predicted_classes[idx], ground_truth_classes[idx], reduction='none')
+            class_cost = self.class_loss(predicted_classes[idx], ground_truth_classes[idx])
             mask_cost = self.mask_loss(predicted_masks[idx], ground_truth_masks[idx], reduction='none').mean((1, 2))
             cost_matrix = class_cost + mask_cost
 
@@ -93,8 +94,8 @@ class ExtendedMask2Former(nn.Module):
     def class_confidence_predictor(self, bounding_box_classes, mask_classes):
         """        
         Parameters:
-        - bounding_box_classes (Tensor): Class logits from the bounding box branch [batch_size, num_queries, num_classes]
-        - mask_classes (Tensor): Class logits from the mask branch [batch_size, num_queries, num_classes]
+            - bounding_box_classes (tensor): Class logits from the bounding box branch [batch_size, num_queries, num_classes]
+            - mask_classes (tensor): Class logits from the mask branch [batch_size, num_queries, num_classes]
 
         """
         # Softmax to convert logits to probabilities
@@ -112,19 +113,20 @@ class ExtendedMask2Former(nn.Module):
     def compute_loss(self, predictions, targets, anchors, mask_weight=1.0, bounding_box_weight=1.0, class_weight=0.5):
         """
         Refactored loss computation to better align with the DetectionLoss class approach.
+
         Parameters:
-            - predictions ():
-            - targets ():
-            - anchors ():
+            - predictions (dictionary): Dictionary containing the model predictions for bounding boxes, classes and masks
+            - targets (dictionary): Dictionary containing the ground truth for bounding boxes, classes and masks
+            - anchors (tensor): Tensor of all the anchors created
         """
         device = self.device
         anchors = anchors.to(device)
         
         # Extract predictions
-        predicted_classes_masks = predictions['pred_logits'][:, :self.anchors.size(0), :]
-        predicted_masks = predictions['pred_masks'][:, :self.anchors.size(0), :]
-        predicted_bounding_boxes = predictions['bounding_box'][:, :self.anchors.size(0), :]  
-        predicted_classes_boxes = predictions['class_scores'][:, :self.anchors.size(0), :]
+        predicted_classes_masks = predictions['pred_logits'][:, :self.num_anchors, :]
+        predicted_masks = predictions['pred_masks'][:, :self.num_anchors, :]
+        predicted_bounding_boxes = predictions['bounding_box'][:, :self.num_anchors, :]  
+        predicted_classes_boxes = predictions['class_scores'][:, :self.num_anchors, :]
 
         # Ground truth
         ground_truth_labels = targets['labels'].to(device)

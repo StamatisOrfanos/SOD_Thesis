@@ -87,10 +87,7 @@ class Mask2Former(nn.Module):
         # positional_embeddings : [positional encodings for each scale]
         # feature_maps_size_list: [sizes (H, W) of feature maps for each scale]
         src, positional_embeddings, feature_maps_size_list = self.generate_info_per_feature_map(feature_map_list)
-        
-        
-        print("\n\n\n")
-        
+                
         # Initialize query embeddings and replicate them for the batch size and create the initial output features for the queries.
         _, batch_size, _ = src[0].shape        
         
