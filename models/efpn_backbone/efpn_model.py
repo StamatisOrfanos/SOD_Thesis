@@ -100,11 +100,11 @@ class FTT(nn.Module):
     
     def forward(self, p2, p3):
         # Apply the content extractor to P3 and upsample the content features
-        content_features = self.content_extractor(p3)
+        content_features  = self.content_extractor(p3)
         upsampled_content = self.subpixel_conv(content_features)
 
         # Apply the texture extractor to P2 and Element-wise sum of the upsampled content and texture features
-        texture_features = self.texture_extractor(p2)
+        texture_features  = self.texture_extractor(p2)
         combined_features = upsampled_content + texture_features
     
         return combined_features

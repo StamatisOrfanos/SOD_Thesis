@@ -139,7 +139,7 @@ class Mask2Former(nn.Module):
     def class_mask_predictions(self, output, src, positional_embeddings, feature_maps_size_list, mask, query_embed):
         """
         Parameters:
-            - output (tensor): 
+            - output (tensor): Tensor of the query features embeddings
             - src (list): Projected feature maps for each scale to dimensionality 
             - positional_embeddings (list): [positional encodings for each scale]
             - feature_maps_size_list (list): [sizes (H, W) of feature maps for each scale]
@@ -174,26 +174,17 @@ class Mask2Former(nn.Module):
     def forward_prediction_heads(self, output, mask, attention_mask_target_size):
         """
         Parameters:
-            - output (tensor): 
+            - output (tensor): Tensor of the query features embeddings
             - mask (list): Features to be used for mask prediction.
             - attention_mask_target_size (list): Feature maps size list
-        """
-        print("\n\n\n")
-        print(f"Output tensor shape: {output.shape}")
-        
-        
+        """ 
         # This changes the shape from [sequence length, batch size, features] to [batch size, sequence length, features].        
-        decoder_output = self.decoder_norm(output).transpose(0, 1)
-        print(f"Normalized, transposed Output tensor shape: {output.shape}")
-        
+        decoder_output = self.decoder_norm(output).transpose(0, 1)        
         
         # Pass the transposed decoder output through a linear layer to predict class logits and through another linear layer to get mask embeddings.
         outputs_class  = self.class_embedding(decoder_output)
         mask_embedding = self.mask_embedding(decoder_output)
-        
-        print(f"Mask tensor shape: {mask.shape}")
-        print(f"Mask embedding shape: {mask_embedding.shape}")
-
+        mask = mask.float()
         
         # Perform a tensor operation to generate the mask predictions. Project the mask embeddings onto the mask features.
         # "bqc,bchw->bqhw" is the einsum operation indicating: batch (b), queries (q), channels (c), height (h) and width (w).

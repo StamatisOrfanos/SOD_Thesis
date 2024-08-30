@@ -19,7 +19,7 @@ class ExtendedMask2Former(nn.Module):
         efpn (EFPN): The Enhanced Feature Pyramid Network model used as the backbone for feature extraction and bounding box training.
         mask2former (Mask2Former): The Mask2Former model used for predicting object instances and their masks based on the features provided by EFPN.
     """
-    def __init__(self, num_classes, num_anchors, device, hidden_dim=256, num_queries=100, nheads=16, dim_feedforward=2048, dec_layers=1, mask_dim=256):
+    def __init__(self, num_classes, num_anchors, device, hidden_dim=256, num_queries=100, nheads=16, dim_feedforward=2048, dec_layers=1, mask_dim=100):
         super(ExtendedMask2Former, self).__init__()
         self.device = device              
         self.efpn        = EFPN(hidden_dim, num_classes, num_anchors)
@@ -95,7 +95,7 @@ class ExtendedMask2Former(nn.Module):
         Parameters:
         - bounding_box_classes (Tensor): Class logits from the bounding box branch [batch_size, num_queries, num_classes]
         - mask_classes (Tensor): Class logits from the mask branch [batch_size, num_queries, num_classes]
-    
+
         """
         # Softmax to convert logits to probabilities
         box_probabilities = torch.softmax(bounding_box_classes, dim=-1)
@@ -112,8 +112,12 @@ class ExtendedMask2Former(nn.Module):
     def compute_loss(self, predictions, targets, anchors, mask_weight=1.0, bounding_box_weight=1.0, class_weight=0.5):
         """
         Refactored loss computation to better align with the DetectionLoss class approach.
+        Parameters:
+            - predictions ():
+            - targets ():
+            - anchors ():
         """
-        device = predictions.device
+        device = self.device
         anchors = anchors.to(device)
         
         # Extract predictions
@@ -146,9 +150,9 @@ class ExtendedMask2Former(nn.Module):
         # - Compute final class prediction through confidence vote -
         final_class_loss = self.class_loss(self.class_confidence_predictor(predicted_classes_boxes, predicted_classes_masks))
         
-        # print("\n\n\n The class loss from the bounding box is of type: {}, size:{} and values:{}".format(type(bounding_box_class_loss),bounding_box_class_loss.size()))
-        # print("\n The class loss from the masks is of type: {}, size:{} and values:{}".format(type(mask_class_loss),mask_class_loss.size()))
-        # print("\n The class loss from the combinations is of type: {}, size:{} and values:{}\n\n\n".format(type(final_class_loss),final_class_loss.size()))
+        print("\n\n\n The class loss from the bounding box is of type: {}, size:{} and values:{}".format(type(bounding_box_class_loss),bounding_box_class_loss.size()))
+        print("\n The class loss from the masks is of type: {}, size:{} and values:{}".format(type(mask_class_loss),mask_class_loss.size()))
+        print("\n The class loss from the combinations is of type: {}, size:{} and values:{}\n\n\n".format(type(final_class_loss),final_class_loss.size()))
  
 
         total_loss = mask_weight * mask_loss + bounding_box_weight * bounding_box_loss + class_weight * final_class_loss
