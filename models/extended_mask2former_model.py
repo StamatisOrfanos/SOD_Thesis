@@ -64,8 +64,17 @@ class ExtendedMask2Former(nn.Module):
     def hungarian_loss(self, predicted_classes, predicted_masks, ground_truth_classes, ground_truth_masks):        
         batch_size = predicted_classes.size(0)
         total_mask_loss, total_class_loss = [], []
+        
+        print("Predicted Classes Shape:", predicted_classes.shape)
+        print("Ground Truth Classes Shape:", ground_truth_classes.shape)
+
 
         for idx in range(batch_size):
+            
+            print("Batch index:", idx)
+            print("Predicted Classes at idx:", predicted_classes[idx].shape)
+            print("Ground Truth Classes at idx:", ground_truth_classes[idx].shape)
+
             
             class_cost = self.class_loss(predicted_classes[idx], ground_truth_classes[idx])
             mask_cost = self.mask_loss(predicted_masks[idx], ground_truth_masks[idx], reduction='none').mean((1, 2))

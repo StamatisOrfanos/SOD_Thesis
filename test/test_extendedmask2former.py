@@ -173,10 +173,15 @@ for epoch in range(num_epochs):
         images = torch.stack(images).to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
         
+        labels = targets
+        
         batched_bboxes = torch.cat([t['boxes'] for t in targets]).to(device)
         batched_labels = torch.cat([t['labels'] for t in targets]).to(device)
         batched_masks  = torch.stack([t['masks'] for t in targets]).to(device)
-        
+        print("Batched labels have shape: {} ".format(batched_labels.shape))
+        print("Batched labels have shape: {} ".format(targets[0]["labels"].shape))
+        print("Batched labels have shape: {} ".format(targets[1]["labels"].shape))
+        break
         predictions = model(images, batched_masks)
         actual = {"boxes": batched_bboxes, "labels": batched_labels, "masks": batched_masks}
 
@@ -186,4 +191,4 @@ for epoch in range(num_epochs):
         loss.backward()
         optimizer.step()
 
-    print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+#     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
