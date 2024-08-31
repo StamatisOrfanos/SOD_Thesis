@@ -57,7 +57,6 @@ class SOD_Data(Dataset):
         labels = torch.as_tensor(labels, dtype=torch.int64)
         masks = torch.stack(masks_list) if masks_list else torch.zeros((0, self.target_size, self.target_size), dtype=torch.uint8)
         masks = self.pad_masks(masks, self.max_annotations)
-        masks = masks.unsqueeze(0)  # Add a batch dimension
         target = {'boxes': boxes, 'labels': labels, 'masks': masks}
         
         if self.transform: image = self.transform(image)

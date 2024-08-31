@@ -172,13 +172,13 @@ for epoch in range(num_epochs):
     for images, targets in train_loader:
         images = torch.stack(images).to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-
-        gt_bboxes = targets[0]['boxes'].to(device)
-        gt_labels = targets[0]['labels'].to(device)
-        gt_masks  = targets[0]['masks'].to(device)
-
-        predictions = model(images, gt_masks)
-        actual = {"boxes": gt_bboxes, "labels": gt_labels, "masks": gt_masks}
+        
+        batched_bboxes = torch.cat([t['boxes'] for t in targets]).to(device)
+        batched_labels = torch.cat([t['labels'] for t in targets]).to(device)
+        batched_masks  = torch.stack([t['masks'] for t in targets]).to(device)
+        
+        predictions = model(images, batched_masks)
+        actual = {"boxes": batched_bboxes, "labels": batched_labels, "masks": batched_masks}
 
         loss = model.compute_loss(predictions, actual, anchors)
 

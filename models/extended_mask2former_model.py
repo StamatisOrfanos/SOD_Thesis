@@ -62,6 +62,14 @@ class ExtendedMask2Former(nn.Module):
     
 
     def hungarian_loss(self, predicted_classes, predicted_masks, ground_truth_classes, ground_truth_masks):
+        
+        print("Predicted Classes Shape:", predicted_classes.shape)
+        print("Ground Truth Classes Shape:", ground_truth_classes.shape)
+        print("Predicted Masks Shape:", predicted_masks.shape)
+        print("Ground Truth Masks Shape:", ground_truth_masks.shape)
+
+        
+        
         batch_size = predicted_classes.size(0)
         total_mask_loss, total_class_loss = [], []
 
@@ -121,6 +129,7 @@ class ExtendedMask2Former(nn.Module):
         """
         device = self.device
         anchors = anchors.to(device)
+        print(f"\n\n\n\n {targets.shape[0]}  \n\n\n")
         
         # Extract predictions
         predicted_classes_masks = predictions['pred_logits'][:, :self.num_anchors, :]

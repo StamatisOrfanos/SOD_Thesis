@@ -183,6 +183,9 @@ class Mask2Former(nn.Module):
         mask_embedding = self.mask_embedding(decoder_output)
         mask = mask.float()
         
+        print(f"The mask is of size: {mask.shape}")
+        print(f"The mask embedding is of size: {mask_embedding.shape}")
+        
         # Perform a tensor operation to generate the mask predictions. Project the mask embeddings onto the mask features.
         # "bqc,bchw->bqhw" is the einsum operation indicating: batch (b), queries (q), channels (c), height (h) and width (w).
         # It effectively combines mask embeddings (bqc) with mask features (bchw) to produce mask predictions (bqhw).
