@@ -57,7 +57,8 @@ class SOD_Data(Dataset):
         labels = torch.as_tensor(labels, dtype=torch.int64)
         masks = torch.stack(masks_list) if masks_list else torch.zeros((0, self.target_size, self.target_size), dtype=torch.uint8)
         masks = self.pad_masks(masks, self.max_annotations)
-        target = {'boxes': boxes, 'labels': labels, 'masks': masks}
+        mask_labels = self.pad_mask_classes(labels, self.max_annotations)
+        target = {'boxes': boxes, 'labels': labels, 'masks': masks, "mask_labels": mask_labels}
         
         if self.transform: image = self.transform(image)
         
@@ -98,16 +99,27 @@ class SOD_Data(Dataset):
         mask = mask.resize(target_size, Image.NEAREST) # type: ignore
         mask_array = np.array(mask)
         return torch.tensor(mask_array, dtype=torch.uint8)
-    
-    def pad_masks(self, masks, max_masks=100):
+
+
+    def pad_masks(self, masks, max_pad=100):
         """
-            Pads or truncates the mask tensor to have a fixed number of masks
+            Pad or truncate the mask tensor to have a fixed number of masks
         """
-        padded_masks = torch.zeros((max_masks, masks.shape[1], masks.shape[2]), dtype=masks.dtype)
-        actual_masks = min(max_masks, masks.shape[0])
+        padded_masks = torch.zeros((max_pad, masks.shape[1], masks.shape[2]), dtype=masks.dtype)
+        actual_masks = min(max_pad, masks.shape[0])
         padded_masks[:actual_masks] = masks[:actual_masks]
         return padded_masks
-    
+
+
+    def pad_mask_classes(self, labels, max_pad=100):
+        """
+            Pad or truncate the labels to have a fixed number of classes
+        """
+        padded_labels = torch.full((max_pad,), -1, dtype=torch.int64)
+        actual_labels = min(max_pad, len(labels))
+        padded_labels[:actual_labels] = labels[:actual_labels]
+        return padded_labels
+
 
     def filter_images_with_annotations(self, image_files):
         """

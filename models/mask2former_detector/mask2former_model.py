@@ -100,10 +100,10 @@ class Mask2Former(nn.Module):
 
         # Collect the final class and mask predictions, along with auxiliary outputs for intermediate layers to support training stability and performance.
         result = {
-            'pred_logits' : predictions_class[-1],
-            'pred_masks'  : predictions_mask[-1],
-            'bounding_box': bounding_box,
-            "class_scores": class_scores
+            'pred_mask_labels' : predictions_class[-1],
+            'pred_masks'       : predictions_mask[-1],
+            'bounding_box'     : bounding_box,
+            "class_scores"     : class_scores
         }
         
         return result

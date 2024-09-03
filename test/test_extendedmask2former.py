@@ -173,17 +173,13 @@ for epoch in range(num_epochs):
         images = torch.stack(images).to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
         
-        labels = targets
         
         batched_bboxes = torch.cat([t['boxes'] for t in targets]).to(device)
         batched_labels = torch.cat([t['labels'] for t in targets]).to(device)
         batched_masks  = torch.stack([t['masks'] for t in targets]).to(device)
-        print("Batched labels have shape: {} ".format(batched_labels.shape))
-        print("Batched labels have shape: {} ".format(targets[0]["labels"].shape))
-        print("Batched labels have shape: {} ".format(targets[1]["labels"].shape))
-        break
+        batched_mask_labels = torch.stack([t['mask_labels'] for t in targets]).to(device)
         predictions = model(images, batched_masks)
-        actual = {"boxes": batched_bboxes, "labels": batched_labels, "masks": batched_masks}
+        actual = {"boxes": batched_bboxes, "labels": batched_labels, "masks": batched_masks, "mask_labels": batched_mask_labels}
 
         loss = model.compute_loss(predictions, actual, anchors)
 
