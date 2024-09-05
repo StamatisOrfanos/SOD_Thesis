@@ -60,44 +60,67 @@ class ExtendedMask2Former(nn.Module):
         return pred_boxes
     
 
-    def hungarian_loss(self, predicted_classes, predicted_masks, ground_truth_labels, ground_truth_masks):        
+    def hungarian_loss(self, predicted_classes, predicted_masks, ground_truth_labels, ground_truth_masks):
         batch_size = predicted_classes.size(0)
-        total_mask_loss, total_class_loss = [], []
+        num_objects = ground_truth_labels.size(1)
         
-        print("\n\n\n Predicted Classes Shape:", predicted_classes.shape)
-        print("Ground Truth Classes Shape:", ground_truth_labels.shape)
-        
-        print("Predicted Classes Shape:", predicted_classes.shape)
-        print("Ground Truth Classes Shape:", ground_truth_labels.shape)
+        print("\n\n\n")
+        print("Batch size: {}, number of objects: {}".format(batch_size, num_objects))
 
+        total_mask_loss, total_class_loss = [], []
 
         for idx in range(batch_size):
+            # Shape: [100, 12] for predictions and [100] for ground truth labels
+            predicted_classes_per_batch = predicted_classes[idx]
+            ground_truth_labels_per_batch = ground_truth_labels[idx]
+            print("The shape of the predicted classes per batch is: {} and the same for the ground truth is: {}"
+                  .format(predicted_classes_per_batch.shape, ground_truth_labels_per_batch.shape))
             
-            print("Batch index:", idx)
-            print("Predicted Masks at idx:", predicted_masks[idx].shape)
-            print("Ground Truth Masks at idx:", ground_truth_masks[idx].shape)
-
             
-            class_cost = self.class_loss(predicted_classes[idx], ground_truth_labels[idx])
-            mask_cost = self.mask_loss(predicted_masks[idx].float(), ground_truth_masks[idx].float()).mean((1, 2))
-            cost_matrix = class_cost + mask_cost
 
-            # Hungarian matching to find minimal cost assignment
-            predicted_indices, ground_truth_indices = linear_sum_assignment(cost_matrix.cpu().detach().numpy())
+            # Compute class cost matrix
+            class_cost_matrix = torch.full((num_objects, num_objects), float('inf'), device=self.device)
+            print("The class cost matrix has shape: {}".format(class_cost_matrix.shape))
             
-            # Calculate matched loss for assigned pairs
-            matched_class_loss = class_cost[predicted_indices, ground_truth_indices].mean()
-            matched_mask_loss = mask_cost[predicted_indices, ground_truth_indices].mean()
+            valid_labels_mask = ground_truth_labels_per_batch != -1
+            print("Valid labels mask: {}".format(valid_labels_mask))
+            
+            
+            class_cost_matrix[valid_labels_mask] = self.class_loss(
+                predicted_classes_per_batch.unsqueeze(0).expand(num_objects, -1, -1),
+                ground_truth_labels_per_batch.unsqueeze(1).expand(-1, num_objects)
+            )
 
-            # Accumulate loss for the batch
+            # Compute mask cost matrix
+            mask_cost_matrix = torch.full((num_objects, num_objects), float('inf'), device=self.device)
+            for i in range(num_objects):
+                for j in range(num_objects):
+                    if ground_truth_labels_per_batch[j] != -1:  # Only compute for valid ground truth masks
+                        mask_loss = self.mask_loss(
+                            predicted_masks[idx][i].unsqueeze(0),  # Add batch dimension for compatibility
+                            ground_truth_masks[idx][j].unsqueeze(0)
+                        )
+                        mask_cost_matrix[i, j] = mask_loss
+
+            # Combine cost matrices
+            combined_cost_matrix = class_cost_matrix + mask_cost_matrix
+
+            # Hungarian algorithm to find minimal cost assignment
+            predicted_indices, ground_truth_indices = linear_sum_assignment(combined_cost_matrix.cpu().detach().numpy())
+
+            # Compute losses for the optimal assignments
+            matched_class_loss = class_cost_matrix[predicted_indices, ground_truth_indices].mean()
+            matched_mask_loss = mask_cost_matrix[predicted_indices, ground_truth_indices].mean()
+
             total_mask_loss.append(matched_mask_loss)
-            total_class_loss.append(matched_class_loss)            
-        
-        # Get the mask and class loss for all the batch, so we need to normalize here
-        mask_loss = sum(total_mask_loss) / batch_size
-        class_loss = sum(total_class_loss) / batch_size
+            total_class_loss.append(matched_class_loss)
 
-        return mask_loss, class_loss
+        # Average losses over the batch
+        average_mask_loss = sum(total_mask_loss) / batch_size
+        average_class_loss = sum(total_class_loss) / batch_size
+
+        return average_mask_loss, average_class_loss
+
     
     
 
@@ -107,7 +130,6 @@ class ExtendedMask2Former(nn.Module):
         Parameters:
             - bounding_box_classes (tensor): Class logits from the bounding box branch [batch_size, num_queries, num_classes]
             - mask_classes (tensor): Class logits from the mask branch [batch_size, num_queries, num_classes]
-
         """
         # Softmax to convert logits to probabilities
         box_probabilities = torch.softmax(bounding_box_classes, dim=-1)
