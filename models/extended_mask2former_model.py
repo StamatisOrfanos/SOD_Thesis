@@ -66,10 +66,17 @@ class ExtendedMask2Former(nn.Module):
             predicted_masks (tensor): _description_
             ground_truth_masks (tensor): _description_
         """
-        intersection = (predicted_masks & ground_truth_masks).float().sum((2, 3))
-        union = (predicted_masks | ground_truth_masks).float().sum((2, 3))
-        iou = intersection / union
+        # Ensure that both ground truth and predicted masks are binary
+        predicted_masks = (torch.sigmoid(predicted_masks) > 0.5)        
+        ground_truth_masks = ground_truth_masks.bool()
+
+        # Calculate intersection and union
+        intersection = (predicted_masks & ground_truth_masks).sum((2, 3))
+        union = (predicted_masks | ground_truth_masks).sum((2, 3))
+        iou = intersection / union.clamp(min=1)
+
         return 1 - iou
+
     
     
     def hungarian_loss(self, pred_classes, pred_masks, gt_classes, gt_masks):
