@@ -59,37 +59,63 @@ class ExtendedMask2Former(nn.Module):
 
         return pred_boxes
     
-    
+# This function now explicitly computes an IoU for each pair of predicted and ground truth mask across all batches and retains 
+# the full `[batch_size, num_queries, num_queries]` shape required for proper cost matrix calculations.
+
     def calculate_iou(self, predicted_masks, ground_truth_masks):
         """
         Parameters:
-            predicted_masks (tensor): _description_
-            ground_truth_masks (tensor): _description_
+            predicted_masks (tensor): Predicted masks, shaped [batch_size, num_queries, height, width]
+            ground_truth_masks (tensor): Ground truth masks, shaped [batch_size, num_queries, height, width]
         """
-        # Ensure that both ground truth and predicted masks are binary
-        predicted_masks = (torch.sigmoid(predicted_masks) > 0.5)        
+        # Ensure masks are boolean
+        predicted_masks = (torch.sigmoid(predicted_masks) > 0.5)
         ground_truth_masks = ground_truth_masks.bool()
 
-        # Calculate intersection and union
-        intersection = (predicted_masks & ground_truth_masks).sum((2, 3))
-        union = (predicted_masks | ground_truth_masks).sum((2, 3))
-        iou = intersection / union.clamp(min=1)
+        # Initialize IoU matrix
+        batch_size, num_queries, _, _ = predicted_masks.shape
+        iou_matrix = torch.zeros((batch_size, num_queries, num_queries), device=predicted_masks.device)
 
-        return 1 - iou
+        for b in range(batch_size):
+            for i in range(num_queries):
+                for j in range(num_queries):
+                    intersection = (predicted_masks[b, i] & ground_truth_masks[b, j]).float().sum()
+                    union = (predicted_masks[b, i] | ground_truth_masks[b, j]).float().sum()
+                    if union > 0:
+                        iou_matrix[b, i, j] = intersection / union
 
+        return 1 - iou_matrix  # Return the IoU costs as 1 - IoU
     
     
     def hungarian_loss(self, pred_classes, pred_masks, gt_classes, gt_masks):
         # Calculate the cost matrices
-        iou_costs = self.calculate_iou(pred_masks, gt_masks)  # [batch_size, num_queries, num_queries]
-        class_costs = -torch.log_softmax(pred_classes, dim=-1)[:, :, gt_classes]  # [batch_size, num_queries, num_queries]
+        iou_costs = self.calculate_iou(pred_masks, gt_masks)
 
-        combined_costs = iou_costs + class_costs  # Combine costs
+        # Calculate class costs using softmax and negative log likelihood
+        pred_classes_softmax = torch.softmax(pred_classes, dim=-1)
+        batch_size, num_queries, num_classes = pred_classes_softmax.shape
+        class_costs = torch.full((batch_size, num_queries, num_queries), float('inf'), device=self.device)
+
+        # Building the cost matrix for each element in the batch
+        for b in range(batch_size):
+            for i in range(num_queries):
+                for j in range(num_queries):
+                    if gt_classes[b, j] != -1:  # Assuming -1 is the padding value that should be ignored
+                        class_costs[b, i, j] = -torch.log(pred_classes_softmax[b, i, gt_classes[b, j]])
+                        
         
+        print(f"iou_costs shape: {iou_costs.shape}, class_costs shape: {class_costs.shape}")
+        
+         # Ensure both cost matrices are aligned in shape
+        if iou_costs.shape != class_costs.shape:
+            raise ValueError("Shape mismatch in cost matrices: iou_costs and class_costs must have the same dimensions.")
+
+        # Combine costs
+        combined_costs = iou_costs + class_costs
+
         # Apply Hungarian matching
-        batch_size = pred_classes.size(0)
         mask_losses, class_losses = [], []
-        
+
         for idx in range(batch_size):
             row_ind, col_ind = linear_sum_assignment(combined_costs[idx].cpu().detach().numpy())
             mask_losses.append(self.mask_loss(pred_masks[idx, row_ind], gt_masks[idx, col_ind]).mean())
