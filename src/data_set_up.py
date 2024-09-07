@@ -46,21 +46,20 @@ class SOD_Data(Dataset):
                 box = self.resize_box(box)
                 
                 masks_part = eval("[" + line.split("[")[1])
-                masks = self.create_binary_mask((600, 600), masks_part)
-                masks = self.resize_mask(masks, (self.target_size, self.target_size))
+                mask = self.create_and_resize_mask((600, 600), (self.target_size, self.target_size), masks_part)
                 
                 boxes.append(box)
                 labels.append(class_code)
-                masks_list.append(masks)
+                masks_list.append(mask)
 
         
-        # boxes  = torch.as_tensor(boxes, dtype=torch.int64)
         boxes = torch.as_tensor(boxes, dtype=torch.float32) / self.target_size
         labels = torch.as_tensor(labels, dtype=torch.int64)
-        masks = torch.stack([torch.tensor(mask, dtype=torch.uint8) for mask in masks_list])
-
-        target = {'boxes': boxes, 'labels': labels, 'masks': masks }
-
+        masks = torch.stack(masks_list) if masks_list else torch.zeros((0, self.target_size, self.target_size), dtype=torch.uint8)
+        masks = self.pad_masks(masks, self.max_annotations)
+        mask_labels = self.pad_mask_classes(labels, self.max_annotations)
+        target = {'boxes': boxes, 'labels': labels, 'masks': masks, "mask_labels": mask_labels}
+        
         if self.transform: image = self.transform(image)
         
         return image, target
@@ -82,35 +81,45 @@ class SOD_Data(Dataset):
         return [x_min, y_min, x_max, y_max]
     
 
-    def create_binary_mask(self, original_size, polygons):
+    def create_and_resize_mask(self, original_size, target_size, polygons):
         """
         Parameters:
-            - original_size (tuple): Tuple of the original size of the image (height, width)
-            - polygons (list): List of tuples where each tuple is a point
+            original_size (tuple): Original dimensions of the image (height, width).
+            target_size (tuple): Target dimensions to which the mask will be resized.
+            polygons (list of lists of tuples): Each list of tuples represents polygon vertices.
         """
-        mask = np.zeros(original_size, dtype=np.uint8)
-        for polygon in polygons:
-            if polygon:
-                polygon = ()
-                polygon = np.array(polygon, dtype=np.int32)
-                if polygon.shape[0] >= 3:
-                    mask = Image.fromarray(mask)
-                    mask.polygon(polygon, fill=1, outline=1) # type: ignore
-                    mask = np.array(mask)
-        return mask
-        
-        
-   
-    def resize_mask(self, mask, target_size):
+        mask = Image.new('L', original_size, 0)
+        draw = ImageDraw.Draw(mask)
+            
+        if len(polygons) >= 3:
+            draw.polygon(polygons, outline=1, fill=1)
+        else:
+            print("Polygon with insufficient points:", polygons)
+
+        mask = mask.resize(target_size, Image.NEAREST) # type: ignore
+        mask_array = np.array(mask)
+        return torch.tensor(mask_array, dtype=torch.uint8)
+
+
+    def pad_masks(self, masks, max_pad=100):
         """
-        Parameters:
-            - mask (np.array): This is the binary mask that we create for the image
-            - target_size (tuple): Tuple of the image size we want to resize to
+            Pad or truncate the mask tensor to have a fixed number of masks
         """
-        mask_img = Image.fromarray(mask)
-        mask_img = mask_img.resize(target_size, Image.NEAREST) # type: ignore
-        return np.array(mask_img)
-    
+        padded_masks = torch.zeros((max_pad, masks.shape[1], masks.shape[2]), dtype=masks.dtype)
+        actual_masks = min(max_pad, masks.shape[0])
+        padded_masks[:actual_masks] = masks[:actual_masks]
+        return padded_masks
+
+
+    def pad_mask_classes(self, labels, max_pad=100):
+        """
+            Pad or truncate the labels to have a fixed number of classes
+        """
+        padded_labels = torch.full((max_pad,), -1, dtype=torch.int64)
+        actual_labels = min(max_pad, len(labels))
+        padded_labels[:actual_labels] = labels[:actual_labels]
+        return padded_labels
+
 
     def filter_images_with_annotations(self, image_files):
         """
@@ -118,13 +127,16 @@ class SOD_Data(Dataset):
             - image_files (list<File>): Initial list of images before the filtering
         """
         valid_image_files = []
+        
         for image_name in image_files:
             annotation_name = image_name.replace('.jpg', '.txt').replace('.png', '.txt')
-            annotation_path = os.path.join(self.annotation_dir, annotation_name)
+            annotation_path = os.path.join(self.annotation_dir, annotation_name)  
+             
             with open(annotation_path, 'r') as f:
                 annotation_lines = f.readlines()
                 if len(annotation_lines) <= self.max_annotations:
-                    valid_image_files.append(image_name)
+                    valid_image_files.append(image_name)  
+
         return valid_image_files
     
     

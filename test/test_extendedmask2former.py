@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 from src.data_set_up import SOD_Data
 from models.extended_mask2former_model import ExtendedMask2Former
 from models.efpn_backbone.anchors import Anchors
+import torch.nn.functional as F
 from src.helpers import train, validate, test
 
 # # ------------------------------------------------------------------------------------------------------------------------------------
@@ -96,16 +97,6 @@ test_path = os.path.join(base_dir, "test")
 validation_path = os.path.join(base_dir, "validation")
 
 
-def sod_collate_fn(batch):
-    images = [item[0] for item in batch] 
-    targets = [item[1] for item in batch]
-
-    # Stack images into a single tensor
-    images = torch.stack(images, dim=0)
-
-    return images, targets
-
-
 # Data transform function
 data_transform = {
     "train": transforms.Compose([
@@ -123,12 +114,11 @@ data_transform = {
 }
 
 
-# Dataset and DataLoader
 train_dataset      = SOD_Data(train_path +"/images", train_path + "/annotations", data_transform["train"])
 test_dataset       = SOD_Data(test_path + "/images", test_path  + "/annotations", data_transform["test"])
 validation_dataset = SOD_Data(validation_path + "/images", validation_path + "/annotations", data_transform["validation"])
 
-train_loader      = DataLoader(train_dataset, batch_size=3, shuffle=True, collate_fn=lambda x: tuple(zip(*x)))
+train_loader      = DataLoader(train_dataset, batch_size=2, shuffle=True, collate_fn=lambda x: tuple(zip(*x)))
 test_loader       = DataLoader(test_dataset, batch_size=3, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
 validation_loader = DataLoader(validation_dataset, batch_size=3, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
 
@@ -182,13 +172,14 @@ for epoch in range(num_epochs):
     for images, targets in train_loader:
         images = torch.stack(images).to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-
-        gt_bboxes = targets[0]['boxes'].to(device)
-        gt_labels = targets[0]['labels'].to(device)
-        gt_masks  = targets[0]['masks'].to(device)
-
-        predictions = model(images)
-        actual = {"boxes": gt_bboxes, "labels": gt_labels}
+        
+        
+        batched_bboxes = torch.cat([t['boxes'] for t in targets]).to(device)
+        batched_labels = torch.cat([t['labels'] for t in targets]).to(device)
+        batched_masks  = torch.stack([t['masks'] for t in targets]).to(device)
+        batched_mask_labels = torch.stack([t['mask_labels'] for t in targets]).to(device)
+        predictions = model(images, batched_masks)
+        actual = {"boxes": batched_bboxes, "labels": batched_labels, "masks": batched_masks, "mask_labels": batched_mask_labels}
 
         loss = model.compute_loss(predictions, actual, anchors)
 
@@ -196,4 +187,4 @@ for epoch in range(num_epochs):
         loss.backward()
         optimizer.step()
 
-    print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+#     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')

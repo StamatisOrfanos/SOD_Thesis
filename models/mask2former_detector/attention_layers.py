@@ -3,7 +3,6 @@ from torch import nn, Tensor
 from torch.nn import functional as F
 
 
-
 class SelfAttentionLayer(nn.Module):
     """
     Parameters:

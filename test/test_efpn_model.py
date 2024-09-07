@@ -35,7 +35,7 @@ print("The total number of EFPN parameters are: ", total_params)
 
 # Step 4: Pass the image through the model
 with torch.no_grad():
-    feature_maps, masks, bounding_box, class_scores = model(image)
+    feature_maps, bounding_box, class_scores = model(image)
 
 
 # Step 5: Visualize the feature maps
@@ -49,17 +49,11 @@ print("\nThe class scores are the following:\n")
 print(class_scores.size())
 
     
-# Step 7: Visualize the masks of each feature map
-print("\nThe masks of the feature maps created are the following:\n")
-for mask in masks:
-    print(mask.shape)
-
-    
 # Step 7: Visualize the bounding box
 print("\nThe bounding box with shape: {} created is the following:\n".format(bounding_box.shape))
 
 
-# Step 9: Get the summary of the EFPN model
+# Step 8: Get the summary of the EFPN model
 print("\n\nThe summary of the EFPN model is the following: \n", model) 
 # ------------------------------------------------------------------------------------------------------------------------------
 
