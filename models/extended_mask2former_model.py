@@ -59,8 +59,6 @@ class ExtendedMask2Former(nn.Module):
 
         return pred_boxes
     
-# This function now explicitly computes an IoU for each pair of predicted and ground truth mask across all batches and retains 
-# the full `[batch_size, num_queries, num_queries]` shape required for proper cost matrix calculations.
 
     def calculate_iou(self, predicted_masks, ground_truth_masks):
         """
@@ -87,60 +85,61 @@ class ExtendedMask2Former(nn.Module):
         return 1 - iou_matrix  # Return the IoU costs as 1 - IoU
     
     
-    def hungarian_loss(self, pred_classes, pred_masks, gt_classes, gt_masks):
-        # Calculate the cost matrices
-        iou_costs = self.calculate_iou(pred_masks, gt_masks)
+    def hungarian_loss(self, predicted_labels, predicted_masks, ground_truth_classes, ground_truth_masks):
+        # Calculate the cost matrices with expected tensor format of [batch_size, num_queries, num_queries]
+        iou_costs = self.calculate_iou(predicted_masks, ground_truth_masks)
 
         # Calculate class costs using softmax and negative log likelihood
-        pred_classes_softmax = torch.softmax(pred_classes, dim=-1)
-        batch_size, num_queries, num_classes = pred_classes_softmax.shape
+        pred_classes_softmax = torch.softmax(predicted_labels, dim=-1)
+        batch_size, num_queries, _ = pred_classes_softmax.shape
         class_costs = torch.full((batch_size, num_queries, num_queries), float('inf'), device=self.device)
 
-        # Building the cost matrix for each element in the batch
+        # Building the class cost matrix for each element in the batch
         for b in range(batch_size):
             for i in range(num_queries):
                 for j in range(num_queries):
-                    if gt_classes[b, j] != -1:  # Assuming -1 is the padding value that should be ignored
-                        class_costs[b, i, j] = -torch.log(pred_classes_softmax[b, i, gt_classes[b, j]])
-                        
-        
-        print(f"iou_costs shape: {iou_costs.shape}, class_costs shape: {class_costs.shape}")
-        
-         # Ensure both cost matrices are aligned in shape
-        if iou_costs.shape != class_costs.shape:
-            raise ValueError("Shape mismatch in cost matrices: iou_costs and class_costs must have the same dimensions.")
+                    # The values with -1 are padding and are ignored
+                    if ground_truth_classes[b, j] != -1:  
+                        class_costs[b, i, j] = -torch.log(pred_classes_softmax[b, i, ground_truth_classes[b, j]] + 1e-6)  # Added epsilon to avoid log(0)
 
-        # Combine costs
+        # Ensure that costs are finite by clamping and handling inf/nan
+        iou_costs = torch.clamp(iou_costs, min=0, max=10)
+        class_costs = torch.clamp(class_costs, min=0, max=10)
         combined_costs = iou_costs + class_costs
-
+        
+        # Set all inf or nan values to a large finite value
+        combined_costs[~torch.isfinite(combined_costs)] = 1e5  
+        
         # Apply Hungarian matching
         mask_losses, class_losses = [], []
-
+        
         for idx in range(batch_size):
-            row_ind, col_ind = linear_sum_assignment(combined_costs[idx].cpu().detach().numpy())
-            mask_losses.append(self.mask_loss(pred_masks[idx, row_ind], gt_masks[idx, col_ind]).mean())
-            class_losses.append(self.class_loss(pred_classes[idx, row_ind], gt_classes[idx, col_ind]))
+            row_indices, column_indices = linear_sum_assignment(combined_costs[idx].cpu().detach().numpy())
+            # Ensure mask data types are float for BCE loss
+            predicted_mask_selected = predicted_masks[idx, row_indices].float()
+            ground_truth_mask_selected = ground_truth_masks[idx, column_indices].float()
+            mask_losses.append(self.mask_loss(predicted_mask_selected, ground_truth_mask_selected).mean())
+            class_losses.append(self.class_loss(predicted_labels[idx, row_indices], ground_truth_classes[idx, column_indices]))
 
-        # Calculate mean loss over the batch
-        mask_loss = torch.stack(mask_losses).mean()
-        class_loss = torch.stack(class_losses).mean()
+        # Calculate mean loss over the batch if matches were found
+        mask_loss  = torch.stack(mask_losses).mean()  if mask_losses  else torch.tensor(0.0, device=self.device)
+        class_loss = torch.stack(class_losses).mean() if class_losses else torch.tensor(0.0, device=self.device)
 
         return mask_loss, class_loss
-    
 
 
-    def class_confidence_predictor(self, bounding_box_classes, mask_classes):
+    def class_confidence_predictor(self, bounding_box_labels, mask_labels):
         """        
         Parameters:
-            - bounding_box_classes (tensor): Class logits from the bounding box branch [batch_size, num_queries, num_classes]
-            - mask_classes (tensor): Class logits from the mask branch [batch_size, num_queries, num_classes]
+            - bounding_box_labels (tensor): Class logits from the bounding box branch [batch_size, num_queries, num_classes]
+            - mask_labels (tensor): Class logits from the mask branch [batch_size, num_queries, num_classes]
         """
-        # Softmax to convert logits to probabilities
-        box_probabilities = torch.softmax(bounding_box_classes, dim=-1)
-        mask_probabilities = torch.softmax(mask_classes, dim=-1)
+        # Softmax to convert logits to probabilities        
+        box_probabilities = torch.softmax(bounding_box_labels, dim=-1)
+        mask_probabilities = torch.softmax(mask_labels, dim=-1)
         
         # Combine by taking the maximum across probabilities from both predictions
-        combined_probabilities = torch.max(box_probabilities, mask_probabilities, dim=0) # type: ignore
+        combined_probabilities = torch.maximum(box_probabilities, mask_probabilities)
         
         return combined_probabilities
 

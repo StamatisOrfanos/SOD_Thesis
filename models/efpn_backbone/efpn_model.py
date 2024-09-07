@@ -18,6 +18,9 @@ class EFPN(nn.Module):
         # Load EfficientNet with pre-trained weights
         self.backbone = EfficientNet.from_pretrained('efficientnet-b7')
 
+        # The number of classes is the number of different classes and the background 
+        self.number_classes = num_classes+1
+
         # Initialize FTTModule
         self.ftt_model = FTT(in_channels)
 
@@ -42,7 +45,7 @@ class EFPN(nn.Module):
         self.top_down_p2 = nn.Upsample(scale_factor=2, mode='nearest')
 
         # Define the bounding box for the spatially richest feature map
-        self.bounding_box = BoundingBoxGenerator(in_channels, num_classes, num_anchors)
+        self.bounding_box = BoundingBoxGenerator(in_channels, self.number_classes, num_anchors)
         
 
     def forward(self, image):
