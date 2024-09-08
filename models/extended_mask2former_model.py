@@ -134,13 +134,17 @@ class ExtendedMask2Former(nn.Module):
             - bounding_box_labels (tensor): Class logits from the bounding box branch [batch_size, num_queries, num_classes]
             - mask_labels (tensor): Class logits from the mask branch [batch_size, num_queries, num_classes]
         """
+        # Get the minimum value of the size of those tensors
+        min_queries = min(bounding_box_labels.size(1), mask_labels.size(1))
+        bounding_box_labels = bounding_box_labels[:, :min_queries, :]
+        mask_labels = mask_labels[:, :min_queries, :]
+                        
         # Softmax to convert logits to probabilities        
         box_probabilities = torch.softmax(bounding_box_labels, dim=-1)
         mask_probabilities = torch.softmax(mask_labels, dim=-1)
         
         # Combine by taking the maximum across probabilities from both predictions
-        combined_probabilities = torch.maximum(box_probabilities, mask_probabilities)
-        
+        combined_probabilities = torch.maximum(box_probabilities, mask_probabilities)        
         return combined_probabilities
 
 
@@ -156,9 +160,9 @@ class ExtendedMask2Former(nn.Module):
             - anchors (tensor): Tensor of all the anchors created
         """
         device = self.device
-        anchors = anchors.to(device)
+        anchors = anchors.to(device)        
         num_objects = targets['mask_labels'].shape[1]
-        
+            
         # Extract predictions
         predicted_bounding_boxes = predictions['bounding_box'][:, :self.num_anchors, :]  
         predicted_classes_boxes = predictions['class_scores'][:, :self.num_anchors, :]
@@ -190,7 +194,8 @@ class ExtendedMask2Former(nn.Module):
         mask_loss, mask_class_loss = self.hungarian_loss(predicted_classes_masks, predicted_masks, ground_truth_masks_labels, ground_truth_masks)
         
         # - Compute final class prediction through confidence vote -
-        final_class_loss = self.class_loss(self.class_confidence_predictor(predicted_classes_boxes, predicted_classes_masks))
+        maximized_class_predictions = self.class_confidence_predictor(predicted_classes_boxes, predicted_classes_masks)
+        final_class_loss = self.class_loss(maximized_class_predictions.reshape(-1, maximized_class_predictions.size(-1)), classification_targets.reshape(-1))
         
         print("\n\n\n The class loss from the bounding box is of type: {}, size:{} and values:{}".format(type(bounding_box_class_loss),bounding_box_class_loss.size()))
         print("\n The class loss from the masks is of type: {}, size:{} and values:{}".format(type(mask_class_loss),mask_class_loss.size()))
