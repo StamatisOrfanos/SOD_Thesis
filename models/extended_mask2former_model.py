@@ -126,6 +126,57 @@ class ExtendedMask2Former(nn.Module):
         class_loss = torch.stack(class_losses).mean() if class_losses else torch.tensor(0.0, device=self.device)
 
         return mask_loss, class_loss
+    
+        
+    def calculate_map(self, predictions, ground_truths, iou_thresholds):
+        """
+        Parameters:
+            predictions (dict):  Dictionary containing the model predictions for bounding boxes, classes, and masks.
+            ground_truths (dict):  Dictionary containing the ground truth for bounding boxes, classes, and masks.
+            iou_thresholds (float or list): Single IoU threshold or list of IoU thresholds.
+        """
+        if isinstance(iou_thresholds, float):
+            iou_thresholds = [iou_thresholds]
+
+        average_precisions = []
+        all_precisions = []
+        all_recalls = []
+
+        for iou_threshold in iou_thresholds:
+            # Calculate the IoU matrix
+            iou_matrix = self.calculate_iou(predictions['pred_masks'], ground_truths['masks'])
+            true_positives = iou_matrix > iou_threshold
+            true_positive_flat = true_positives.view(-1)
+
+            # Sort indices by true positive values in descending order
+            sorted_indices = torch.argsort(true_positive_flat, descending=True)
+            true_positive_sorted = true_positive_flat[sorted_indices]
+
+            # Calculate cumulative true positives and false positives
+            cumulative_true_positive = torch.cumsum(true_positive_sorted.float(), dim=0)
+            cumulative_false_positive = torch.cumsum(1 - true_positive_sorted.float(), dim=0)
+
+            # Calculate Precision and Recall
+            precision = cumulative_true_positive / (cumulative_true_positive + cumulative_false_positive + 1e-6)
+            recall = cumulative_true_positive / len(true_positive_sorted)
+
+            # Integrate precision over recall to find average precision (AP)
+            ap = torch.trapz(precision, recall)
+            average_precisions.append(ap)
+            all_precisions.append(precision[-1] if len(precision) > 0 else torch.tensor(0.0))
+            all_recalls.append(recall[-1] if len(recall) > 0 else torch.tensor(0.0))
+
+        # Calculate mean AP (mAP) across all specified IoU thresholds
+        mAP = torch.mean(torch.tensor(average_precisions))
+
+        result = {
+            "precision": torch.mean(torch.tensor(all_precisions)),
+            "recall": torch.mean(torch.tensor(all_recalls)),
+            "mAP": mAP
+        }
+        
+        return result
+
 
 
     def class_confidence_predictor(self, bounding_box_labels, mask_labels):
@@ -147,8 +198,6 @@ class ExtendedMask2Former(nn.Module):
         combined_probabilities = torch.maximum(box_probabilities, mask_probabilities)        
         return combined_probabilities
 
-
-    
        
     def compute_loss(self, predictions, targets, anchors, mask_weight=1.0, bounding_box_weight=1.0, class_weight=0.5):
         """
@@ -194,15 +243,10 @@ class ExtendedMask2Former(nn.Module):
         mask_loss, mask_class_loss = self.hungarian_loss(predicted_classes_masks, predicted_masks, ground_truth_masks_labels, ground_truth_masks)
         
         # - Compute final class prediction through confidence vote -
-        maximized_class_predictions = self.class_confidence_predictor(predicted_classes_boxes, predicted_classes_masks)
-        final_class_loss = self.class_loss(maximized_class_predictions.reshape(-1, maximized_class_predictions.size(-1)), classification_targets.reshape(-1))
-        
-        print("\n\n\n The class loss from the bounding box is of type: {}, size:{} and values:{}".format(type(bounding_box_class_loss),bounding_box_class_loss.size()))
-        print("\n The class loss from the masks is of type: {}, size:{} and values:{}".format(type(mask_class_loss),mask_class_loss.size()))
-        print("\n The class loss from the combinations is of type: {}, size:{} and values:{}\n\n\n".format(type(final_class_loss),final_class_loss.size()))
- 
+        combined_class_predictions = self.class_confidence_predictor(predicted_classes_boxes, predicted_classes_masks)
+        final_class_loss = self.class_loss(combined_class_predictions.reshape(-1, combined_class_predictions.size(-1)), ground_truth_masks_labels.reshape(-1))
 
-        total_loss = mask_weight * mask_loss + bounding_box_weight * bounding_box_loss + class_weight * final_class_loss
+        total_loss = mask_weight * mask_loss + bounding_box_weight * bounding_box_loss + class_weight * final_class_loss     
         
         return total_loss
     

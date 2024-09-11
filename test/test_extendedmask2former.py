@@ -118,7 +118,7 @@ train_dataset      = SOD_Data(train_path +"/images", train_path + "/annotations"
 test_dataset       = SOD_Data(test_path + "/images", test_path  + "/annotations", data_transform["test"])
 validation_dataset = SOD_Data(validation_path + "/images", validation_path + "/annotations", data_transform["validation"])
 
-train_loader      = DataLoader(train_dataset, batch_size=2, shuffle=True, collate_fn=lambda x: tuple(zip(*x)))
+train_loader      = DataLoader(train_dataset, batch_size=1, shuffle=True, collate_fn=lambda x: tuple(zip(*x)))
 test_loader       = DataLoader(test_dataset, batch_size=3, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
 validation_loader = DataLoader(validation_dataset, batch_size=3, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
 
@@ -168,6 +168,8 @@ num_epochs = 1
 for epoch in range(num_epochs):
     
     model.train()
+    per_epoch_predictions = []
+    per_epoch_ground_truths = []
     
     for images, targets in train_loader:
         images = torch.stack(images).to(device)
@@ -178,13 +180,19 @@ for epoch in range(num_epochs):
         batched_labels = torch.cat([t['labels'] for t in targets]).to(device)
         batched_masks  = torch.stack([t['masks'] for t in targets]).to(device)
         batched_mask_labels = torch.stack([t['mask_labels'] for t in targets]).to(device)
+        
+        
         predictions = model(images, batched_masks)
         actual = {"boxes": batched_bboxes, "labels": batched_labels, "masks": batched_masks, "mask_labels": batched_mask_labels}
-
-        loss = model.compute_loss(predictions, actual, anchors)
+        loss, _, _ = model.compute_loss(predictions, actual, anchors)
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        per_epoch_predictions.append(predictions)
+        per_epoch_ground_truths.append(actual)
 
-#     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+
+    map = model.calculate_map(predictions, targets, [0.5])
+    mapCOCO = model.calculate_map(predictions, targets, torch.arange(0.5, 1.0, 0.05))
+    print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
