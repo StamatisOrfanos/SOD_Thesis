@@ -6,7 +6,7 @@ from torchvision import transforms
 from models.extended_mask2former_model import ExtendedMask2Former
 # Import libraries
 import pandas as pd
-import os, json
+import os, json, statistics
 import torch
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
@@ -143,13 +143,11 @@ scales = [32]
 
 # Define the aspect ratios
 aspect_ratios = [0.5, 1.0]
-
 anchors = torch.tensor(Anchors.generate_anchors(feature_map_shapes, scales, aspect_ratios), dtype=torch.float32)
 
 # Initialise the ExtendedMask2Former model and load it to device
 model = ExtendedMask2Former(num_classes=number_classes, num_anchors=anchors.size(0), device=device).to(device)
 anchors = anchors.to(device)
-
 
 # Hyperparameters selection
 num_epochs = 1
@@ -160,39 +158,51 @@ batch_size = 1
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
 
-metrics_df = pd.DataFrame(columns=['epoch', 'train_loss', 'val_loss', 'precision', 'recall', 'AP', 'mAP'])
+metrics_df = pd.DataFrame(columns=['epoch', 'loss', 'precision', 'recall', 'mAP', 'mAPCOCO'])
 
 # Train for one epoch to ensure that the model can be trained as expected
 num_epochs = 1
 
 for epoch in range(num_epochs):
     
-    model.train()
-    per_epoch_predictions = []
-    per_epoch_ground_truths = []
-    
-    for images, targets in train_loader:
-        images = torch.stack(images).to(device)
-        targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-        
-        
-        batched_bboxes = torch.cat([t['boxes'] for t in targets]).to(device)
-        batched_labels = torch.cat([t['labels'] for t in targets]).to(device)
-        batched_masks  = torch.stack([t['masks'] for t in targets]).to(device)
-        batched_mask_labels = torch.stack([t['mask_labels'] for t in targets]).to(device)
-        
-        
-        predictions = model(images, batched_masks)
-        actual = {"boxes": batched_bboxes, "labels": batched_labels, "masks": batched_masks, "mask_labels": batched_mask_labels}
-        loss, _, _ = model.compute_loss(predictions, actual, anchors)
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        per_epoch_predictions.append(predictions)
-        per_epoch_ground_truths.append(actual)
-
-
-    map = model.calculate_map(predictions, targets, [0.5])
-    mapCOCO = model.calculate_map(predictions, targets, torch.arange(0.5, 1.0, 0.05))
-    print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+  model.train()
+  per_epoch_predictions = []
+  per_epoch_ground_truths = []
+  per_epoch_loss = []
+  
+  for images, targets in train_loader:
+      images = torch.stack(images).to(device)
+      targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+      
+      # Concatenate and stack data
+      batched_bboxes = torch.cat([t['boxes'] for t in targets]).to(device)
+      batched_labels = torch.cat([t['labels'] for t in targets]).to(device)
+      batched_masks  = torch.stack([t['masks'] for t in targets]).to(device)
+      batched_mask_labels = torch.stack([t['mask_labels'] for t in targets]).to(device)
+      
+      # Get the predictions of the model and the actual data to feed to the loss function
+      predictions = model(images, batched_masks)
+      actual = {"boxes": batched_bboxes, "labels": batched_labels, "masks": batched_masks, "mask_labels": batched_mask_labels}
+      
+      # Get the loss value and background propagate the value 
+      loss = model.compute_loss(predictions, actual, anchors)
+      optimizer.zero_grad()
+      loss.backward()
+      optimizer.step()
+      
+      # Get the predictions, actual data and loss for each batch to calculate the epoch metrics
+      per_epoch_loss.append(loss)
+      per_epoch_predictions.append(predictions)
+      per_epoch_ground_truths.append(actual)
+  
+  # Get Mean Average Precisions for IoU of [0.5] and [0.5-0.95] with Mean Average Precision
+  map = model.calculate_map(predictions, targets, [0.5])
+  mapCOCO = model.calculate_map(predictions, targets, torch.arange(0.5, 1.0, 0.05))
+  
+  # Add epoch metrics
+  new_row = {'epoch': epoch, 'loss': statistics.mean(per_epoch_loss), 'precision': map['precision'], 'recall': map['recall'], 'mAP': map["mAP"], 'mAPCOCO': mapCOCO['mAP']}
+  metrics_df.loc[len(metrics_df)] = new_row  # type: ignore
+  
+  # Save model info every 25 epochs to check progress with evaluation
+  if epoch % 25 == 0 and epoch != 0: torch.save(model, "results/model_uav_{}.pt".format(epoch)) # type: ignore
+  

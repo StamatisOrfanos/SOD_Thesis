@@ -86,6 +86,13 @@ class ExtendedMask2Former(nn.Module):
     
     
     def hungarian_loss(self, predicted_labels, predicted_masks, ground_truth_classes, ground_truth_masks):
+        """
+        Parameters:
+            predicted_labels (tensor): Predicted masks labels, shaped [batch_size, num_queries, number_classes]
+            predicted_masks (tensor): Predicted masks, shaped [batch_size, num_queries, height, width]
+            ground_truth_classes (tensor): Ground truth mask labels, shaped [batch_size, num_queries, number_classes]
+            ground_truth_masks (tensor): Ground truth masks, shaped [batch_size, num_queries, height, width]
+        """
         # Calculate the cost matrices with expected tensor format of [batch_size, num_queries, num_queries]
         iou_costs = self.calculate_iou(predicted_masks, ground_truth_masks)
 

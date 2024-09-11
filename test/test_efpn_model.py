@@ -24,7 +24,7 @@ def load_image(image_path):
 image = load_image("/Users/stamatiosorphanos/Documents/MCs_Thesis/SOD_Thesis/docs/Extended_Mask2Former/1.jpg")
 
 # Step 2: Instantiate the model
-model = EFPN(in_channels=256, hidden_dim=256,  num_classes=10, num_anchors=10)
+model = EFPN(in_channels=256,  num_classes=10, num_anchors=10)
 model.eval()  # Set the model to evaluation mode
 
 
@@ -120,7 +120,7 @@ train_loader = DataLoader(train_dataset, batch_size=3, shuffle=True, collate_fn=
 # Define model, loss function, and optimizer
 device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 anchors = Anchors.generate_anchors([(19, 19)], scales=[32], aspect_ratios=[0.5, 1])
-model = EFPN(in_channels=3, hidden_dim=256, num_classes=20, num_anchors=len(anchors)).to(device)
+model = EFPN(in_channels=3, num_classes=20, num_anchors=len(anchors)).to(device)
 loss_fn = DetectionLoss(anchors=anchors).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
