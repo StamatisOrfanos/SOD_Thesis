@@ -14,7 +14,7 @@ from src.data_set_up import SOD_Data
 from models.extended_mask2former_model import ExtendedMask2Former
 from models.efpn_backbone.anchors import Anchors
 import torch.nn.functional as F
-from src.helpers import train, validate, test
+from src.helpers import train, evaluate_model
 
 # # ------------------------------------------------------------------------------------------------------------------------------------
 # # Step 1: Load and preprocess the image
@@ -151,7 +151,7 @@ anchors = anchors.to(device)
 # Hyperparameters selection
 num_epochs = 1
 learning_rate = 0.001
-batch_size = 1
+
 
 # Define the optimizer and the scheduler
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -162,48 +162,5 @@ metrics_df = pd.DataFrame(columns=['epoch', 'loss', 'precision', 'recall', 'mAP'
 # Train for one epoch to ensure that the model can be trained as expected
 num_epochs = 1
 
-for epoch in range(num_epochs):
-    
-  model.train()
-  per_epoch_predictions = []
-  per_epoch_ground_truths = []
-  per_epoch_loss = []
-  
-  for images, targets in train_loader:
-      images = torch.stack(images).to(device)
-      targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-      
-      # Concatenate and stack data
-      batched_bboxes = torch.cat([t['boxes'] for t in targets]).to(device)
-      batched_labels = torch.cat([t['labels'] for t in targets]).to(device)
-      batched_masks  = torch.stack([t['masks'] for t in targets]).to(device)
-      batched_mask_labels = torch.stack([t['mask_labels'] for t in targets]).to(device)
-      
-      # Get the predictions of the model and the actual data to feed to the loss function
-      predictions = model(images, batched_masks)
-      actual = {'boxes': batched_bboxes, 'labels': batched_labels, 'masks': batched_masks, 'mask_labels': batched_mask_labels}
-      
-      # Get the loss value and background propagate the value 
-      loss = model.compute_loss(predictions, actual, anchors)
-      optimizer.zero_grad()
-      loss.backward()
-      optimizer.step()
-      
-      # Get the predictions, actual data and loss for each batch to calculate the epoch metrics
-      per_epoch_loss.append(loss)
-      per_epoch_predictions.append(predictions)
-      per_epoch_ground_truths.append(actual)
-  
-  # Get Mean Average Precisions for IoU of [0.5] and [0.5-0.95] with Mean Average Precision
-  map = model.calculate_map(predictions, targets, [0.5])
-  mapCOCO = model.calculate_map(predictions, targets, torch.arange(0.5, 1.0, 0.05))
-  loss = statistics.mean(per_epoch_loss)
-  
-  # Add epoch metrics
-  new_row = {'epoch': epoch, 'loss': loss, 'precision': map['precision'], 'recall': map['recall'], 'mAP': map['mAP'], 'mAPCOCO': mapCOCO['mAP']}
-  metrics_df.loc[len(metrics_df)] = new_row  # type: ignore
-  
-  # Save model info every 25 epochs to check progress with evaluation
-  if epoch % 25 == 0 and epoch != 0: torch.save(model, 'results/model_uav_{}.pt'.format(epoch)) # type: ignore
-  print('For the epoch:{} the loss is: {}, the precision is: {}, the recall is: {}, the mAP[0.5] is: {} and the mAP[0.5-0.95] is: {}'.format(loss, map['precision'], map['recall'], map['mAP'], mapCOCO['mAP']))
-  
+# train(model, train_loader, device, anchors, optimizer, 1)
+evaluate_model(model, test_loader, device, anchors)

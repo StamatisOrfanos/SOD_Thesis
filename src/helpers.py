@@ -1,153 +1,110 @@
 import numpy as np
-import torch
+import torch, statistics
 from sklearn.metrics import precision_recall_curve, average_precision_score
-
-# ------------------------------------------------------------------------
-
 import torch
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose, ToTensor, Normalize
 from torchvision import transforms
+from sklearn.metrics import confusion_matrix
+import pandas as pd
+from datetime import datetime
 
 
-# Assuming transforms and other required modules are already imported
+
 def train(model, train_loader, device, anchors, optimizer, num_epochs):
-    model.train()  # Set the model to training mode
-    running_loss = 0.0
-    all_metrics = {'precision': [], 'recall': [], 'AP': []}
-    anchors = anchors.to(device)
+    """
+    Parameters:
+        model (nn.Model): ExtendedMask2Former model
+        train_loader (DataLoader): Dataloader object for the training data.
+        device (string): String value for the device we are going to use [cuda or cpu]
+        anchors (tensor): Tensor containing the anchors
+        optimizer (torch.optim): Optimizer of our choice
+        num_epochs (int): Number of epochs for the training
+    """
+    # Define the dataframe we are going to use to save the accuracy metrics
+    metrics_df = pd.DataFrame(columns=['epoch', 'loss', 'precision', 'recall', 'mAP', 'mAPCOCO'])
+
     
-    for epoch in range(num_epochs):
-        
+    
+    for epoch in range(num_epochs):    
         model.train()
+        per_epoch_predictions = []
+        per_epoch_ground_truths = []
+        per_epoch_loss = []
         
         for images, targets in train_loader:
             images = torch.stack(images).to(device)
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-
-            gt_bboxes = targets[0]['boxes'].to(device)
-            gt_labels = targets[0]['labels'].to(device)
-            gt_masks  = targets[0]['masks'].to(device)
-            actual = {"boxes": gt_bboxes, "labels": gt_labels, "masks": gt_masks}
-
-            predictions = model(images, gt_masks)
-
+            
+            # Concatenate and stack data
+            batched_bboxes = torch.cat([t['boxes'] for t in targets]).to(device)
+            batched_labels = torch.cat([t['labels'] for t in targets]).to(device)
+            batched_masks  = torch.stack([t['masks'] for t in targets]).to(device)
+            batched_mask_labels = torch.stack([t['mask_labels'] for t in targets]).to(device)
+            
+            # Get the predictions of the model and the actual data to feed to the loss function
+            predictions = model(images, batched_masks)
+            actual = {'boxes': batched_bboxes, 'labels': batched_labels, 'masks': batched_masks, 'mask_labels': batched_mask_labels}
+            
+            # Get the loss value and background propagate the value 
             loss = model.compute_loss(predictions, actual, anchors)
-
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            
+            # Get the predictions, actual data and loss for each batch to calculate the epoch metrics
+            per_epoch_loss.append(loss)
+            per_epoch_predictions.append(predictions)
+            per_epoch_ground_truths.append(actual)
+        
+        # Get Mean Average Precisions for IoU of [0.5] and [0.5-0.95] with Mean Average Precision
+        map = model.calculate_map(predictions, targets, [0.5])
+        mapCOCO = model.calculate_map(predictions, targets, torch.arange(0.5, 1.0, 0.05))
+        loss = statistics.mean(per_epoch_loss)
+        
+        # Add epoch metrics
+        new_row = {'epoch': epoch, 'loss': loss, 'precision': map['precision'], 'recall': map['recall'], 'mAP': map['mAP'], 'mAPCOCO': mapCOCO['mAP']}
+        metrics_df.loc[len(metrics_df)] = new_row  # type: ignore
+        
+        # Save model info every 25 epochs to check progress with evaluation
+        if epoch % 25 == 0 and epoch != 0: torch.save(model, 'results/model_uav_{}.pt'.format(epoch)) # type: ignore
+        print('For the epoch:{} the loss is: {}, the precision is: {}, the recall is: {}, the mAP[0.5] is: {} and the mAP[0.5-0.95] is: {}'.format(loss, map['precision'], map['recall'], map['mAP'], mapCOCO['mAP']))
+        
 
-        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
 
 
 
 
-def validate(model, val_loader, device, anchors, num_classes):
-    """
-    Parameters:
-        - model (nn.Module): The model to be trained.
-        - train_loader (DataLoader): DataLoader for the training data.
-        - optimizer (Optimizer): The optimizer used for training the model.
-        - device (str): The device on which the training will be performed (e.g., 'cpu', 'cuda').
-        - anchors (Tensor): The anchor boxes used for bounding box predictions.
-        - num_classes (int): The number of classes in the dataset.
-    """
+def evaluate_model(model, data_loader, device, anchors):
     model.eval()
-    val_loss = 0
-    all_metrics = {'precision': [], 'recall': [], 'AP': []}
-    with torch.no_grad():
-        for images, targets in val_loader:
+    total_loss = 0
+    all_preds = []
+
+    with torch.no_grad():  # Disable gradient computation
+        for images, targets in data_loader:
             images = torch.stack(images).to(device)
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-            outputs = model(images)
-            loss = model.compute_loss(outputs, targets, anchors)
-            val_loss += loss.item()
+            
+            # Concatenate and stack data
+            batched_bboxes = torch.cat([t['boxes'] for t in targets]).to(device)
+            batched_labels = torch.cat([t['labels'] for t in targets]).to(device)
+            batched_masks  = torch.stack([t['masks'] for t in targets]).to(device)
+            batched_mask_labels = torch.stack([t['mask_labels'] for t in targets]).to(device)
+            
+            # Get the predictions of the model and the actual data to feed to the loss function
+            predictions = model(images, batched_masks)
+            actual = {'boxes': batched_bboxes, 'labels': batched_labels, 'masks': batched_masks, 'mask_labels': batched_mask_labels}
+            
+            # Get the loss value and background propagate the value 
+            loss = model.compute_loss(predictions, actual, anchors)
+            total_loss += loss.item()
 
-            precision, recall, ap, mAP = calculate_metrics(outputs, targets, num_classes)
-            all_metrics['precision'].append(precision)
-            all_metrics['recall'].append(recall)
-            all_metrics['AP'].append(ap)
+            # Assuming the model outputs predicted class labels in 'pred_labels'
+            pred_labels = predictions['pred_mask_labels'].max(dim=1)[1]  # Get the argmax of class probabilities
+            all_preds.extend(pred_labels.cpu().numpy())
 
-    return val_loss / len(val_loader), all_metrics, mAP
+        # Calculate average loss
+        avg_loss = total_loss / len(data_loader)
 
+    return avg_loss
 
-def test(model, test_loader, device, anchors, num_classes):
-    """
-    Parameters:
-        - model (nn.Module): The model to be trained.
-        - train_loader (DataLoader): DataLoader for the training data.
-        - optimizer (Optimizer): The optimizer used for training the model.
-        - device (str): The device on which the training will be performed (e.g., 'cpu', 'cuda').
-        - anchors (Tensor): The anchor boxes used for bounding box predictions.
-        - num_classes (int): The number of classes in the dataset.
-    """
-    model.eval()
-    test_loss = 0
-    all_metrics = {'precision': [], 'recall': [], 'AP': []}
-    with torch.no_grad():
-        for images, targets in test_loader:
-            images = torch.stack(images).to(device)
-            targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-            outputs = model(images)
-            loss = model.compute_loss(outputs, targets, anchors)
-            test_loss += loss.item()
-
-            precision, recall, ap, mAP = calculate_metrics(outputs, targets, num_classes)
-            all_metrics['precision'].extend(precision)
-            all_metrics['recall'].extend(recall)
-            all_metrics['AP'].extend(ap)
-
-    return test_loss / len(test_loader), all_metrics, mAP
-
-# ------------------------------------------------------------------------
-
-
-
-def calculate_metrics(predictions, targets, num_classes):
-    all_true_labels = []
-    all_pred_scores = []
-    all_pred_labels = []
-
-    for i in range(len(targets)):
-        true_labels = targets[i]['labels'].cpu().numpy()
-        pred_scores = predictions['pred_logits'][i].cpu().detach().numpy()
-
-        # Ensure the number of predicted labels matches the number of true labels
-        if len(pred_scores) >= len(true_labels):
-            pred_scores = pred_scores[:len(true_labels)]
-        else:
-            true_labels = true_labels[:len(pred_scores)]
-
-        pred_labels = pred_scores.argmax(axis=1)
-        all_true_labels.extend(true_labels)
-        all_pred_scores.extend(pred_scores)
-        all_pred_labels.extend(pred_labels)
-
-    all_true_labels = np.array(all_true_labels)
-    all_pred_scores = np.array(all_pred_scores)
-    all_pred_labels = np.array(all_pred_labels)
-
-    precision_list = []
-    recall_list = []
-    ap_list = []
-
-    for class_id in range(num_classes):
-        # Binarize the labels for the current class
-        true_class = (all_true_labels == class_id).astype(int)
-        if np.sum(true_class) == 0:
-            continue
-
-        pred_class_scores = all_pred_scores[:, class_id]
-
-        precision, recall, _ = precision_recall_curve(true_class, pred_class_scores)
-        ap = average_precision_score(true_class, pred_class_scores)
-
-        precision_list.append(precision)
-        recall_list.append(recall)
-        ap_list.append(ap)
-
-    # Calculate mean average precision (mAP)
-    mAP = np.mean(ap_list) if ap_list else 0
-
-    return precision_list, recall_list, ap_list, mAP
