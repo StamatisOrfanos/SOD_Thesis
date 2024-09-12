@@ -253,7 +253,7 @@ class ExtendedMask2Former(nn.Module):
         combined_class_predictions = self.class_confidence_predictor(predicted_classes_boxes, predicted_classes_masks)
         final_class_loss = self.class_loss(combined_class_predictions.reshape(-1, combined_class_predictions.size(-1)), ground_truth_masks_labels.reshape(-1))
 
-        total_loss = mask_weight * mask_loss + bounding_box_weight * bounding_box_loss + class_weight * final_class_loss     
+        total_loss = mask_weight * mask_loss + bounding_box_weight * bounding_box_loss + class_weight * final_class_loss
         
         return total_loss
     
