@@ -157,6 +157,7 @@ class SOD_Data(Dataset):
                     x_min, y_min, x_max, y_max = map(int, bbox_class_part[0:4])
                     width = x_max - x_min
                     height = y_max - y_min
+                    if height == 0: height = 1
                     box_widths.append(width)
                     box_heights.append(height)
                     aspect_ratios[width / height] += 1
