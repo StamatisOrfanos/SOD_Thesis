@@ -11,7 +11,7 @@ from datetime import datetime
 
 
 
-def train(model, train_loader, device, anchors, optimizer, num_epochs):
+def train(model, train_loader, device, anchors, optimizer, num_epochs, dataset):
     """
     Parameters:
         model (nn.Model): ExtendedMask2Former model
@@ -67,7 +67,7 @@ def train(model, train_loader, device, anchors, optimizer, num_epochs):
         metrics_df.loc[len(metrics_df)] = new_row  # type: ignore
         
         # Save model info every 25 epochs to check progress with evaluation
-        if epoch % 25 == 0 and epoch != 0: torch.save(model, 'results/model_uav_{}.pt'.format(epoch)) # type: ignore
+        if epoch % 25 == 0 and epoch != 0: torch.save(model, 'results/model_{}_{}.pt'.format(dataset, epoch)) # type: ignore
         print('For the epoch:{} the loss is: {}, the precision is: {}, the recall is: {}, the mAP[0.5] is: {} and the mAP[0.5-0.95] is: {}'.format(loss, map['precision'], map['recall'], map['mAP'], mapCOCO['mAP']))
         
 

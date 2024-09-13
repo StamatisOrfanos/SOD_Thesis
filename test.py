@@ -99,9 +99,3 @@
 # if __name__ == "__main__":
 #     main()
 
-
-# import os
-# path = "/Users/stamatiosorphanos/Documents/MCs_Thesis/SOD_Thesis/data/uav_sod_data/train/images"
-
-# num_files = sum(os.path.isfile(os.path.join(path, f)) for f in os.listdir(path))
-# print(num_files)
