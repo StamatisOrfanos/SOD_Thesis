@@ -8,10 +8,12 @@ from PIL import Image, ImageDraw
 
 class SOD_Data(Dataset):
     """
-    Args:
+    Parameters:
         - images_directory (string): Path of the directory containing the images 
         - annotations_directory (string): Path of the directory containing the annotations
-        - transform (pytorch.transform, optional): transform function for the images of the dataset
+        - transform (pytorch.transform, optional): Transform function for the images of the dataset
+        - target_size (int): Target size of the image we want to resize to
+        - max_annotations (int): Maximum value of annotations per image
     """
     def __init__(self, images_directory, annotations_directory, transform, target_size=300, max_annotations=100):
         self.image_dir = images_directory

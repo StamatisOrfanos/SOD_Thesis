@@ -7,13 +7,20 @@ from torch.utils.data import Dataset
 from collections import defaultdict
 
 
-
-
 class S3Dataset(Dataset):
-    def __init__(self, image_paths, annotation_paths, transform, bucket_name, target_size=300, max_annotations=100):
-        self.image_paths = image_paths
-        self.annotation_paths = annotation_paths
-        self.image_files = [f for f in os.listdir(image_paths) if f.endswith(('.jpg', '.png'))]
+    """
+    Parameters:
+        - images_directory (string): Path of the directory containing the images 
+        - annotations_directory (string): Path of the directory containing the annotations
+        - transform (pytorch.transform, optional): Transform function for the images of the dataset
+        - bucket_name (string): String value of the s3 bucket name
+        - target_size (int): Target size of the image we want to resize to
+        - max_annotations (int): Maximum value of annotations per image
+    """
+    def __init__(self, images_directory, annotations_directory, transform, bucket_name, target_size=300, max_annotations=100):
+        self.image_paths = images_directory
+        self.annotation_paths = annotations_directory
+        self.image_files = [f for f in os.listdir(images_directory) if f.endswith(('.jpg', '.png'))]
         self.transform = transform
         self.s3_bucket = boto3.client('s3')
         self.bucket_name = bucket_name
