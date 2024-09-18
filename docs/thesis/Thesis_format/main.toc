@@ -17,21 +17,21 @@
 \contentsline {subsection}{\numberline {3.1.1}Extended Feature Pyramid Network}{19}{subsection.3.1.1}%
 \contentsline {subsection}{\numberline {3.1.2}Masked-Attention Mask Transformer}{20}{subsection.3.1.2}%
 \contentsline {subsection}{\numberline {3.1.3}Extended Masked-Attention Mask Transformer}{22}{subsection.3.1.3}%
-\contentsline {chapter}{\numberline {4}Experiments}{26}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Datasets}{26}{section.4.1}%
-\contentsline {subsection}{\numberline {4.1.1}Microsoft Common Object in COntext (MS COCO)}{26}{subsection.4.1.1}%
-\contentsline {subsection}{\numberline {4.1.2}Unmanned Aerial Vehicle Small Object Detection}{27}{subsection.4.1.2}%
-\contentsline {subsection}{\numberline {4.1.3}VisDrone}{28}{subsection.4.1.3}%
-\contentsline {section}{\numberline {4.2}Data Pre-Processing}{29}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Evaluation Metrics}{30}{section.4.3}%
-\contentsline {section}{\numberline {4.4}Training}{32}{section.4.4}%
-\contentsline {subsection}{\numberline {4.4.1}Microsoft Common Object in COntext (MS COCO)}{32}{subsection.4.4.1}%
-\contentsline {subsection}{\numberline {4.4.2}Unmanned Aerial Vehicle Small Object Detection}{32}{subsection.4.4.2}%
-\contentsline {subsection}{\numberline {4.4.3}VisDrone}{32}{subsection.4.4.3}%
-\contentsline {section}{\numberline {4.5}Results}{32}{section.4.5}%
-\contentsline {subsection}{\numberline {4.5.1}Microsoft Common Object in COntext (MS COCO)}{32}{subsection.4.5.1}%
-\contentsline {subsection}{\numberline {4.5.2}Unmanned Aerial Vehicle Small Object Detection}{32}{subsection.4.5.2}%
-\contentsline {subsection}{\numberline {4.5.3}VisDrone}{32}{subsection.4.5.3}%
-\contentsline {chapter}{\numberline {5}Discussion}{33}{chapter.5}%
-\contentsline {chapter}{\numberline {6}Conclusion}{34}{chapter.6}%
-\contentsline {chapter}{\numberline {A}Appendix A}{35}{appendix.A}%
+\contentsline {chapter}{\numberline {4}Experiments}{27}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Datasets}{27}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Microsoft Common Object in COntext (MS COCO)}{27}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Unmanned Aerial Vehicle Small Object Detection}{28}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}VisDrone}{29}{subsection.4.1.3}%
+\contentsline {section}{\numberline {4.2}Data Pre-Processing}{30}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Evaluation Metrics}{31}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Training}{33}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}Microsoft Common Object in COntext (MS COCO)}{33}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.4.2}Unmanned Aerial Vehicle Small Object Detection}{33}{subsection.4.4.2}%
+\contentsline {subsection}{\numberline {4.4.3}VisDrone}{33}{subsection.4.4.3}%
+\contentsline {section}{\numberline {4.5}Results}{33}{section.4.5}%
+\contentsline {subsection}{\numberline {4.5.1}Microsoft Common Object in COntext (MS COCO)}{33}{subsection.4.5.1}%
+\contentsline {subsection}{\numberline {4.5.2}Unmanned Aerial Vehicle Small Object Detection}{33}{subsection.4.5.2}%
+\contentsline {subsection}{\numberline {4.5.3}VisDrone}{33}{subsection.4.5.3}%
+\contentsline {chapter}{\numberline {5}Discussion}{34}{chapter.5}%
+\contentsline {chapter}{\numberline {6}Conclusion}{35}{chapter.6}%
+\contentsline {chapter}{\numberline {A}Appendix A}{36}{appendix.A}%

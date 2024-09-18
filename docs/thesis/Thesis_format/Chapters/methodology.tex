@@ -225,7 +225,92 @@ Lastly after the attention mechanisms—both masked and cross-attention—the FF
 attention-focused features. This structure allows the FFN to introduce additional complexity and abstraction capabilities into the feature representations.
 
 
-\textbf{Add loss function here:}
+In order to maximize the capabilities of this model we had to create a custom loss function that takes into consideration all the data created by the model. 
+The loss function for the Extended Mask2Former model is designed to jointly optimize object detection and instance segmentation tasks by integrating multiple 
+loss components. The total loss \( L_{\text{total}} \) is computed as a weighted sum of the mask loss, bounding box regression loss, and classification loss:
+
+\[
+L_{\text{total}} = \lambda_{\text{mask}} \, L_{\text{mask}} + \lambda_{\text{bbox}} \, L_{\text{bbox}} + \lambda_{\text{class}} \, L_{\text{class}}
+\]
+
+where:
+
+\( \lambda_{\text{mask}} \), \( \lambda_{\text{bbox}} \), and \( \lambda_{\text{class}} \) are weighting coefficients for each loss component.
+
+\vspace{1.5cm}
+
+\begin{enumerate}
+    \item \textbf{Mask Loss}: (\( L_{\text{mask}} \))
+    The mask loss measures the discrepancy between the predicted masks \( \hat{M} \) and the ground truth masks \( M \). It uses the Binary Cross-Entropy Loss with logits:
+    \[
+    L_{\text{mask}} = \frac{1}{N} \sum_{i=1}^{N} \text{BCEWithLogits}\left( \hat{M}_i, \, M_i \right)
+    \]
+
+    - \( N \) is the number of matched instances. \\
+    - The matching between predicted and ground truth masks is performed using the Hungarian algorithm based on a combined cost of mask Intersection over Union (IoU) 
+    and classification cost.
+    \newpage
+
+    \item \textbf{Matching via Hungarian Algorithm}
+
+    To align predicted instances with ground truth instances, the Hungarian algorithm solves an assignment problem using a combined cost matrix \( \mathbf{C} \):
+    
+    \[
+    \mathbf{C} = \alpha \left( 1 - \text{IoU}\left( \hat{M}, \, M \right) \right) + \beta \left( -\log\left( \text{Softmax}\left( \hat{C}_{\text{mask}} \right) + \epsilon \right) \right)
+    \]
+    
+    - \( \alpha \) and \( \beta \) are weighting coefficients for the IoU and classification cost components, respectively. \\ 
+    - \( \text{IoU}\left( \hat{M}, \, M \right) \) computes the Intersection over Union between predicted and ground truth masks. \\
+    - The negative log-likelihood term penalizes incorrect class predictions. \\
+    - \( \epsilon \) is a small constant added to avoid taking the logarithm of zero. \\
+
+    \item \textbf{Bounding Box Regression Loss}: (\( L_{\text{bbox}} \))
+
+    This loss quantifies the error between the predicted bounding boxes \( \hat{B} \) and the regression targets \( B^* \) (encoded ground truth boxes relative to anchor boxes \( A \)) using the Smooth L1 Loss:
+    
+    \[
+    L_{\text{bbox}} = \frac{1}{K} \sum_{j=1}^{K} \text{SmoothL1}\left( \hat{B}_j, \, B^*_j \right)
+    \]
+    
+    - \( K \) is the number of anchor boxes. \\ 
+    - The regression targets \( B^* \) are obtained by encoding the matched ground truth boxes \( B \) with respect to the anchors \( A \):
+    
+      \[
+      B^* = \text{encode}\left( B, \, A \right)
+      \]
+    
+    - Anchors are matched to ground truth boxes using an IoU-based matching strategy.
+
+    \item \textbf{Classification Loss}: (\( L_{\text{class}} \))
+
+    The classification loss evaluates the discrepancy between the combined class predictions \( \hat{C} \) and the ground truth class labels \( C \). 
+    The predictions from both the bounding box branch \( \hat{C}_{\text{bbox}} \) and the mask branch \( \hat{C}_{\text{mask}} \) are combined by 
+    taking the element-wise maximum of their softmax probabilities:
+    
+    \[
+    \hat{C} = \max\left( \text{Softmax}\left( \hat{C}_{\text{bbox}} \right), \, \text{Softmax}\left( \hat{C}_{\text{mask}} \right) \right)
+    \]
+    
+    The classification loss is then computed using the Cross-Entropy Loss:
+    
+    \[
+    L_{\text{class}} = \frac{1}{N} \sum_{i=1}^{N} \text{CrossEntropy}\left( \hat{C}_i, \, C_i \right)
+    \]
+    
+    - \( N \) is the number of instances. \\
+    - \( C_i \) is the ground truth class label for instance \( i \).
+\end{enumerate}
+
+
+
+
+
+
+
+
+
+
+
 
 
 
