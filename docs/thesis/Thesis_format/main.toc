@@ -25,13 +25,10 @@
 \contentsline {section}{\numberline {4.2}Data Pre-Processing}{30}{section.4.2}%
 \contentsline {section}{\numberline {4.3}Evaluation Metrics}{31}{section.4.3}%
 \contentsline {section}{\numberline {4.4}Training}{33}{section.4.4}%
-\contentsline {subsection}{\numberline {4.4.1}Microsoft Common Object in COntext (MS COCO)}{33}{subsection.4.4.1}%
-\contentsline {subsection}{\numberline {4.4.2}Unmanned Aerial Vehicle Small Object Detection}{33}{subsection.4.4.2}%
-\contentsline {subsection}{\numberline {4.4.3}VisDrone}{33}{subsection.4.4.3}%
-\contentsline {section}{\numberline {4.5}Results}{33}{section.4.5}%
-\contentsline {subsection}{\numberline {4.5.1}Microsoft Common Object in COntext (MS COCO)}{33}{subsection.4.5.1}%
-\contentsline {subsection}{\numberline {4.5.2}Unmanned Aerial Vehicle Small Object Detection}{33}{subsection.4.5.2}%
-\contentsline {subsection}{\numberline {4.5.3}VisDrone}{33}{subsection.4.5.3}%
-\contentsline {chapter}{\numberline {5}Discussion}{34}{chapter.5}%
-\contentsline {chapter}{\numberline {6}Conclusion}{35}{chapter.6}%
-\contentsline {chapter}{\numberline {A}Appendix A}{36}{appendix.A}%
+\contentsline {section}{\numberline {4.5}Results}{34}{section.4.5}%
+\contentsline {subsection}{\numberline {4.5.1}Microsoft Common Object in COntext (MS COCO)}{34}{subsection.4.5.1}%
+\contentsline {subsection}{\numberline {4.5.2}Unmanned Aerial Vehicle Small Object Detection}{34}{subsection.4.5.2}%
+\contentsline {subsection}{\numberline {4.5.3}VisDrone}{34}{subsection.4.5.3}%
+\contentsline {chapter}{\numberline {5}Discussion}{35}{chapter.5}%
+\contentsline {chapter}{\numberline {6}Conclusion}{36}{chapter.6}%
+\contentsline {chapter}{\numberline {A}Appendix A}{37}{appendix.A}%

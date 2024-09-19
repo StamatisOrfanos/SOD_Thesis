@@ -200,22 +200,83 @@ scenarios where multiple object types are involved.
 \newpage
 \section{Training}
 
+To implement the Extended Masked-Attention Mask Transformer, we utilized Amazon Web Services (AWS) SageMaker for efficient training and experimentation. 
+Specifically, we employed the \textit{ml.p4d.24xlarge} instance type for our notebook environment, which is equipped with eight NVIDIA A100 GPUs and supports CUDA 12.1. 
+This powerful computational setup allowed us to run the training with a batch size of four images per batch, achieving an optimal balance between convergence 
+speed and model accuracy.
 
-\subsection{Microsoft Common Object in COntext (MS COCO)}
+The weights of the network were initialized using the default settings provided by PyTorch, ensuring standard initialization practices. All experiments were 
+conducted using this configuration to maintain consistency and reliability in our results. By leveraging the capabilities of AWS SageMaker and the high-performance 
+computing resources of the \textit{ml.p4d.24xlarge} instance, we were able to efficiently train the model and effectively utilize the limited data from small objects in images.
 
+To provide clarity on our training setup and ensure reproducibility, the table \ref{tab:training_parameters} summarizes the key training parameters used for the 
+Extended Masked-Attention Mask Transformer. These parameters were carefully selected based on extensive experimentation to achieve an optimal balance between 
+convergence speed and model accuracy. 
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|}
+    \hline
+    &                   \textbf{MS COCO}      & \textbf{UAV-SOD}     & \textbf{VisDrone}            \\ \hline
+    Number of Epochs   & 125                  & 75                   & 75                           \\ \hline
+    Optimizer          & AdamW                & AdamW                & AdamW                        \\ \hline
+    Learning Rate      & $1 \times 10^{-4}$   & $1 \times 10^{-3}$   & $1 \times 10^{-3}$           \\ \hline
+    Batch size         & 4                    &  4                   & 4                            \\ \hline
+    Image size         & $600\times600$       &  $600\times600$      & $600\times600$               \\ \hline
+    Number of Anchors  & $30000$              &  $722$               & $722$                        \\ \hline
+\end{tabular}
+\caption{Details of training parameters per dataset}
+\label{tab:training_parameters}
+\end{table}
 
-\subsection{Unmanned Aerial Vehicle Small Object Detection}
-
-
-\subsection{VisDrone}
-
+\newpage
 
 \section{Results}
 
+Following the comprehensive description of our training setup and parameters, we now present the results of our experiments with the Extended Masked-Attention 
+Mask Transformer. This section delves into the performance metrics achieved by the model, highlighting its effectiveness in both object detection and instance 
+segmentation tasks. We evaluate the model's ability to accurately detect and segment objects of various sizes within images, with a particular focus on its 
+performance on small objects, which pose significant challenges due to their limited visual information.
+
+
 \subsection{Microsoft Common Object in COntext (MS COCO)}
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters}   \\ \hline
+        EMAMT   & 125                  & 75                   & 75                                  \\ \hline
+    \end{tabular}
+    \caption{Results of training for COCO dataset}
+    \label{tab:coco_results}
+\end{table}
+
 
 
 \subsection{Unmanned Aerial Vehicle Small Object Detection}
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters}   \\ \hline
+        EMAMT   & 125                  & 75                   & 75                              \\ \hline
+    \end{tabular}
+    \caption{Results of training for UAV-SOD dataset}
+    \label{tab:uav_results}
+\end{table}
+
+
+
 
 
 \subsection{VisDrone}
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters}   \\ \hline
+        EMAMT   & 125                  & 75                   & 75                             \\ \hline
+    \end{tabular}
+    \caption{Results of training for VisDrone dataset}
+    \label{tab:vis_results}
+\end{table}
