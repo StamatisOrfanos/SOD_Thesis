@@ -240,7 +240,7 @@ where:
 \vspace{1.5cm}
 
 \begin{enumerate}
-    \item \textbf{Mask Loss}: (\( L_{\text{mask}} \))
+    \item \textbf{Mask Loss}: \\
     The mask loss measures the discrepancy between the predicted masks \( \hat{M} \) and the ground truth masks \( M \). It uses the Binary Cross-Entropy Loss with logits:
     \[
     L_{\text{mask}} = \frac{1}{N} \sum_{i=1}^{N} \text{BCEWithLogits}\left( \hat{M}_i, \, M_i \right)
@@ -251,7 +251,7 @@ where:
     and classification cost.
     \newpage
 
-    \item \textbf{Matching via Hungarian Algorithm}
+    \item \textbf{Matching via Hungarian Algorithm}: \\
 
     To align predicted instances with ground truth instances, the Hungarian algorithm solves an assignment problem using a combined cost matrix \( \mathbf{C} \):
     
@@ -264,7 +264,7 @@ where:
     - The negative log-likelihood term penalizes incorrect class predictions. \\
     - \( \epsilon \) is a small constant added to avoid taking the logarithm of zero. \\
 
-    \item \textbf{Bounding Box Regression Loss}: (\( L_{\text{bbox}} \))
+    \item \textbf{Bounding Box Regression Loss}:
 
     This loss quantifies the error between the predicted bounding boxes \( \hat{B} \) and the regression targets \( B^* \) (encoded ground truth boxes relative to anchor boxes \( A \)) using the Smooth L1 Loss:
     
@@ -281,7 +281,7 @@ where:
     
     - Anchors are matched to ground truth boxes using an IoU-based matching strategy.
 
-    \item \textbf{Classification Loss}: (\( L_{\text{class}} \))
+    \item \textbf{Classification Loss}:
 
     The classification loss evaluates the discrepancy between the combined class predictions \( \hat{C} \) and the ground truth class labels \( C \). 
     The predictions from both the bounding box branch \( \hat{C}_{\text{bbox}} \) and the mask branch \( \hat{C}_{\text{mask}} \) are combined by 
@@ -299,24 +299,19 @@ where:
     
     - \( N \) is the number of instances. \\
     - \( C_i \) is the ground truth class label for instance \( i \).
+
 \end{enumerate}
 
 
+This multi-task learning approach leverages the shared representations between tasks, leading to better generalization and performance compared to training each 
+task separately. It allows the model to learn more robust and comprehensive features from the data, as the different tasks provide complementary information that 
+enriches the learning process. By leveraging both mask predictions and bounding box regressions, the model maximizes the use of all available data from small objects. 
+Specifically, this combined approach addresses the challenges posed by small objects, which often provide limited information due to their size. The masks capture 
+fine-grained spatial details that might be overlooked in bounding box predictions, enhancing the accuracy of segmentation for small objects. Meanwhile, the bounding 
+boxes provide coarse localization that can guide the mask predictions, improving robustness in detecting small objects. This synergy allows the model to effectively 
+detect and segment small objects, enhancing both accuracy and robustness in scenarios where small object recognition is critical.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-\newpage
+\vspace{1.5cm}
 
 The table below, sorted by the number of parameters, provides a comparative look at various popular object detection models that we have presented in the 
 section above. This table highlights models ranging from YOLOv3, known for its balance of speed and accuracy, to more complex architectures like Mask R-CNN, 
