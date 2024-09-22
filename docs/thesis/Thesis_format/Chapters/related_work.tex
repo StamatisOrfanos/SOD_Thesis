@@ -87,12 +87,14 @@ extent of \(H \times W\) , where $H$ and $W$ are layer hyper-parameters that are
 into a convolution feature map. Each RoI is defined by a four-tuple \((r, c, h, w)\) that specifies its top-left corner \((r, c)\) and its height 
 and width \((h, w)\). Also one of the great inclusions of this model was the implementation of multi-task loss:
 
-\[L(p, u, t', v) = L_{cls}(p, u) + \lambda [u \geq 1] L_{loc}(t', v)z\]
+\begin{equation}
+    L(p, u, t', v) = L_{cls}(p, u) + \lambda [u \geq 1] L_{loc}(t', v)z   \tag{1}
+\end{equation}
 
 ,where the classification loss \(L_{cls}(p, u)\) is defined as the negative log likelihood of the true class \(u\), expressed as:
-\[
-L_{cls}(p, u) = -\log p_u
-\]
+\begin{equation}
+    L_{cls}(p, u) = -\log p_u \tag{2}
+\end{equation}
 
 The localization loss \(L_{loc}\) is defined over the predicted bounding box parameters \(t' = (t'_x, t'_y, t'_w, t'_h)\) and the ground truth bounding 
 box parameters \(v = (v_x, v_y, v_w, v_h)\) for class \(u\). The Iverson bracket \([u \geq 1]\) is used as an indicator function that evaluates to 1 
@@ -100,9 +102,9 @@ when \(u\) is 1 or more, and 0 otherwise. This function helps in applying the lo
 effectively ignoring the background.
 
 The overall loss \(L(p, u, t', v)\) is then a combination of classification and localization losses, modulated by a parameter \(\lambda\), representing the trade-off between these two tasks:
-\[
-L(p, u, t', v) = L_{cls}(p, u) + \lambda [u \geq 1] L_{loc}(t', v)
-\]
+\begin{equation}
+    L(p, u, t', v) = L_{cls}(p, u) + \lambda [u \geq 1] L_{loc}(t', v)   \tag{3}
+\end{equation}
 
 \newpage
 \subsubsection{Faster Region-based Convolution Neural Networks}
@@ -199,9 +201,9 @@ A bilinear interpolation is used to compute the exact values of the input featur
 the result.
 
 Furthermore once again this model utilizes a multi-task loss in order to take into consideration all the outputs of the model.
-\[
-L = L_{cls} + L_{box} + L_{mask} 
-\]
+\begin{equation}
+    L = L_{cls} + L_{box} + L_{mask} \tag{4}
+\end{equation}
  
 The mask branch has a $K \times m^2$-dimensional output for each RoI, which encodes K binary masks of resolution m × m, one for each of the K classes.
 To this a per-pixel sigmoid is applied, and define Lmask as the average binary cross-entropy loss. For an RoI associated with ground-truth class k, 

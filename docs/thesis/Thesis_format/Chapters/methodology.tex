@@ -74,7 +74,11 @@ from the 3rd layer of EFPN, and the reference is the feature map P2 from the 4th
 
 \newpage
 The output $P'_3$ can be defined as:
-\[P'_3 = E_t(P_2 \Vert E_c(P_3)_{\uparrow 2}) + E_c(P_3)_{\uparrow 2}\]
+
+\begin{equation}
+    P'_3 = E_t(P_2 \Vert E_c(P_3)_{\uparrow 2}) + E_c(P_3)_{\uparrow 2} \tag{5}
+\end{equation}
+
 
 ,where where $E_t()$ denotes texture extractor component, $E_c()$ denotes content extractor component, $\uparrow 2\times$ here denotes double up-scaling by 
 sub-pixel convolution and k denotes feature concatenation. The content extractor and texture extractor are both composed of residual blocks. In the main stream, 
@@ -119,7 +123,9 @@ There is the hypothesize that local features are enough to update query features
 For this a masked attention was proposed, a variant of cross attention that only attends within the foreground region of the predicted mask for each query. 
 Standard cross-attention computes:
 
-\[X_l = \text{softmax}(Q_l K_l^T) V_l + X_{l-1}\]
+\begin{equation}
+    X_l = \text{softmax}(Q_l K_l^T) V_l + X_{l-1} \tag{6}
+\end{equation}
 
 Here, $l$ is the layer index, $X_l \epsilon R^{N \times C}$ refers to N C-dimensional query features at the $l$th layer and 
 $Q_l = f_Q(X_l-1) \epsilon R^{N \times C} $. Here $X_0$ denotes input query features to the Transformer decoder. $K_l, V_l \epsilon R^{H_l W_l \times C}$ are the 
@@ -127,17 +133,23 @@ image features under transformation $f_K()$ and $f_{V}()$ respectively, and $H_l
 linear transformations
 
 
-Our masked attention modulates the attention matrix via
-\[X_l = \text{softmax}(\mathcal{M}_{l-1} + Q_l K_l^T) V_l + X_{l-1}\]
+Our masked attention modulates the attention matrix via:
+
+\begin{equation}
+    X_l = \text{softmax}(\mathcal{M}_{l-1} + Q_l K_l^T) V_l + X_{l-1} \tag{7}
+\end{equation}
+
 
 Moreover, the attention mask $M_{l-1}$ at feature location (x, y) is:
-\[
+
+\begin{equation}
     \mathcal{M}_{l-1}(x, y) = 
     \begin{cases} 
     0 & \text{if } \mathcal{M}_{l-1}(x, y) = 1 \\
     -\infty & \text{otherwise} 
-    \end{cases}    
-\]
+    \end{cases}  \tag{8}
+\end{equation}
+    
 
 Here, $M_{l-1} \epsilon \{0, 1\}^{N \times H_l W_l}$  is the binarized output, thresholded at 0.5 of the resized mask prediction of the previous $(l - 1)$-th 
 Transformer decoder layer. It is resized to the same resolution of $K_l$. $M_0$ is the binary mask prediction obtained from $X_0$, before feeding query features
@@ -229,9 +241,9 @@ In order to maximize the capabilities of this model we had to create a custom lo
 The loss function for the Extended Mask2Former model is designed to jointly optimize object detection and instance segmentation tasks by integrating multiple 
 loss components. The total loss \( L_{\text{total}} \) is computed as a weighted sum of the mask loss, bounding box regression loss, and classification loss:
 
-\[
-L_{\text{total}} = \lambda_{\text{mask}} \, L_{\text{mask}} + \lambda_{\text{bbox}} \, L_{\text{bbox}} + \lambda_{\text{class}} \, L_{\text{class}}
-\]
+\begin{equation}
+    L_{\text{total}} = \lambda_{\text{mask}} \, L_{\text{mask}} + \lambda_{\text{bbox}} \, L_{\text{bbox}} + \lambda_{\text{class}} \, L_{\text{class}} \tag{9}    
+\end{equation}
 
 where:
 
@@ -242,9 +254,9 @@ where:
 \begin{enumerate}
     \item \textbf{Mask Loss}: \\
     The mask loss measures the discrepancy between the predicted masks \( \hat{M} \) and the ground truth masks \( M \). It uses the Binary Cross-Entropy Loss with logits:
-    \[
-    L_{\text{mask}} = \frac{1}{N} \sum_{i=1}^{N} \text{BCEWithLogits}\left( \hat{M}_i, \, M_i \right)
-    \]
+    \begin{equation}
+        L_{\text{mask}} = \frac{1}{N} \sum_{i=1}^{N} \text{BCEWithLogits}\left( \hat{M}_i, \, M_i \right) \tag{10}
+    \end{equation}
 
     - \( N \) is the number of matched instances. \\
     - The matching between predicted and ground truth masks is performed using the Hungarian algorithm based on a combined cost of mask Intersection over Union (IoU) 
@@ -255,9 +267,9 @@ where:
 
     To align predicted instances with ground truth instances, the Hungarian algorithm solves an assignment problem using a combined cost matrix \( \mathbf{C} \):
     
-    \[
-    \mathbf{C} = \alpha \left( 1 - \text{IoU}\left( \hat{M}, \, M \right) \right) + \beta \left( -\log\left( \text{Softmax}\left( \hat{C}_{\text{mask}} \right) + \epsilon \right) \right)
-    \]
+    \begin{equation}
+        \mathbf{C} = \alpha \left( 1 - \text{IoU}\left( \hat{M}, \, M \right) \right) + \beta \left( -\log\left( \text{Softmax}\left( \hat{C}_{\text{mask}} \right) + \epsilon \right) \right) \tag{11}
+    \end{equation}
     
     - \( \alpha \) and \( \beta \) are weighting coefficients for the IoU and classification cost components, respectively. \\ 
     - \( \text{IoU}\left( \hat{M}, \, M \right) \) computes the Intersection over Union between predicted and ground truth masks. \\
@@ -268,16 +280,16 @@ where:
 
     This loss quantifies the error between the predicted bounding boxes \( \hat{B} \) and the regression targets \( B^* \) (encoded ground truth boxes relative to anchor boxes \( A \)) using the Smooth L1 Loss:
     
-    \[
-    L_{\text{bbox}} = \frac{1}{K} \sum_{j=1}^{K} \text{SmoothL1}\left( \hat{B}_j, \, B^*_j \right)
-    \]
+    \begin{equation}
+        L_{\text{bbox}} = \frac{1}{K} \sum_{j=1}^{K} \text{SmoothL1}\left( \hat{B}_j, \, B^*_j \right) \tag{12}
+    \end{equation}
     
     - \( K \) is the number of anchor boxes. \\ 
     - The regression targets \( B^* \) are obtained by encoding the matched ground truth boxes \( B \) with respect to the anchors \( A \):
     
-      \[
-      B^* = \text{encode}\left( B, \, A \right)
-      \]
+      \begin{equation}
+        B^* = \text{encode}\left( B, \, A \right) \tag{13}
+      \end{equation}
     
     - Anchors are matched to ground truth boxes using an IoU-based matching strategy.
 
@@ -287,15 +299,16 @@ where:
     The predictions from both the bounding box branch \( \hat{C}_{\text{bbox}} \) and the mask branch \( \hat{C}_{\text{mask}} \) are combined by 
     taking the element-wise maximum of their softmax probabilities:
     
-    \[
-    \hat{C} = \max\left( \text{Softmax}\left( \hat{C}_{\text{bbox}} \right), \, \text{Softmax}\left( \hat{C}_{\text{mask}} \right) \right)
-    \]
+    \begin{equation}
+        \hat{C} = \max\left( \text{Softmax}\left( \hat{C}_{\text{bbox}} \right), \, \text{Softmax}\left( \hat{C}_{\text{mask}} \right) \right) \tag{14}
+    \end{equation}
+
     
     The classification loss is then computed using the Cross-Entropy Loss:
     
-    \[
-    L_{\text{class}} = \frac{1}{N} \sum_{i=1}^{N} \text{CrossEntropy}\left( \hat{C}_i, \, C_i \right)
-    \]
+    \begin{equation}
+        L_{\text{class}} = \frac{1}{N} \sum_{i=1}^{N} \text{CrossEntropy}\left( \hat{C}_i, \, C_i \right) \tag{15}
+    \end{equation}
     
     - \( N \) is the number of instances. \\
     - \( C_i \) is the ground truth class label for instance \( i \).
