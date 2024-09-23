@@ -5,8 +5,13 @@
 \usepackage{booktabs}
 \usepackage{geometry}
 \usepackage{tabularx}
+\usepackage{cite}
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
-\usepackage[numbers]{natbib}
+\usepackage[backend=biber,style=numeric]{biblatex}  % Use biblatex with biber as backend
+
+% Bibliography
+\addbibresource{Chapters/bibliography.bib}
+
 
 % Adjust the header and footer size
 \geometry{
@@ -90,13 +95,10 @@
 % Conclusion
 \include{Chapters/conclusion}
 
-% Bibliography
-\bibliographystyle{unsrt}
-\bibliography{Chapters/bibliography}
-
-
 % Appendix
 \appendix
 \include{Chapters/appendix_a}
+
+\printbibliography
 
 \end{document}
