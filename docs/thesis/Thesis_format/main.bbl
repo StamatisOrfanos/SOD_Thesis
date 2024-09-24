@@ -19,6 +19,338 @@
 
 \refsection{0}
   \datalist[entry]{nty/global//global/global}
+    \entry{sr}{inproceedings}{}
+      \name{author}{6}{}{%
+        {{hash=e7f84c0038abd44671e98f85fdff581f}{%
+           family={Bai},
+           familyi={B\bibinitperiod},
+           given={Yang},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=d3f5bd6de905ccea7ce708cc55510466}{%
+           family={Zou},
+           familyi={Z\bibinitperiod},
+           given={Tongyuan},
+           giveni={T\bibinitperiod}}}%
+        {{hash=3f337adf5ef4cce0e9a9dfd05ac77704}{%
+           family={Ye},
+           familyi={Y\bibinitperiod},
+           given={Shujia},
+           giveni={S\bibinitperiod}}}%
+        {{hash=0741b699e819e24e3af42501dfeec4b9}{%
+           family={Qin},
+           familyi={Q\bibinitperiod},
+           given={Zhenqiang},
+           giveni={Z\bibinitperiod}}}%
+        {{hash=2380a8f38a9e1b5a1e8b54fcc46d8f27}{%
+           family={Gao},
+           familyi={G\bibinitperiod},
+           given={Guoming},
+           giveni={G\bibinitperiod}}}%
+        {{hash=130e3881c8e24bdd5efbd6a9f4f84784}{%
+           family={Gu},
+           familyi={G\bibinitperiod},
+           given={Yanfeng},
+           giveni={Y\bibinitperiod}}}%
+      }
+      \strng{namehash}{4d4196616f013d44defe34a8c0f562d7}
+      \strng{fullhash}{f2054f1f2e9194711401c47113463ff1}
+      \strng{bibnamehash}{4d4196616f013d44defe34a8c0f562d7}
+      \strng{authorbibnamehash}{4d4196616f013d44defe34a8c0f562d7}
+      \strng{authornamehash}{4d4196616f013d44defe34a8c0f562d7}
+      \strng{authorfullhash}{f2054f1f2e9194711401c47113463ff1}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{IGARSS 2020 - 2020 IEEE International Geoscience and Remote Sensing Symposium}
+      \field{title}{Weak Target Detection in High-Resolution Remote Sensing Images by Combining Super-Resolution and Deformable FPN}
+      \field{year}{2020}
+      \field{pages}{292\bibrangedash 295}
+      \range{pages}{4}
+      \verb{doi}
+      \verb 10.1109/IGARSS39084.2020.9323260
+      \endverb
+      \keyw{Feature extraction;Convolution;Object detection;Remote sensing;Image resolution;Superresolution;Strain;Weak target detection;super-resolution;deformable convolution}
+    \endentry
+    \entry{small1}{article}{}
+      \name{author}{3}{}{%
+        {{hash=c3b5a8797e3732ca29e9f16450f51035}{%
+           family={Bosquet},
+           familyi={B\bibinitperiod},
+           given={B.},
+           giveni={B\bibinitperiod}}}%
+        {{hash=b42e0cef3cd312bbecb9a7a4a21aebbf}{%
+           family={Mucientes},
+           familyi={M\bibinitperiod},
+           given={M.},
+           giveni={M\bibinitperiod}}}%
+        {{hash=717563eec1ee9d7d4e71e7749e511a12}{%
+           family={Brea},
+           familyi={B\bibinitperiod},
+           given={V.\bibnamedelimi M.},
+           giveni={V\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+      }
+      \strng{namehash}{da38dae484054dafccd5fc1682071085}
+      \strng{fullhash}{da38dae484054dafccd5fc1682071085}
+      \strng{bibnamehash}{da38dae484054dafccd5fc1682071085}
+      \strng{authorbibnamehash}{da38dae484054dafccd5fc1682071085}
+      \strng{authornamehash}{da38dae484054dafccd5fc1682071085}
+      \strng{authorfullhash}{da38dae484054dafccd5fc1682071085}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Engineering Applications of Artificial Intelligence}
+      \field{title}{{STDnet: exploiting high resolution feature maps for small object detection}}
+      \field{volume}{91}
+      \field{year}{2020}
+      \field{pages}{103615}
+      \range{pages}{1}
+    \endentry
+    \entry{e2evisiontr}{misc}{}
+      \name{author}{6}{}{%
+        {{hash=0cb223da593b5653feac6f6eabcbe82d}{%
+           family={Carion},
+           familyi={C\bibinitperiod},
+           given={Nicolas},
+           giveni={N\bibinitperiod}}}%
+        {{hash=e5dfae4582081d649e3a0d5342050016}{%
+           family={Massa},
+           familyi={M\bibinitperiod},
+           given={Francisco},
+           giveni={F\bibinitperiod}}}%
+        {{hash=a345e20a460089c920bb74098ed450db}{%
+           family={Synnaeve},
+           familyi={S\bibinitperiod},
+           given={Gabriel},
+           giveni={G\bibinitperiod}}}%
+        {{hash=26e026be6d5366fce878100ba03d68c1}{%
+           family={Usunier},
+           familyi={U\bibinitperiod},
+           given={Nicolas},
+           giveni={N\bibinitperiod}}}%
+        {{hash=28c5859f568975f174c8668976ed369d}{%
+           family={Kirillov},
+           familyi={K\bibinitperiod},
+           given={Alexander},
+           giveni={A\bibinitperiod}}}%
+        {{hash=23bcbde34947ed4fd04cc55ff956c83e}{%
+           family={Zagoruyko},
+           familyi={Z\bibinitperiod},
+           given={Sergey},
+           giveni={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{4963c2a11ef1b07108a62832acac80e9}
+      \strng{fullhash}{53851df57e601a457251e3876b7dab6a}
+      \strng{bibnamehash}{4963c2a11ef1b07108a62832acac80e9}
+      \strng{authorbibnamehash}{4963c2a11ef1b07108a62832acac80e9}
+      \strng{authornamehash}{4963c2a11ef1b07108a62832acac80e9}
+      \strng{authorfullhash}{53851df57e601a457251e3876b7dab6a}
+      \field{sortinit}{C}
+      \field{sortinithash}{4d103a86280481745c9c897c925753c0}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.CV}
+      \field{eprinttype}{arXiv}
+      \field{title}{End-to-End Object Detection with Transformers}
+      \field{year}{2020}
+      \verb{eprint}
+      \verb 2005.12872
+      \endverb
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/2005.12872
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/2005.12872
+      \endverb
+    \endentry
+    \entry{mamt}{misc}{}
+      \name{author}{3}{}{%
+        {{hash=765bc94d57cffc4ed141f33df561ba39}{%
+           family={Cheng},
+           familyi={C\bibinitperiod},
+           given={Bowen},
+           giveni={B\bibinitperiod}}}%
+        {{hash=0c14478283bed70b2c487f3fba643a7b}{%
+           family={Schwing},
+           familyi={S\bibinitperiod},
+           given={Alexander\bibnamedelima G.},
+           giveni={A\bibinitperiod\bibinitdelim G\bibinitperiod}}}%
+        {{hash=28c5859f568975f174c8668976ed369d}{%
+           family={Kirillov},
+           familyi={K\bibinitperiod},
+           given={Alexander},
+           giveni={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{3c44e9fc833624fcc2b78730dbf739ef}
+      \strng{fullhash}{3c44e9fc833624fcc2b78730dbf739ef}
+      \strng{bibnamehash}{3c44e9fc833624fcc2b78730dbf739ef}
+      \strng{authorbibnamehash}{3c44e9fc833624fcc2b78730dbf739ef}
+      \strng{authornamehash}{3c44e9fc833624fcc2b78730dbf739ef}
+      \strng{authorfullhash}{3c44e9fc833624fcc2b78730dbf739ef}
+      \field{sortinit}{C}
+      \field{sortinithash}{4d103a86280481745c9c897c925753c0}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.CV}
+      \field{eprinttype}{arXiv}
+      \field{title}{Per-Pixel Classification is Not All You Need for Semantic Segmentation}
+      \field{year}{2021}
+      \verb{eprint}
+      \verb 2107.06278
+      \endverb
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/2107.06278
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/2107.06278
+      \endverb
+    \endentry
+    \entry{mamt2}{misc}{}
+      \name{author}{5}{}{%
+        {{hash=765bc94d57cffc4ed141f33df561ba39}{%
+           family={Cheng},
+           familyi={C\bibinitperiod},
+           given={Bowen},
+           giveni={B\bibinitperiod}}}%
+        {{hash=4ada721a93e1592ecdc3df0fc9876469}{%
+           family={Misra},
+           familyi={M\bibinitperiod},
+           given={Ishan},
+           giveni={I\bibinitperiod}}}%
+        {{hash=0c14478283bed70b2c487f3fba643a7b}{%
+           family={Schwing},
+           familyi={S\bibinitperiod},
+           given={Alexander\bibnamedelima G.},
+           giveni={A\bibinitperiod\bibinitdelim G\bibinitperiod}}}%
+        {{hash=28c5859f568975f174c8668976ed369d}{%
+           family={Kirillov},
+           familyi={K\bibinitperiod},
+           given={Alexander},
+           giveni={A\bibinitperiod}}}%
+        {{hash=b04a9f34a16019be789d119ecef9ae8b}{%
+           family={Girdhar},
+           familyi={G\bibinitperiod},
+           given={Rohit},
+           giveni={R\bibinitperiod}}}%
+      }
+      \strng{namehash}{7d2b3400d921389f56414d8709fbaad8}
+      \strng{fullhash}{afb33e24edaab3447dd0952ca74d2a30}
+      \strng{bibnamehash}{7d2b3400d921389f56414d8709fbaad8}
+      \strng{authorbibnamehash}{7d2b3400d921389f56414d8709fbaad8}
+      \strng{authornamehash}{7d2b3400d921389f56414d8709fbaad8}
+      \strng{authorfullhash}{afb33e24edaab3447dd0952ca74d2a30}
+      \field{sortinit}{C}
+      \field{sortinithash}{4d103a86280481745c9c897c925753c0}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.CV}
+      \field{eprinttype}{arXiv}
+      \field{title}{Masked-attention Mask Transformer for Universal Image Segmentation}
+      \field{year}{2022}
+      \verb{eprint}
+      \verb 2112.01527
+      \endverb
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/2112.01527
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/2112.01527
+      \endverb
+    \endentry
+    \entry{COCOdataset}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=57fd3f55fc8784f1f8f3416278ecf8c7}{%
+           family={Consortium},
+           familyi={C\bibinitperiod},
+           given={COCO},
+           giveni={C\bibinitperiod}}}%
+      }
+      \strng{namehash}{57fd3f55fc8784f1f8f3416278ecf8c7}
+      \strng{fullhash}{57fd3f55fc8784f1f8f3416278ecf8c7}
+      \strng{bibnamehash}{57fd3f55fc8784f1f8f3416278ecf8c7}
+      \strng{authorbibnamehash}{57fd3f55fc8784f1f8f3416278ecf8c7}
+      \strng{authornamehash}{57fd3f55fc8784f1f8f3416278ecf8c7}
+      \strng{authorfullhash}{57fd3f55fc8784f1f8f3416278ecf8c7}
+      \field{extraname}{1}
+      \field{sortinit}{C}
+      \field{sortinithash}{4d103a86280481745c9c897c925753c0}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://cocodataset.org/#download}}
+      \field{note}{Accessed: 2024-09-22}
+      \field{title}{COCO Dataset}
+    \endentry
+    \entry{VisDroneDataset}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=4a351a3909c673c9b4f8557652e05b2d}{%
+           family={Consortium},
+           familyi={C\bibinitperiod},
+           given={VisDrone},
+           giveni={V\bibinitperiod}}}%
+      }
+      \strng{namehash}{4a351a3909c673c9b4f8557652e05b2d}
+      \strng{fullhash}{4a351a3909c673c9b4f8557652e05b2d}
+      \strng{bibnamehash}{4a351a3909c673c9b4f8557652e05b2d}
+      \strng{authorbibnamehash}{4a351a3909c673c9b4f8557652e05b2d}
+      \strng{authornamehash}{4a351a3909c673c9b4f8557652e05b2d}
+      \strng{authorfullhash}{4a351a3909c673c9b4f8557652e05b2d}
+      \field{extraname}{2}
+      \field{sortinit}{C}
+      \field{sortinithash}{4d103a86280481745c9c897c925753c0}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://github.com/VisDrone/VisDrone-Dataset}}
+      \field{note}{Accessed: 2024-09-22}
+      \field{title}{VisDrone Dataset}
+    \endentry
+    \entry{efpn}{misc}{}
+      \name{author}{4}{}{%
+        {{hash=1375001ef19f9d9801b7862c0685f902}{%
+           family={Deng},
+           familyi={D\bibinitperiod},
+           given={Chunfang},
+           giveni={C\bibinitperiod}}}%
+        {{hash=d3055ac497464c0a25aab2eb3d7ca6fa}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Mengmeng},
+           giveni={M\bibinitperiod}}}%
+        {{hash=883bc21bc18b1ae1bf85c3afcd6e584a}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={Liang},
+           giveni={L\bibinitperiod}}}%
+        {{hash=bc6c6f66f139beef784a50d9f1485019}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={Yong},
+           giveni={Y\bibinitperiod}}}%
+      }
+      \strng{namehash}{4e783409608f8a5845ded310382fc79c}
+      \strng{fullhash}{27a69c3ccde19b748f41e000083023e7}
+      \strng{bibnamehash}{4e783409608f8a5845ded310382fc79c}
+      \strng{authorbibnamehash}{4e783409608f8a5845ded310382fc79c}
+      \strng{authornamehash}{4e783409608f8a5845ded310382fc79c}
+      \strng{authorfullhash}{27a69c3ccde19b748f41e000083023e7}
+      \field{sortinit}{D}
+      \field{sortinithash}{6f385f66841fb5e82009dc833c761848}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.CV}
+      \field{eprinttype}{arXiv}
+      \field{title}{Extended Feature Pyramid Network for Small Object Detection}
+      \field{year}{2020}
+      \verb{eprint}
+      \verb 2003.07021
+      \endverb
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/2003.07021
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/2003.07021
+      \endverb
+    \endentry
     \entry{visiontr}{misc}{}
       \name{author}{12}{}{%
         {{hash=72308762399d6ab62bbd9391c64c7bfd}{%
@@ -104,6 +436,73 @@
       \endverb
       \verb{url}
       \verb https://arxiv.org/abs/2010.11929
+      \endverb
+    \endentry
+    \entry{instasqueries}{misc}{}
+      \name{author}{8}{}{%
+        {{hash=1bfd086e5d8b197043e8abe881934c60}{%
+           family={Fang},
+           familyi={F\bibinitperiod},
+           given={Yuxin},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=217b1fffe673cd1dd2bf1c134d96e52d}{%
+           family={Yang},
+           familyi={Y\bibinitperiod},
+           given={Shusheng},
+           giveni={S\bibinitperiod}}}%
+        {{hash=1bd616b774bd66d7d77e025ac08c962d}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Xinggang},
+           giveni={X\bibinitperiod}}}%
+        {{hash=b0a63a9f832f00cc0a29c361a64c672e}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Yu},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=60a57881ddf3e55a752ce8d767f9f46a}{%
+           family={Fang},
+           familyi={F\bibinitperiod},
+           given={Chen},
+           giveni={C\bibinitperiod}}}%
+        {{hash=a0e29acfeb76985fc3a8e6627409227a}{%
+           family={Shan},
+           familyi={S\bibinitperiod},
+           given={Ying},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=2a325920e39be526f4290ba647c95e5b}{%
+           family={Feng},
+           familyi={F\bibinitperiod},
+           given={Bin},
+           giveni={B\bibinitperiod}}}%
+        {{hash=d2354226a305a694e082d0c47c299a00}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={Wenyu},
+           giveni={W\bibinitperiod}}}%
+      }
+      \strng{namehash}{2bf57b4d7506547fd2c51fe516390b35}
+      \strng{fullhash}{579ea900f49da39122a4bf4f4b9337cf}
+      \strng{bibnamehash}{2bf57b4d7506547fd2c51fe516390b35}
+      \strng{authorbibnamehash}{2bf57b4d7506547fd2c51fe516390b35}
+      \strng{authornamehash}{2bf57b4d7506547fd2c51fe516390b35}
+      \strng{authorfullhash}{579ea900f49da39122a4bf4f4b9337cf}
+      \field{sortinit}{F}
+      \field{sortinithash}{2638baaa20439f1b5a8f80c6c08a13b4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.CV}
+      \field{eprinttype}{arXiv}
+      \field{title}{Instances as Queries}
+      \field{year}{2021}
+      \verb{eprint}
+      \verb 2105.01928
+      \endverb
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/2105.01928
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/2105.01928
       \endverb
     \endentry
     \entry{frcnn}{misc}{}
@@ -230,6 +629,53 @@
       \endverb
       \verb{url}
       \verb https://arxiv.org/abs/1703.06870
+      \endverb
+    \endentry
+    \entry{FaPN}{misc}{}
+      \name{author}{4}{}{%
+        {{hash=e6e3c502c9b92c65a7e55f8f67124bf1}{%
+           family={Huang},
+           familyi={H\bibinitperiod},
+           given={Shihua},
+           giveni={S\bibinitperiod}}}%
+        {{hash=a78b45566b38587a803b25e071a35585}{%
+           family={Lu},
+           familyi={L\bibinitperiod},
+           given={Zhichao},
+           giveni={Z\bibinitperiod}}}%
+        {{hash=d996245cdf7e3ee194ac555abf114d79}{%
+           family={Cheng},
+           familyi={C\bibinitperiod},
+           given={Ran},
+           giveni={R\bibinitperiod}}}%
+        {{hash=1601c4503ced09329cbdff823397ecd1}{%
+           family={He},
+           familyi={H\bibinitperiod},
+           given={Cheng},
+           giveni={C\bibinitperiod}}}%
+      }
+      \strng{namehash}{3be4520ecbbc94134710475ace73ee80}
+      \strng{fullhash}{1ba3a62e336597613d3f84da5fd7af23}
+      \strng{bibnamehash}{3be4520ecbbc94134710475ace73ee80}
+      \strng{authorbibnamehash}{3be4520ecbbc94134710475ace73ee80}
+      \strng{authornamehash}{3be4520ecbbc94134710475ace73ee80}
+      \strng{authorfullhash}{1ba3a62e336597613d3f84da5fd7af23}
+      \field{sortinit}{H}
+      \field{sortinithash}{23a3aa7c24e56cfa16945d55545109b5}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.CV}
+      \field{eprinttype}{arXiv}
+      \field{title}{FaPN: Feature-aligned Pyramid Network for Dense Image Prediction}
+      \field{year}{2021}
+      \verb{eprint}
+      \verb 2108.07058
+      \endverb
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/2108.07058
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/2108.07058
       \endverb
     \endentry
     \entry{fpn}{misc}{}
@@ -434,6 +880,28 @@
       \endverb
       \keyw{Measurement;Object detection;Detectors;Interpolation;Tools;Benchmark testing;Standards;object-detection metrics;average precision;object-detection challenges;bounding boxes}
     \endentry
+    \entry{UAVSmallObjectKaggle}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=39ea2eb6b4bab1c6fe43483a09590ccc}{%
+           family={Rath},
+           familyi={R\bibinitperiod},
+           given={Sovit},
+           giveni={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{39ea2eb6b4bab1c6fe43483a09590ccc}
+      \strng{fullhash}{39ea2eb6b4bab1c6fe43483a09590ccc}
+      \strng{bibnamehash}{39ea2eb6b4bab1c6fe43483a09590ccc}
+      \strng{authorbibnamehash}{39ea2eb6b4bab1c6fe43483a09590ccc}
+      \strng{authornamehash}{39ea2eb6b4bab1c6fe43483a09590ccc}
+      \strng{authorfullhash}{39ea2eb6b4bab1c6fe43483a09590ccc}
+      \field{sortinit}{R}
+      \field{sortinithash}{5e1c39a9d46ffb6bebd8f801023a9486}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://www.kaggle.com/datasets/sovitrath/uav-small-object-detection-dataset}}
+      \field{note}{Accessed: 2024-09-22}
+      \field{title}{UAV Small Object Detection Dataset}
+    \endentry
     \entry{yolo}{misc}{}
       \name{author}{4}{}{%
         {{hash=99bced2e56a5253f3fe98a5f04e6d9b2}{%
@@ -481,6 +949,47 @@
       \verb https://arxiv.org/abs/1506.02640
       \endverb
     \endentry
+    \entry{small2}{inproceedings}{}
+      \name{author}{4}{}{%
+        {{hash=501eafc23d19c914309ed7a5d6c07c8b}{%
+           family={Ren},
+           familyi={R\bibinitperiod},
+           given={S.},
+           giveni={S\bibinitperiod}}}%
+        {{hash=65862d45e231b0e30a375caf05dcbd78}{%
+           family={He},
+           familyi={H\bibinitperiod},
+           given={K.},
+           giveni={K\bibinitperiod}}}%
+        {{hash=54beefd8a2a6dc8ea32c277fc3036953}{%
+           family={Girshick},
+           familyi={G\bibinitperiod},
+           given={R.},
+           giveni={R\bibinitperiod}}}%
+        {{hash=2d21a4c5b1b7b1da5165b2f8f62e700c}{%
+           family={Sun},
+           familyi={S\bibinitperiod},
+           given={J.},
+           giveni={J\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Montreal, Quebec, Canada}%
+      }
+      \strng{namehash}{f1f28b852dfc493e558722b4c464d54f}
+      \strng{fullhash}{ec21238f09659604896c6cb5fc9d9dd9}
+      \strng{bibnamehash}{f1f28b852dfc493e558722b4c464d54f}
+      \strng{authorbibnamehash}{f1f28b852dfc493e558722b4c464d54f}
+      \strng{authornamehash}{f1f28b852dfc493e558722b4c464d54f}
+      \strng{authorfullhash}{ec21238f09659604896c6cb5fc9d9dd9}
+      \field{extraname}{1}
+      \field{sortinit}{R}
+      \field{sortinithash}{5e1c39a9d46ffb6bebd8f801023a9486}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Advances in Neural Information Processing Systems (NeurIPS)}
+      \field{title}{{Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks}}
+      \field{year}{2015}
+    \endentry
     \entry{frrcnn}{misc}{}
       \name{author}{4}{}{%
         {{hash=bb295293acacd54387339079ebbe4ead}{%
@@ -510,6 +1019,7 @@
       \strng{authorbibnamehash}{f086ca4da3e532e8a41cb758ea461825}
       \strng{authornamehash}{f086ca4da3e532e8a41cb758ea461825}
       \strng{authorfullhash}{008a132af3e2d4ff15eb01a8fb4b005c}
+      \field{extraname}{2}
       \field{sortinit}{R}
       \field{sortinithash}{5e1c39a9d46ffb6bebd8f801023a9486}
       \field{labelnamesource}{author}
@@ -526,6 +1036,90 @@
       \endverb
       \verb{url}
       \verb https://arxiv.org/abs/1506.01497
+      \endverb
+    \endentry
+    \entry{segmenter}{misc}{}
+      \name{author}{4}{}{%
+        {{hash=c059d19127cf2ed3c99310f035fc468d}{%
+           family={Strudel},
+           familyi={S\bibinitperiod},
+           given={Robin},
+           giveni={R\bibinitperiod}}}%
+        {{hash=b018b15faf9c9d40070a3d006cb0e631}{%
+           family={Garcia},
+           familyi={G\bibinitperiod},
+           given={Ricardo},
+           giveni={R\bibinitperiod}}}%
+        {{hash=91122039bd34bd0a796ccae30967fd3c}{%
+           family={Laptev},
+           familyi={L\bibinitperiod},
+           given={Ivan},
+           giveni={I\bibinitperiod}}}%
+        {{hash=58e4a9845eac42a4b0e5205cf0970fc0}{%
+           family={Schmid},
+           familyi={S\bibinitperiod},
+           given={Cordelia},
+           giveni={C\bibinitperiod}}}%
+      }
+      \strng{namehash}{ec94c106bbfcd08cfcb883c823c56a77}
+      \strng{fullhash}{dfcd4c7f97e0d25b57f44c2970eaa259}
+      \strng{bibnamehash}{ec94c106bbfcd08cfcb883c823c56a77}
+      \strng{authorbibnamehash}{ec94c106bbfcd08cfcb883c823c56a77}
+      \strng{authornamehash}{ec94c106bbfcd08cfcb883c823c56a77}
+      \strng{authorfullhash}{dfcd4c7f97e0d25b57f44c2970eaa259}
+      \field{sortinit}{S}
+      \field{sortinithash}{b164b07b29984b41daf1e85279fbc5ab}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.CV}
+      \field{eprinttype}{arXiv}
+      \field{title}{Segmenter: Transformer for Semantic Segmentation}
+      \field{year}{2021}
+      \verb{eprint}
+      \verb 2105.05633
+      \endverb
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/2105.05633
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/2105.05633
+      \endverb
+    \endentry
+    \entry{efficient}{misc}{}
+      \name{author}{2}{}{%
+        {{hash=1e7d6abb8225099acc71f672b9ec336e}{%
+           family={Tan},
+           familyi={T\bibinitperiod},
+           given={Mingxing},
+           giveni={M\bibinitperiod}}}%
+        {{hash=c636f146591d51579a8119b777394878}{%
+           family={Le},
+           familyi={L\bibinitperiod},
+           given={Quoc\bibnamedelima V.},
+           giveni={Q\bibinitperiod\bibinitdelim V\bibinitperiod}}}%
+      }
+      \strng{namehash}{d029e8131f7a0bef056d7edc726f1529}
+      \strng{fullhash}{d029e8131f7a0bef056d7edc726f1529}
+      \strng{bibnamehash}{d029e8131f7a0bef056d7edc726f1529}
+      \strng{authorbibnamehash}{d029e8131f7a0bef056d7edc726f1529}
+      \strng{authornamehash}{d029e8131f7a0bef056d7edc726f1529}
+      \strng{authorfullhash}{d029e8131f7a0bef056d7edc726f1529}
+      \field{sortinit}{T}
+      \field{sortinithash}{9af77f0292593c26bde9a56e688eaee9}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.LG}
+      \field{eprinttype}{arXiv}
+      \field{title}{EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks}
+      \field{year}{2020}
+      \verb{eprint}
+      \verb 1905.11946
+      \endverb
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/1905.11946
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/1905.11946
       \endverb
     \endentry
   \enddatalist

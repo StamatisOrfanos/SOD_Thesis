@@ -12,14 +12,14 @@ robust multi-stage model specifically made to achieve the best possible results 
 
 \section{Architecture}
 
-Choosing a multi-stage model for small object detection does not necessarily imply that the model will be heavy in terms of trainable parameters or challenging 
+Choosing a multi-stage model for small object detection does not necessarily imply that the model will be demanding in terms of trainable parameters or challenging 
 to train. Our approach strategically combines the two types of models in order to harness their individual strengths while maintaining manageable complexity 
 and training efficiency. This integration ensures that our multi-stage detector not only achieves an elevated accuracy but also remains practical in terms of 
 computational resources and training time, making it a viable solution for real-world applications where both performance and efficiency are critical.
 
 In this section we are going to describe and explain the model we developed in detail with the aim of successfully tackling the Small Object Detection challenge. 
 The model we created is named Extended Masked-Attention Mask Transformer, a name based on the models we decided to integrate being the Extended Feature Pyramid 
-Network[] and the Masked-Attention Mask Transformer (MAMT)[].
+Network \cite{efpn} and the Masked-Attention Mask Transformer (MAMT) \cite{mamt2}.
 
 A very interesting finding in the EFPN article is that over the past years, rapid development of deep learning has boosted the popularity of 
 CNN-based detectors and the improved overall accuracy and efficiency. Unfortunately they still perform poorly when detecting small objects with a few pixels. 
@@ -35,7 +35,7 @@ medium-sized objects and some large-sized objects.
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.55]{Figures/efpn-sod-mapping.jpg}
-    \caption{Small Object Detection Mapping}
+    \caption{Small Object Detection Mapping \cite{efpn}}
     \label{fig:efpn-sod-mapping}
 \end{figure}
 
@@ -43,7 +43,7 @@ medium-sized objects and some large-sized objects.
 \newpage
 \subsection{Extended Feature Pyramid Network}
 
-The implementation of the Extended Feature Pyramid follows closely an FPN-like framework embedded with a feature Super Resolution (SR)[] module. 
+The implementation of the Extended Feature Pyramid follows closely an FPN-like framework embedded with a feature Super Resolution (SR) \cite{sr} module. 
 This pipeline directly generates high resolution features from low-resolution images to support small object detection, while stays in low computational 
 cost. The top four pyramid layers are constructed by top-down pathways for medium and large object detection. 
 
@@ -57,7 +57,7 @@ with a tailor-made high-resolution CNN feature map $C'2$, producing the final ex
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.15]{Figures/efpn.jpg}
-    \caption{Extended Feature Pyramid Network}
+    \caption{Extended Feature Pyramid Network \cite{efpn}}
     \label{fig:efpn}
 \end{figure}
 
@@ -68,7 +68,7 @@ from the 3rd layer of EFPN, and the reference is the feature map P2 from the 4th
 \begin{figure}
     \centering
     \includegraphics[scale=0.18]{Figures/fft.png}
-    \caption{Feature Texture Transfer}
+    \caption{Feature Texture Transfer \cite{efpn}}
     \label{fig:ftt}
 \end{figure}
 
@@ -90,14 +90,14 @@ Sub-pixel convolution augments pixels on the dimensions of width and height via 
 
 Mask classification architectures group pixels into N segments by predicting N binary masks, along with N corresponding category labels. 
 Mask classification is general enough to address any segmentation or object detection task by assigning different semantics.
-However, the  challenge is to find good representations for each segment. Inspired by DETR [], each segment in an image can be represented as a 
+However, the  challenge is to find good representations for each segment. Inspired by DETR \cite{e2evisiontr}, each segment in an image can be represented as a 
 C-dimensional feature vector know as object query and can be processed by a Transformer decoder, trained with a set prediction objective. A simple meta 
 architecture would consist of three components. 
 
 A backbone that extracts low resolution features from an image. A pixel decoder that gradually up-samples low-resolution features from the output of the 
 backbone to generate high-resolution per-pixel embeddings. And finally a Transformer decoder that operates on image features to process object queries. 
 The final binary mask predictions are decoded from per-pixel embeddings with object queries. One successful instantiation of such a meta architecture is 
-MaskFormer [].
+MaskFormer\cite{mamt}.
 
 
 Mask2Former adopts this kind meta architecture, with the proposed Transformer decoder in the Figure \ref{fig:mamt} replacing the standard one. The key 
@@ -107,7 +107,7 @@ foreground region of the predicted mask for each query, instead of attending to 
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.8]{Figures/MaskAttentionMaskTransformer.jpg}
-    \caption{Masked-Attention Mask Transformer}
+    \caption{Masked-Attention Mask Transformer \cite{mamt2}}
     \label{fig:mamt}
 \end{figure}
 
@@ -115,7 +115,7 @@ foreground region of the predicted mask for each query, instead of attending to 
 \newpage
 To handle small objects, an efficient multi-scale strategy is proposed to utilize high-resolution features. It feeds successive feature maps from the 
 pixel decoder’s feature pyramid into successive Transformer  decoder layers in a round robin fashion. 
-Context features have been shown to be important for image segmentation. However, recent studies [] suggest that the slow convergence of 
+Context features have been shown to be important for image segmentation. However, recent studies \cite{instasqueries, FaPN, segmenter} suggest that the slow convergence of 
 Transformer-based models is due to global context in the cross-attention layer, as it takes many training epochs for cross-attention to learn to attend to 
 localized object regions. 
 
@@ -155,7 +155,7 @@ Here, $M_{l-1} \epsilon \{0, 1\}^{N \times H_l W_l}$  is the binarized output, t
 Transformer decoder layer. It is resized to the same resolution of $K_l$. $M_0$ is the binary mask prediction obtained from $X_0$, before feeding query features
 into the Transformer decoder.
 
-High-resolution features improve model performance, especially for small objects [], however, this is computationally demanding. 
+High-resolution features improve model performance, especially for small objects \cite{e2evisiontr}, however, this is computationally demanding. 
 Thus the solution being an efficient multi-scale strategy to introduce high-resolution features while controlling the increase in computation. 
 Instead of always using the high-resolution feature map, a feature pyramid which consists of both low- and high-resolution features is utilized and 
 feed one resolution of the  multi-scale feature to one Transformer decoder layer at a time. Specifically, the feature pyramid produced by the 
@@ -189,7 +189,7 @@ In this section we are going to analyze our model, the Extended Masked-Attention
 Firstly we are going to analyze the EFPN part of the model in the lower left part of the Figure \ref{fig:emamt}, where the EFPN model has as a input,
 an image of size $600 \times 600$. The reason for the selection of that size is the backbone we use to generate the rich feature maps for the model.
 In our architecture we decided that a pre-trained feature extractor that combines great performance and light design was vital. This combination of characteristics
-led us to the choice of EfficientNet [] model and more specifically the EfficientNet-B7 model that uses an input size of $600 \times 600$. Furthermore we decided 
+led us to the choice of EfficientNet \cite{efficient} model and more specifically the EfficientNet-B7 model that uses an input size of $600 \times 600$. Furthermore we decided 
 to create five feature maps that have the sizes $(300, 300), (150, 150), (75, 75), (38, 38), (19, 19)$ in order to have a wide range of data for the model to use. 
 
 Alongside the feature maps the EFPN also produces the bounding boxes and the initial binary masks that are going to be used by the MAMT detector. The 
