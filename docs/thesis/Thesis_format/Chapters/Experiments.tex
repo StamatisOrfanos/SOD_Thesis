@@ -169,32 +169,47 @@ The metrics we are going to be using that are object detection specific are the 
 Union (IoU), Average Recall (AR) and mean Average Recall (mAR). \\
 
 
-Recall measures the proportion of actual positives that are correctly identified by the model, indicating the model’s ability to detect all relevant instances.
-\[\text{Recall} = \frac{TP}{TP + FN}\]
+Recall \cite{metrics} measures the proportion of actual positives that are correctly identified by the model, indicating the model’s ability to detect all relevant instances.
+\begin{equation}
+    \text{Recall} = \frac{TP}{TP + FN} \tag{16}
+\end{equation}
 
 
-Precision indicates the accuracy of the positive predictions made by the model, measuring the proportion of positive identifications that were actually correct.
-\[\text{Precision} = \frac{TP}{TP + FP}\]
+Precision \cite{metrics} indicates the accuracy of the positive predictions made by the model, measuring the proportion of positive identifications that were actually correct.
+\begin{equation}
+    \text{Precision} = \frac{TP}{TP + FP} \tag{17}
+\end{equation}
+
+F1-Score \cite{metrics} is the harmonic mean of precision and recall, providing a balance between the two by penalizing extreme values.
+
+\begin{equation}
+    F1 = 2 \cdot \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}} \tag{18}
+\end{equation}
 
 
-F1-Score is the harmonic mean of precision and recall, providing a balance between the two by penalizing extreme values.
-\[F1 = 2 \cdot \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}\]
-
-Intersection Over Union (IoU) assesses the overlap between predicted bounding boxes and ground truth boxes, quantifying the exactness of the location 
+Intersection Over Union (IoU) \cite{metrics} assesses the overlap between predicted bounding boxes and ground truth boxes, quantifying the exactness of the location 
 of predictions. It is a fundamental metric for determining whether a detection is a true.
-\[IoU = \frac{\text{Area of Overlap}}{\text{Area of Union}}\]
+
+\begin{equation}
+    IoU = \frac{\text{Area of Overlap}}{\text{Area of Union}} \tag{19}
+\end{equation}
 
 
-Average Precision (AP) quantifies the precision of an object detector across different recall levels by taking the mean of precisions computed 
+Average Precision (AP) \cite{metrics}quantifies the precision of an object detector across different recall levels by taking the mean of precisions computed 
 at the point of each of the 11 recall levels. The precision at each recall level $r$ is interpolated by taking the maximum precision measured 
 for a method at any recall level $\geqslant r$
-\[AP = \frac{1}{11} \sum_{r \in \{0.0, 0.1, \ldots, 1.0\}} P_{\text{interp}}(r)\]
+
+\begin{equation}
+    AP = \frac{1}{11} \sum_{r \in \{0.0, 0.1, \ldots, 1.0\}} P_{\text{interp}}(r) \tag{20}
+\end{equation}
 
 
-Mean Average Precision (mAP) is the average of the AP scores for all classes or over different Intersection over Union (IoU) thresholds. 
+Mean Average Precision (mAP) \cite{metrics} is the average of the AP scores for all classes or over different Intersection over Union (IoU) thresholds. 
 This metric gives an overall effectiveness of the detection model across various object categories or detection precisions, making it ideal for 
 scenarios where multiple object types are involved.
-\[mAP = \frac{1}{N} \sum_{i=1}^{N} AP_i\]
+\begin{equation}
+    mAP = \frac{1}{N} \sum_{i=1}^{N} AP_i \tag{21}
+\end{equation}
 
 
 \newpage

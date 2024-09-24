@@ -394,6 +394,46 @@
       \verb https://arxiv.org/abs/1511.08458
       \endverb
     \endentry
+    \entry{metrics}{inproceedings}{}
+      \name{author}{3}{}{%
+        {{hash=d115bdfa8f1fff2c9e1d606791bfae43}{%
+           family={Padilla},
+           familyi={P\bibinitperiod},
+           given={Rafael},
+           giveni={R\bibinitperiod}}}%
+        {{hash=95aaf141d71f5e22acc646c5a2f162fc}{%
+           family={Netto},
+           familyi={N\bibinitperiod},
+           given={Sergio\bibnamedelima L.},
+           giveni={S\bibinitperiod\bibinitdelim L\bibinitperiod}}}%
+        {{hash=e2d66730cb151eef9a7646388bb6d643}{%
+           family={Silva},
+           familyi={S\bibinitperiod},
+           given={Eduardo\bibnamedelimb A.\bibnamedelimi B.},
+           giveni={E\bibinitperiod\bibinitdelim A\bibinitperiod\bibinitdelim B\bibinitperiod},
+           prefix={da},
+           prefixi={d\bibinitperiod}}}%
+      }
+      \strng{namehash}{9cd23a4dc227a61bc2f96db3a38652de}
+      \strng{fullhash}{9cd23a4dc227a61bc2f96db3a38652de}
+      \strng{bibnamehash}{9cd23a4dc227a61bc2f96db3a38652de}
+      \strng{authorbibnamehash}{9cd23a4dc227a61bc2f96db3a38652de}
+      \strng{authornamehash}{9cd23a4dc227a61bc2f96db3a38652de}
+      \strng{authorfullhash}{9cd23a4dc227a61bc2f96db3a38652de}
+      \field{sortinit}{P}
+      \field{sortinithash}{ff3bcf24f47321b42cb156c2cc8a8422}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{2020 International Conference on Systems, Signals and Image Processing (IWSSIP)}
+      \field{title}{A Survey on Performance Metrics for Object-Detection Algorithms}
+      \field{year}{2020}
+      \field{pages}{237\bibrangedash 242}
+      \range{pages}{6}
+      \verb{doi}
+      \verb 10.1109/IWSSIP48289.2020.9145130
+      \endverb
+      \keyw{Measurement;Object detection;Detectors;Interpolation;Tools;Benchmark testing;Standards;object-detection metrics;average precision;object-detection challenges;bounding boxes}
+    \endentry
     \entry{yolo}{misc}{}
       \name{author}{4}{}{%
         {{hash=99bced2e56a5253f3fe98a5f04e6d9b2}{%
