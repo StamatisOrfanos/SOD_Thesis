@@ -243,6 +243,8 @@ convergence speed and model accuracy.
 \label{tab:training_parameters}
 \end{table}
 
+
+
 \newpage
 
 \section{Results}
@@ -261,15 +263,20 @@ abbreviations throughout:
 
 
 \subsection{Microsoft Common Object in COntext (MS COCO)}
+As expected, the proposed methodology is lighter than original Masked-Attention Mask Transformer by xx\% but it is heavier than the Extended Fea. 
+
+Furthermore, when considering the average mAP across IoU thresholds ranging
+from 0.5 to 0.95, the proposed methodology.
+
 
 \begin{table}[h]
     \centering
-    \begin{tabular}{|c|c|c|c|}
+    \begin{tabular}{|c|c|c|c|c|}
         \hline
-        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters}   \\ \hline
-        EMAMT              & 125                    & 75                       & 75                    \\ \hline
-        MAMT               & 125                    & 75                       & 75                    \\ \hline
-        EFPN               & 125                    & 75                       & 75                    \\ \hline
+        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
+        EMAMT              & --                     & --                       & 95M                 &  492             \\ \hline
+        MAMT               & --                     & --                       & 216M                &  868             \\ \hline
+        EFPN               & --                     & --                       & 35M                 &  537             \\ \hline
     \end{tabular}
     \caption{Results of training for COCO dataset}
     \label{tab:coco_results}
@@ -278,14 +285,21 @@ abbreviations throughout:
 
 
 \subsection{Unmanned Aerial Vehicle Small Object Detection}
+
+Once again as expected, the proposed methodology is lighter than original Masked-Attention Mask Transformer by 9.51\%. 
+
+Furthermore, when considering the average mAP across IoU thresholds ranging
+from 0.5 to 0.95, the proposed methodology.
+
+
 \begin{table}[h]
     \centering
-    \begin{tabular}{|c|c|c|c|}
+    \begin{tabular}{|c|c|c|c|c|}
         \hline
-        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters}   \\ \hline
-        EMAMT              & 125                    & 75                       & 75                    \\ \hline
-        MAMT               & 125                    & 75                       & 75                    \\ \hline    
-        EFPN               & 125                    & 75                       & 75                    \\ \hline
+        \textbf{Model}     & \textbf{mAP(@0.5)}    & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
+        EMAMT              & --                    & --                       & 95M                 &  492             \\ \hline
+        MAMT               & --                    & --                       & 216M                &  868             \\ \hline
+        EFPN               & --                    & --                       & 35M                 &  537             \\ \hline
     \end{tabular}
     \caption{Results of training for UAV-SOD dataset}
     \label{tab:uav_results}
@@ -293,17 +307,24 @@ abbreviations throughout:
 
 
 
-
-
 \subsection{VisDrone}
+
+
+Finally the proposed methodology is lighter than original Masked-Attention Mask Transformer by 9.51\%. 
+
+Furthermore, when considering the average mAP across IoU thresholds ranging
+from 0.5 to 0.95, the proposed methodology.
+
+
+
 \begin{table}[h]
     \centering
-    \begin{tabular}{|c|c|c|c|}
+    \begin{tabular}{|c|c|c|c|c|}
         \hline
-        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters}   \\ \hline
-        EMAMT              & 125                    & 75                       & 75                    \\ \hline
-        MAMT               & 125                    & 75                       & 75                    \\ \hline
-        EFPN               & 125                    & 75                       & 75                    \\ \hline
+        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
+        EMAMT              & --                     & --                       & 95M                 &  492             \\ \hline
+        MAMT               & --                     & --                       & 216M                &  868             \\ \hline
+        EFPN               & --                     & --                       & 35M                 &  800              \\ \hline
     \end{tabular}
     \caption{Results of training for VisDrone dataset}
     \label{tab:vis_results}
