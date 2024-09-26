@@ -1,2 +1,53 @@
 \chapter{Discussion}
 
+
+\subsection{Differences between models}
+
+The implementation and evaluation of the proposed method on the PANet and
+TPH-YOLOv5 models produced two different results on the model performances.
+It was extended that while the implementation of the proposed method on TPH-
+YOLOv5 significantly reduced the computational cost of the model with little loss
+in performance or even improvement in performance on a dataset with remote
+sensing images, the implementation of the method on PANet did not have as
+much improvement in computational cost and the loss in performance was
+higher.
+
+This difference in results is observed due to the micro differences in the model
+architecture. PANet uses one prediction head for all 4 levels of the architecture
+while TPH-YOLO has a separate prediction head for each level. This negatively
+affects the model with the proposed method as due to the smaller paths the
+update of weights in the early layers of the model is more direct and the loss of
+one layer can affect the update of another layer more significantly. Another
+difference in the architecture of the two models is the size of the feature maps in
+the "neck" part of the models. PANet uses a fixed depth at all levels of the "neck"
+while TPH-YOLOv5 has different depths in the feature maps depending on the
+level in the feature pyramid. This enables TPH-YOLO to reduce the depth of the
+feature maps in the "neck" part using the proposed method while preserving the
+ability to preserve essential information. PANet on the other hand, due to the
+small depth of the feature maps (256-d) has a reduced ability to preserve essential
+information when applying the proposed method.
+
+
+\subsection{Performance difference between datasets}
+
+
+
+In the experiments conducted within the thesis, a difference in the results of the
+implementation of the proposed method in TPH-YOLOv5 between the VisDrone
+and AI-TOD datasets was observed. More precisely, the proposed method when
+tested on the VisDrone dataset showed a decrease in performance compared to
+the original TPH-YOLOv5 while in the tests performed on the AI-TOD dataset
+TPH-YOLOv5 with the proposed method showed an optimization in performance
+compared to the original.
+This is most likely due to the specificity of the VisDrone dataset. As shown in
+Figure 29, this dataset has many objects that have not been annotated. This leads
+the model to make “false” predictions, when in fact its predictions were correct.
+A model with a small gradient path is more affected by these “false” predictions
+as the error signal from the false predictions does not have to propagate through
+many layers before it reaches the early layers. This results in the model being
+more conservative in its predictions which can reduce recall. This phenomenon
+is not observed in models with longer gradient paths as the error signal has to
+propagate through more layers so the early layers are not affected by such "false"
+predictions.
+
+

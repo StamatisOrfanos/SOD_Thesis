@@ -28,7 +28,9 @@
 \contentsline {section}{\numberline {4.5}Results}{34}{section.4.5}%
 \contentsline {subsection}{\numberline {4.5.1}Microsoft Common Object in COntext (MS COCO)}{34}{subsection.4.5.1}%
 \contentsline {subsection}{\numberline {4.5.2}Unmanned Aerial Vehicle Small Object Detection}{34}{subsection.4.5.2}%
-\contentsline {subsection}{\numberline {4.5.3}VisDrone}{34}{subsection.4.5.3}%
-\contentsline {chapter}{\numberline {5}Discussion}{35}{chapter.5}%
-\contentsline {chapter}{\numberline {6}Conclusion}{36}{chapter.6}%
-\contentsline {chapter}{\numberline {A}Appendix A}{37}{appendix.A}%
+\contentsline {subsection}{\numberline {4.5.3}VisDrone}{35}{subsection.4.5.3}%
+\contentsline {chapter}{\numberline {5}Discussion}{36}{chapter.5}%
+\contentsline {subsection}{\numberline {5.0.1}Differences between models}{36}{subsection.5.0.1}%
+\contentsline {subsection}{\numberline {5.0.2}Performance difference between datasets}{36}{subsection.5.0.2}%
+\contentsline {chapter}{\numberline {6}Conclusion}{37}{chapter.6}%
+\contentsline {chapter}{\numberline {A}Appendix A}{40}{appendix.A}%
