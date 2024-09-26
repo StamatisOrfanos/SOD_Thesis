@@ -27,12 +27,10 @@ examples of small objects are scarce and lastly the categories for small objects
 seeks to elucidate the scale of these objects or the proportion of pixels they occupy within the entire image. There are two main ways to define small objects. 
 
 \newpage
-The first way is the use relative size. According to the definition of Society of Photo-Optical 
-Instrumentation Engineers [SPIE], if the object size is less than 0.12\% of the original image, it is regarded as a small object. Following the same 
-principle Krishna and Jawahar [1] showed that an object is considered small if it occupies only a tiny portion of the image, which is less than 
+The first way is the use relative size. According to the Krishna and Jawahar \cite{small1} showed that an object is considered small if it occupies only a tiny portion of the image, which is less than 
 1\% of the image area. Namely, the bounding box of a small object should cover less than 1\% of the original image. The second way of defining a small 
 object by using the absolute size, where a small object has size less than 32x32 pixels defined in MS-COCO dataset or 16x16 pixels defined in 
-USC-GRAD- STDdb [2].
+USC-GRAD- STDdb \cite{small2}.
 
 There have been some improvements of the models using different techniques, but all these improvements come at a increased complexity and size of the model. 
 This complexity can be prohibitive for applications in a satellite or an Unmanned Aerial Vehicle since their computation capabilities are limited. 

@@ -10,9 +10,9 @@ For the benchmarking of our model we decided to use three very well known datase
 
 
 \subsection{Microsoft Common Object in COntext (MS COCO)}
-The Microsoft Common Objects in Context (MS COCO) dataset 2017 is a comprehensive image dataset designed for object detection, segmentation, and captioning tasks. 
-It is known for its complexity of its images, which are primarily sourced from everyday scenes. The dataset includes 80 object categories, providing a wide 
-range of common objects for robust training and evaluation of machine learning models. These categories encompass various items from person, bicycle, 
+The Microsoft Common Objects in Context (MS COCO) dataset 2017 \cite{COCOdataset} is a comprehensive image dataset designed for object detection, segmentation,
+and captioning tasks. It is known for its complexity of its images, which are primarily sourced from everyday scenes. The dataset includes 80 object categories, 
+providing a wide range of common objects for robust training and evaluation of machine learning models. These categories encompass various items from person, bicycle, 
 car, to stop sign and smaller objects like toothbrush.
 
 In terms of its composition, the MS COCO 2017 dataset contains over 118,000 training images, 5,000 validation images, and a test set of around 41,000 images, 
@@ -37,11 +37,11 @@ Class Distribution in COCO 2017:
 
 \subsection{Unmanned Aerial Vehicle Small Object Detection}
 
-The UAV-SOD (Unmanned Aerial Vehicle Small Object Detection) dataset is specifically designed for advancing research in the area of object detection using 
-aerial imagery captured by drones. This dataset focuses on the detection of small objects, which presents unique challenges due to the small scale and often 
-complex backgrounds seen in aerial images. Here are the key details about the UAV-SOD dataset. The UAV-SOD dataset includes detailed annotations for each image, 
-essential for supervised machine learning models such as object detectors. Annotations are provided in XML format compatible with the PASCAL VOC annotation 
-format, which is widely used in object detection tasks. These annotations include bounding boxes that specify the coordinates of each object in the image. 
+The UAV-SOD (Unmanned Aerial Vehicle Small Object Detection)  \cite{UAVSmallObjectKaggle}  dataset is specifically designed for advancing research in the area of object 
+detection using aerial imagery captured by drones. This dataset focuses on the detection of small objects, which presents unique challenges due to the small 
+scale and often complex backgrounds seen in aerial images. Here are the key details about the UAV-SOD dataset. The UAV-SOD dataset includes detailed annotations 
+for each image, essential for supervised machine learning models such as object detectors. Annotations are provided in XML format compatible with the PASCAL VOC 
+annotation format, which is widely used in object detection tasks. These annotations include bounding boxes that specify the coordinates of each object in the image. 
 The objects in this dataset are annotated with their class labels, enabling not only object detection tasks but also potential use for object classification 
 and segmentation challenges.
 
@@ -57,7 +57,7 @@ Class Distribution in UAV Small Object Detection:
 
 \subsection{VisDrone}
 
-VisDrone is a dataset designed for drone-based object detection, featuring $10,209$ images captured across various environments using different 
+VisDrone \cite{VisDroneDataset} is a dataset designed for drone-based object detection, featuring $10,209$ images captured across various environments using different 
 types of drones. Each image in the dataset has a high resolution of $2000 \times 1500$ pixels. The dataset is organized into splits for comprehensive 
 training and evaluation, consisting of $6,471$ images for training, $548$ images for validation, and $3,190$ images for testing. VisDrone includes a 
 diverse set of ten object classes, such as pedestrians, cars, vans, buses, trucks, motorcycles, bicycles, awning-tricycles, and tricycles. This wide 
@@ -169,53 +169,164 @@ The metrics we are going to be using that are object detection specific are the 
 Union (IoU), Average Recall (AR) and mean Average Recall (mAR). \\
 
 
-Recall measures the proportion of actual positives that are correctly identified by the model, indicating the model’s ability to detect all relevant instances.
-\[\text{Recall} = \frac{TP}{TP + FN}\]
+Recall \cite{metrics} measures the proportion of actual positives that are correctly identified by the model, indicating the model’s ability to detect all relevant instances.
+\begin{equation}
+    \text{Recall} = \frac{TP}{TP + FN} \tag{16}
+\end{equation}
 
 
-Precision indicates the accuracy of the positive predictions made by the model, measuring the proportion of positive identifications that were actually correct.
-\[\text{Precision} = \frac{TP}{TP + FP}\]
+Precision \cite{metrics} indicates the accuracy of the positive predictions made by the model, measuring the proportion of positive identifications that were actually correct.
+\begin{equation}
+    \text{Precision} = \frac{TP}{TP + FP} \tag{17}
+\end{equation}
+
+F1-Score \cite{metrics} is the harmonic mean of precision and recall, providing a balance between the two by penalizing extreme values.
+
+\begin{equation}
+    F1 = 2 \cdot \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}} \tag{18}
+\end{equation}
 
 
-F1-Score is the harmonic mean of precision and recall, providing a balance between the two by penalizing extreme values.
-\[F1 = 2 \cdot \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}\]
-
-Intersection Over Union (IoU) assesses the overlap between predicted bounding boxes and ground truth boxes, quantifying the exactness of the location 
+Intersection Over Union (IoU) \cite{metrics} assesses the overlap between predicted bounding boxes and ground truth boxes, quantifying the exactness of the location 
 of predictions. It is a fundamental metric for determining whether a detection is a true.
-\[IoU = \frac{\text{Area of Overlap}}{\text{Area of Union}}\]
+
+\begin{equation}
+    IoU = \frac{\text{Area of Overlap}}{\text{Area of Union}} \tag{19}
+\end{equation}
 
 
-Average Precision (AP) quantifies the precision of an object detector across different recall levels by taking the mean of precisions computed 
+Average Precision (AP) \cite{metrics}quantifies the precision of an object detector across different recall levels by taking the mean of precisions computed 
 at the point of each of the 11 recall levels. The precision at each recall level $r$ is interpolated by taking the maximum precision measured 
 for a method at any recall level $\geqslant r$
-\[AP = \frac{1}{11} \sum_{r \in \{0.0, 0.1, \ldots, 1.0\}} P_{\text{interp}}(r)\]
+
+\begin{equation}
+    AP = \frac{1}{11} \sum_{r \in \{0.0, 0.1, \ldots, 1.0\}} P_{\text{interp}}(r) \tag{20}
+\end{equation}
 
 
-Mean Average Precision (mAP) is the average of the AP scores for all classes or over different Intersection over Union (IoU) thresholds. 
+Mean Average Precision (mAP) \cite{metrics} is the average of the AP scores for all classes or over different Intersection over Union (IoU) thresholds. 
 This metric gives an overall effectiveness of the detection model across various object categories or detection precisions, making it ideal for 
 scenarios where multiple object types are involved.
-\[mAP = \frac{1}{N} \sum_{i=1}^{N} AP_i\]
+\begin{equation}
+    mAP = \frac{1}{N} \sum_{i=1}^{N} AP_i \tag{21}
+\end{equation}
 
 
 \newpage
 \section{Training}
 
+To implement the Extended Masked-Attention Mask Transformer, we utilized Amazon Web Services (AWS) SageMaker for efficient training and experimentation. 
+Specifically, we employed the \textit{ml.p4d.24xlarge} instance type for our notebook environment, which is equipped with eight NVIDIA A100 GPUs and supports CUDA 12.1. 
+This powerful computational setup allowed us to run the training with a batch size of four images per batch, achieving an optimal balance between convergence 
+speed and model accuracy.
 
-\subsection{Microsoft Common Object in COntext (MS COCO)}
+The weights of the network were initialized using the default settings provided by PyTorch, ensuring standard initialization practices. All experiments were 
+conducted using this configuration to maintain consistency and reliability in our results. By leveraging the capabilities of AWS SageMaker and the high-performance 
+computing resources of the \textit{ml.p4d.24xlarge} instance, we were able to efficiently train the model and effectively utilize the limited data from small objects in images.
+
+To provide clarity on our training setup and ensure reproducibility, the table \ref{tab:training_parameters} summarizes the key training parameters used for the 
+Extended Masked-Attention Mask Transformer. These parameters were carefully selected based on extensive experimentation to achieve an optimal balance between 
+convergence speed and model accuracy. 
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|}
+    \hline
+    &                   \textbf{MS COCO}      & \textbf{UAV-SOD}     & \textbf{VisDrone}            \\ \hline
+    Number of Epochs   & 125                  & 75                   & 75                           \\ \hline
+    Optimizer          & AdamW                & AdamW                & AdamW                        \\ \hline
+    Learning Rate      & $1 \times 10^{-4}$   & $1 \times 10^{-3}$   & $1 \times 10^{-3}$           \\ \hline
+    Batch size         & 4                    &  4                   & 4                            \\ \hline
+    Image size         & $600\times600$       &  $600\times600$      & $600\times600$               \\ \hline
+    Number of Anchors  & $30000$              &  $722$               & $722$                        \\ \hline
+\end{tabular}
+\caption{Details of training parameters per dataset}
+\label{tab:training_parameters}
+\end{table}
 
 
-\subsection{Unmanned Aerial Vehicle Small Object Detection}
 
-
-\subsection{VisDrone}
-
+\newpage
 
 \section{Results}
 
+Following the comprehensive description of our training setup and parameters, we now present the results of our experiments with the Extended Masked-Attention 
+Mask Transformer. This section delves into the performance metrics achieved by the model, highlighting its effectiveness in both object detection and instance 
+segmentation tasks. We evaluate the model's ability to accurately detect and segment objects of various sizes within images, with a particular focus on its 
+performance on small objects, which pose significant challenges due to their limited visual information. For brevity and clarity, we will use the following 
+abbreviations throughout:
+
+\begin{enumerate}
+    \item Masked-Attention Mask Transformer will be referred to as MAMT.
+    \item Extended Masked-Attention Mask Transformer will be referred to as EMAMT.
+    \item Extended Feature Pyramid Network with a R-CNN will be referred to as EFPN.
+\end{enumerate}
+
+
 \subsection{Microsoft Common Object in COntext (MS COCO)}
+As expected, the proposed methodology is lighter than original Masked-Attention Mask Transformer by xx\% but it is heavier than the Extended Fea. 
+
+Furthermore, when considering the average mAP across IoU thresholds ranging
+from 0.5 to 0.95, the proposed methodology.
+
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
+        EMAMT              & --                     & --                       & 95M                 &  492             \\ \hline
+        MAMT               & --                     & --                       & 216M                &  868             \\ \hline
+        EFPN               & --                     & --                       & 35M                 &  537             \\ \hline
+    \end{tabular}
+    \caption{Results of training for COCO dataset}
+    \label{tab:coco_results}
+\end{table}
+
 
 
 \subsection{Unmanned Aerial Vehicle Small Object Detection}
 
+Once again as expected, the proposed methodology is lighter than original Masked-Attention Mask Transformer by 9.51\%. 
+
+Furthermore, when considering the average mAP across IoU thresholds ranging
+from 0.5 to 0.95, the proposed methodology.
+
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        \textbf{Model}     & \textbf{mAP(@0.5)}    & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
+        EMAMT              & --                    & --                       & 95M                 &  492             \\ \hline
+        MAMT               & --                    & --                       & 216M                &  868             \\ \hline
+        EFPN               & --                    & --                       & 35M                 &  537             \\ \hline
+    \end{tabular}
+    \caption{Results of training for UAV-SOD dataset}
+    \label{tab:uav_results}
+\end{table}
+
+
 
 \subsection{VisDrone}
+
+
+Finally the proposed methodology is lighter than original Masked-Attention Mask Transformer by 9.51\%. 
+
+Furthermore, when considering the average mAP across IoU thresholds ranging
+from 0.5 to 0.95, the proposed methodology.
+
+
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
+        EMAMT              & --                     & --                       & 95M                 &  492             \\ \hline
+        MAMT               & --                     & --                       & 216M                &  868             \\ \hline
+        EFPN               & --                     & --                       & 35M                 &  800              \\ \hline
+    \end{tabular}
+    \caption{Results of training for VisDrone dataset}
+    \label{tab:vis_results}
+    
+\end{table}

@@ -4,10 +4,10 @@
 \contentsline {subsection}{\numberline {2.1.1}Region-based Convolution Neural Networks}{4}{subsection.2.1.1}%
 \contentsline {subsubsection}{Region-based Convolution Neural Networks}{4}{section*.4}%
 \contentsline {subsubsection}{Fast Region-based Convolution Neural Networks}{5}{section*.5}%
-\contentsline {subsubsection}{Faster Region-based Convolution Neural Networks}{6}{section*.6}%
-\contentsline {subsubsection}{Masked Region-based Convolution Neural Networks}{7}{section*.7}%
+\contentsline {subsubsection}{Faster Region-based Convolution Neural Networks}{6}{section*.9}%
+\contentsline {subsubsection}{Masked Region-based Convolution Neural Networks}{7}{section*.10}%
 \contentsline {subsection}{\numberline {2.1.2}Feature Pyramid Networks}{9}{subsection.2.1.2}%
-\contentsline {subsubsection}{Feature Pyramid Network}{9}{section*.8}%
+\contentsline {subsubsection}{Feature Pyramid Network}{9}{section*.12}%
 \contentsline {subsection}{\numberline {2.1.3}Vision Transformers}{11}{subsection.2.1.3}%
 \contentsline {section}{\numberline {2.2}Single-stage Object Detection Models}{14}{section.2.2}%
 \contentsline {subsection}{\numberline {2.2.1}You Only Look Once}{14}{subsection.2.2.1}%
@@ -17,21 +17,20 @@
 \contentsline {subsection}{\numberline {3.1.1}Extended Feature Pyramid Network}{19}{subsection.3.1.1}%
 \contentsline {subsection}{\numberline {3.1.2}Masked-Attention Mask Transformer}{20}{subsection.3.1.2}%
 \contentsline {subsection}{\numberline {3.1.3}Extended Masked-Attention Mask Transformer}{22}{subsection.3.1.3}%
-\contentsline {chapter}{\numberline {4}Experiments}{26}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Datasets}{26}{section.4.1}%
-\contentsline {subsection}{\numberline {4.1.1}Microsoft Common Object in COntext (MS COCO)}{26}{subsection.4.1.1}%
-\contentsline {subsection}{\numberline {4.1.2}Unmanned Aerial Vehicle Small Object Detection}{27}{subsection.4.1.2}%
-\contentsline {subsection}{\numberline {4.1.3}VisDrone}{28}{subsection.4.1.3}%
-\contentsline {section}{\numberline {4.2}Data Pre-Processing}{29}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Evaluation Metrics}{30}{section.4.3}%
-\contentsline {section}{\numberline {4.4}Training}{32}{section.4.4}%
-\contentsline {subsection}{\numberline {4.4.1}Microsoft Common Object in COntext (MS COCO)}{32}{subsection.4.4.1}%
-\contentsline {subsection}{\numberline {4.4.2}Unmanned Aerial Vehicle Small Object Detection}{32}{subsection.4.4.2}%
-\contentsline {subsection}{\numberline {4.4.3}VisDrone}{32}{subsection.4.4.3}%
-\contentsline {section}{\numberline {4.5}Results}{32}{section.4.5}%
-\contentsline {subsection}{\numberline {4.5.1}Microsoft Common Object in COntext (MS COCO)}{32}{subsection.4.5.1}%
-\contentsline {subsection}{\numberline {4.5.2}Unmanned Aerial Vehicle Small Object Detection}{32}{subsection.4.5.2}%
-\contentsline {subsection}{\numberline {4.5.3}VisDrone}{32}{subsection.4.5.3}%
-\contentsline {chapter}{\numberline {5}Discussion}{33}{chapter.5}%
-\contentsline {chapter}{\numberline {6}Conclusion}{34}{chapter.6}%
-\contentsline {chapter}{\numberline {A}Appendix A}{35}{appendix.A}%
+\contentsline {chapter}{\numberline {4}Experiments}{27}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Datasets}{27}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Microsoft Common Object in COntext (MS COCO)}{27}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Unmanned Aerial Vehicle Small Object Detection}{28}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}VisDrone}{29}{subsection.4.1.3}%
+\contentsline {section}{\numberline {4.2}Data Pre-Processing}{30}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Evaluation Metrics}{31}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Training}{33}{section.4.4}%
+\contentsline {section}{\numberline {4.5}Results}{34}{section.4.5}%
+\contentsline {subsection}{\numberline {4.5.1}Microsoft Common Object in COntext (MS COCO)}{34}{subsection.4.5.1}%
+\contentsline {subsection}{\numberline {4.5.2}Unmanned Aerial Vehicle Small Object Detection}{34}{subsection.4.5.2}%
+\contentsline {subsection}{\numberline {4.5.3}VisDrone}{35}{subsection.4.5.3}%
+\contentsline {chapter}{\numberline {5}Discussion}{36}{chapter.5}%
+\contentsline {subsection}{\numberline {5.0.1}Differences between models}{36}{subsection.5.0.1}%
+\contentsline {subsection}{\numberline {5.0.2}Performance difference between datasets}{36}{subsection.5.0.2}%
+\contentsline {chapter}{\numberline {6}Conclusion}{37}{chapter.6}%
+\contentsline {chapter}{\numberline {A}Appendix A}{40}{appendix.A}%

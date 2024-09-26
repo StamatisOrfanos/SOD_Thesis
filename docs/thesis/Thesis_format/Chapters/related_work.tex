@@ -2,7 +2,7 @@
 
 This chapter highlights the theories and recent advancements in the fields of remote sensing and computer vision, particularly in small object detection.
 By examining previous research that addresses those challenges, this section not only underscores the technological progress achieved but also identifies 
-the gaps that the current model aims to bridge. In the field of computer vision, Convolutional Neural Networks (CNNs) served as the initial models for 
+the gaps that the current model aims to bridge. In the field of computer vision, Convolutional Neural Networks (CNNs) \cite{cnn} served as the initial models for 
 image analysis, primarily focused on image classification where the entire image is labeled as a single object category. While CNNs had great performance 
 in these tasks, their application to object detection in complex images revealed significant limitations.
 
@@ -43,14 +43,14 @@ through Mask R-CNN highlight a trajectory of continuous improvement, with  each 
 \subsubsection{Region-based Convolution Neural Networks}
 
 The need for more sophisticated solutions that could accurately identify and locate multiple objects within images led to the development of 
-Region-based Convolutional Networks[3] (R-CNNs). Starting with the base Region-based Convolution Neural Network This approach combines region proposal 
+Region-based Convolutional Networks (R-CNNs) \cite{rcnn}. Starting with the base Region-based Convolution Neural Network This approach combines region proposal 
 algorithms with the feature extraction capabilities of CNNs. R-CNNs begin by generating potential object-bound regions in an image, a process known 
 as region proposal. Each region is then cropped and resized to a fixed size before being fed into a pre-trained convolutional neural network. 
 
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.45]{Figures/rcnn.jpeg}
-    \caption{Region-based Convolution Neural Network Architecture}
+    \caption{Region-based Convolution Neural Network Architecture \cite{rcnn}}
     \label{fig:rcnn}
 \end{figure}
 
@@ -67,7 +67,7 @@ run R-CNN in real-time.
 \newpage
 \subsubsection{Fast Region-based Convolution Neural Networks}
 
-Fast R-CNN improved upon the original R-CNN's efficiency, where instead of cropping and resizing each region separately, the entire image is passed through the 
+Fast R-CNN \cite{frcnn} improved upon the original R-CNN's efficiency, where instead of cropping and resizing each region separately, the entire image is passed through the 
 CNN to extract features. Regions of interest (ROIs) are then selected from the feature map using the proposed bounding boxes from the selective search. 
 These ROIs are then pooled into a fixed-size feature map and passed through fully connected layers for classification and bounding box regression 
 in the figure \ref{fig:fast-rcnn}.
@@ -75,7 +75,7 @@ in the figure \ref{fig:fast-rcnn}.
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.4]{Figures/fast-r-cnn.png}
-    \caption{Fast Region-based Convolution Neural Network Architecture}
+    \caption{Fast Region-based Convolution Neural Network Architecture \cite{frcnn}}
     \label{fig:fast-rcnn}
 \end{figure}
 
@@ -87,12 +87,14 @@ extent of \(H \times W\) , where $H$ and $W$ are layer hyper-parameters that are
 into a convolution feature map. Each RoI is defined by a four-tuple \((r, c, h, w)\) that specifies its top-left corner \((r, c)\) and its height 
 and width \((h, w)\). Also one of the great inclusions of this model was the implementation of multi-task loss:
 
-\[L(p, u, t', v) = L_{cls}(p, u) + \lambda [u \geq 1] L_{loc}(t', v)z\]
+\begin{equation}
+    L(p, u, t', v) = L_{cls}(p, u) + \lambda [u \geq 1] L_{loc}(t', v)z   \tag{1}
+\end{equation}
 
 ,where the classification loss \(L_{cls}(p, u)\) is defined as the negative log likelihood of the true class \(u\), expressed as:
-\[
-L_{cls}(p, u) = -\log p_u
-\]
+\begin{equation}
+    L_{cls}(p, u) = -\log p_u \tag{2}
+\end{equation}
 
 The localization loss \(L_{loc}\) is defined over the predicted bounding box parameters \(t' = (t'_x, t'_y, t'_w, t'_h)\) and the ground truth bounding 
 box parameters \(v = (v_x, v_y, v_w, v_h)\) for class \(u\). The Iverson bracket \([u \geq 1]\) is used as an indicator function that evaluates to 1 
@@ -100,14 +102,14 @@ when \(u\) is 1 or more, and 0 otherwise. This function helps in applying the lo
 effectively ignoring the background.
 
 The overall loss \(L(p, u, t', v)\) is then a combination of classification and localization losses, modulated by a parameter \(\lambda\), representing the trade-off between these two tasks:
-\[
-L(p, u, t', v) = L_{cls}(p, u) + \lambda [u \geq 1] L_{loc}(t', v)
-\]
+\begin{equation}
+    L(p, u, t', v) = L_{cls}(p, u) + \lambda [u \geq 1] L_{loc}(t', v)   \tag{3}
+\end{equation}
 
 \newpage
 \subsubsection{Faster Region-based Convolution Neural Networks}
 
-While Fast R-CNN improved upon its predecessors in terms of both speed and accuracy, the Faster R-CNN[4] architecture emerged as an even more refined version. 
+While Fast R-CNN improved upon its predecessors in terms of both speed and accuracy, the Faster R-CNN  architecture \cite{frrcnn} emerged as an even more refined version. 
 Fast R-CNN effectively addressed the inefficiencies of previous models by integrating a region of interest (RoI) pooling layer to connect convolutional 
 feature extraction and region proposal tasks. However, it still relied on external region proposal algorithms, which remained a bottleneck in terms of 
 computational efficiency and speed. 
@@ -115,11 +117,11 @@ computational efficiency and speed.
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.4]{Figures/faster-rcnn.jpeg}
-    \caption{Faster Region-based Convolution Neural Network Architecture}
+    \caption{Faster Region-based Convolution Neural Network Architecture \cite{frrcnn}}
     \label{fig:faster-rcnn}
 \end{figure}
 
-Faster R-CNN resolved this by introducing a novel component, the Region Proposal Network (RPN)[5]. A Region Proposal Network takes an image
+Faster R-CNN resolved this by introducing a novel component, the Region Proposal Network (RPN). A Region Proposal Network takes an image
 (of any size) as input and outputs a set of rectangular object proposals, each with an objectness score. This process is modeled with a fully 
 convolutional network, because the ultimate goal is to share its computation with a Fast R-CNN object detection network, as it is assumed that 
 both nets share a common set of convolutional layers, as seen in the Figure \ref{fig:faster-rcnn}.
@@ -134,8 +136,7 @@ fully-connected layers are shared across all spatial locations.
 This architecture is naturally implemented with an n×n convolutional layer followed by two sibling $1 \times 1$ convolutional layers. 
 
 \newpage
-At each sliding-window 
-location, there is simultaneously a prediction of multiple region proposals, where the number of maximum possible proposals for each location is
+At each sliding-window location, there is simultaneously a prediction of multiple region proposals, where the number of maximum possible proposals for each location is
 denoted as k. The k proposals are parameterized relative to k reference boxes, which are called  anchors. An anchor is centered at the sliding window
 in question, and is associated with a scale and aspect ratio as seen again in Figure \ref{fig:anchors}. By default 3 scales and 3 aspect ratios are used, 
 yielding k = 9 anchors at each sliding position. For a convolutional feature map of a size $W \times H$, there are $W \times H \times k$ anchors in total.
@@ -143,14 +144,14 @@ yielding k = 9 anchors at each sliding position. For a convolutional feature map
 \begin{figure}
     \centering
     \includegraphics[scale=0.1]{Figures/anchors.jpeg}
-    \caption{Region Proposal Network}
+    \caption{Region Proposal Network \cite{frrcnn}}
     \label{fig:anchors}
 \end{figure}
 
 
 \subsubsection{Masked Region-based Convolution Neural Networks}
 
-Mask R-CNN builds on the ideas and successes of the Faster R-CNN model, which predicts both a class label and a bounding-box offset for each candidate object. 
+Mask R-CNN \cite{mrcnn} builds on the ideas and successes of the Faster R-CNN model, which predicts both a class label and a bounding-box offset for each candidate object. 
 To these, Mask R-CNN adds a third branch specifically designed to output the object mask, providing a straightforward and logical extension to the 
 existing framework. This addition allows Mask R-CNN to capture the precise spatial layout of objects, a task that necessitates extracting significantly 
 finer detail than what is required for classifying objects or predicting bounding boxes alone.
@@ -163,7 +164,7 @@ depends on mask predictions. This approach follows the spirit of Fast R-CNN that
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.5]{Figures/mask-r-cnn.png}
-    \caption{Mask Region Convolution Neural Network Architecture}
+    \caption{Mask Region Convolution Neural Network Architecture \cite{mrcnn}}
     \label{fig:mask-r-cnn}
 \end{figure}
 
@@ -189,7 +190,7 @@ of the model.
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.30]{Figures/mask-r-cnn-roi-align.png}
-    \caption{Mask Region Of Interest}
+    \caption{Mask Region Of  \cite{mrcnn}}
     \label{fig:roi-align}
 \end{figure}
 
@@ -199,9 +200,9 @@ A bilinear interpolation is used to compute the exact values of the input featur
 the result.
 
 Furthermore once again this model utilizes a multi-task loss in order to take into consideration all the outputs of the model.
-\[
-L = L_{cls} + L_{box} + L_{mask} 
-\]
+\begin{equation}
+    L = L_{cls} + L_{box} + L_{mask} \tag{4}
+\end{equation}
  
 The mask branch has a $K \times m^2$-dimensional output for each RoI, which encodes K binary masks of resolution m × m, one for each of the K classes.
 To this a per-pixel sigmoid is applied, and define Lmask as the average binary cross-entropy loss. For an RoI associated with ground-truth class k, 
@@ -225,7 +226,7 @@ orientations and scales.
 
 \subsubsection{Feature Pyramid Network}
 
-With Feature Pyramid Networks[] the objective is to harness the pyramidal feature hierarchy of a Convolutional Networks, which inherently contains semantic 
+With Feature Pyramid Networks \cite{fpn} the objective is to harness the pyramidal feature hierarchy of a Convolutional Networks, which inherently contains semantic 
 information from low to high levels, to construct a feature pyramid that maintains high-level semantics throughout. The method processes a single-scale 
 image of arbitrary size and produces proportionally sized feature maps at multiple levels, utilizing a fully convolutional approach. This procedure is 
 compatible with various backbone convolutional architectures, and this paper demonstrates results using ResNets. The construction of the pyramid incorporates 
@@ -243,7 +244,7 @@ respect to the input image. The conv1 output is not included in the pyramid due 
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.5]{Figures/fpn-base.png}
-    \caption{Feature Pyramid Network}
+    \caption{Feature Pyramid Network \cite{fpn}}
     \label{fig:fpn}
 \end{figure}
 
@@ -258,7 +259,7 @@ as seen in the figure \ref{fig:fpn-top}. This process is iterated until the fine
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.5]{Figures/fpn-top-down.jpg}
-    \caption{Feature Pyramid Network Top-Down path}
+    \caption{Feature Pyramid Network Top-Down path \cite{fpn}}
     \label{fig:fpn-top}
 \end{figure}
 
@@ -273,7 +274,7 @@ Experiments with more sophisticated blocks have been made and observed marginall
 
 \subsection{Vision Transformers}
 
-The Vision Transformer (ViT)[] model represents a significant shift in the approach to image recognition, applying architectures originally developed for 
+The Vision Transformer (ViT) \cite{visiontr} model represents a significant shift in the approach to image recognition, applying architectures originally developed for 
 natural language processing (NLP) to computer vision tasks. The ViT moves away from traditional convolutional neural networks (CNNs) to embrace transformers, 
 a model type that leverages self-attention mechanisms originally designed for text data. Like NLP systems, ViT treats an image as a sequence of 
 fixed-size patches, akin to words in a sentence, and processes these patches through a series of transformer layers to capture complex inter-patch 
@@ -288,7 +289,7 @@ figure \ref{fig:tr-base}, where the left part is the transformer encoder and the
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.2]{Figures/transformer_basis.jpg}
-    \caption{NLP Transformer Architecture}
+    \caption{NLP Transformer Architecture \cite{visiontr}}
     \label{fig:tr-base}
 \end{figure}
 
@@ -314,7 +315,7 @@ understanding of the original image’s spatial layout as it processes through t
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.45]{Figures/vision-transformer.jpg}
-    \caption{Vision Transformer Architecture}
+    \caption{Vision Transformer Architecture \cite{visiontr}}
     \label{fig:tr-vit}
 \end{figure}
 
@@ -356,7 +357,7 @@ the cost of lower accuracy, especially in detecting small or overlapping objects
 
 \subsection{You Only Look Once}
 
-YOLO (You Only Look Once)[] represents a shift in object detection techniques through its simple and highly efficient approach. Unlike traditional 
+YOLO (You Only Look Once) \cite{yolo} represents a shift in object detection techniques through its simple and highly efficient approach. Unlike traditional 
 object detection methods that involve a multi-step process, YOLO employs a single convolutional network that simultaneously predicts multiple bounding boxes 
 and class probabilities for those boxes. This process is followed by a non-maximum suppression step to finalize the detections. The architecture is based on a 
 standard high-quality image classification network truncated before any classification layers, known as the base network, which is then augmented with additional 
@@ -381,7 +382,7 @@ accuracy of object detection. These predictions are based on the intersection ov
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.55]{Figures/yolo.jpg}
-    \caption{YOLO Architecture}
+    \caption{YOLO Architecture \cite{yolo}}
     \label{fig:yolo}
 \end{figure}
 
@@ -400,7 +401,7 @@ precision, making YOLO a groundbreaking model in the field of object detection, 
 \newpage
 \subsection{Single Shot MultiBox Detector}
 
-The Single Shot MultiBox Detector (SSD)[] employs a streamlined architecture that integrates detection and classification into a single pass through a 
+The Single Shot MultiBox Detector (SSD) \cite{ssd} employs a streamlined architecture that integrates detection and classification into a single pass through a 
 feed-forward convolutional network, thereby enhancing speed without compromising accuracy. This model produces a fixed collection of bounding boxes and 
 class scores for each object instance identified, followed by a non-maximum suppression step to finalize the detections. The foundation of SSD is a 
 base network derived from standard high-quality image classification architectures, which is truncated before any classification layers. 
@@ -413,7 +414,7 @@ thus enhancing the model's responsiveness to objects of varying dimensions as se
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.55]{Figures/ssmbd.jpg}
-    \caption{Single Shot MultiBox Detector Architecture}
+    \caption{Single Shot MultiBox Detector Architecture \cite{ssd}}
     \label{fig:ssmd}
 \end{figure}
 

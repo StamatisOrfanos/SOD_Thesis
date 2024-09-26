@@ -3,9 +3,15 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
-\usepackage{hyperref}
 \usepackage{geometry}
 \usepackage{tabularx}
+\usepackage{cite}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage[backend=biber,style=numeric]{biblatex}
+
+% Bibliography
+\addbibresource{Chapters/bibliography.bib}
+
 
 % Adjust the header and footer size
 \geometry{
@@ -89,12 +95,12 @@
 % Conclusion
 \include{Chapters/conclusion}
 
-% References
-\bibliographystyle{plain}
-\bibliography{references}
+\printbibliography
+
 
 % Appendix
 \appendix
 \include{Chapters/appendix_a}
+
 
 \end{document}

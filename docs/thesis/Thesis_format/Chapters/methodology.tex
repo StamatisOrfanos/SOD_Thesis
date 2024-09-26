@@ -12,14 +12,14 @@ robust multi-stage model specifically made to achieve the best possible results 
 
 \section{Architecture}
 
-Choosing a multi-stage model for small object detection does not necessarily imply that the model will be heavy in terms of trainable parameters or challenging 
+Choosing a multi-stage model for small object detection does not necessarily imply that the model will be demanding in terms of trainable parameters or challenging 
 to train. Our approach strategically combines the two types of models in order to harness their individual strengths while maintaining manageable complexity 
 and training efficiency. This integration ensures that our multi-stage detector not only achieves an elevated accuracy but also remains practical in terms of 
 computational resources and training time, making it a viable solution for real-world applications where both performance and efficiency are critical.
 
 In this section we are going to describe and explain the model we developed in detail with the aim of successfully tackling the Small Object Detection challenge. 
 The model we created is named Extended Masked-Attention Mask Transformer, a name based on the models we decided to integrate being the Extended Feature Pyramid 
-Network[] and the Masked-Attention Mask Transformer (MAMT)[].
+Network \cite{efpn} and the Masked-Attention Mask Transformer (MAMT) \cite{mamt2}.
 
 A very interesting finding in the EFPN article is that over the past years, rapid development of deep learning has boosted the popularity of 
 CNN-based detectors and the improved overall accuracy and efficiency. Unfortunately they still perform poorly when detecting small objects with a few pixels. 
@@ -35,7 +35,7 @@ medium-sized objects and some large-sized objects.
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.55]{Figures/efpn-sod-mapping.jpg}
-    \caption{Small Object Detection Mapping}
+    \caption{Small Object Detection Mapping \cite{efpn}}
     \label{fig:efpn-sod-mapping}
 \end{figure}
 
@@ -43,7 +43,7 @@ medium-sized objects and some large-sized objects.
 \newpage
 \subsection{Extended Feature Pyramid Network}
 
-The implementation of the Extended Feature Pyramid follows closely an FPN-like framework embedded with a feature Super Resolution (SR)[] module. 
+The implementation of the Extended Feature Pyramid follows closely an FPN-like framework embedded with a feature Super Resolution (SR) \cite{sr} module. 
 This pipeline directly generates high resolution features from low-resolution images to support small object detection, while stays in low computational 
 cost. The top four pyramid layers are constructed by top-down pathways for medium and large object detection. 
 
@@ -57,7 +57,7 @@ with a tailor-made high-resolution CNN feature map $C'2$, producing the final ex
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.15]{Figures/efpn.jpg}
-    \caption{Extended Feature Pyramid Network}
+    \caption{Extended Feature Pyramid Network \cite{efpn}}
     \label{fig:efpn}
 \end{figure}
 
@@ -68,13 +68,17 @@ from the 3rd layer of EFPN, and the reference is the feature map P2 from the 4th
 \begin{figure}
     \centering
     \includegraphics[scale=0.18]{Figures/fft.png}
-    \caption{Feature Texture Transfer}
+    \caption{Feature Texture Transfer \cite{efpn}}
     \label{fig:ftt}
 \end{figure}
 
 \newpage
 The output $P'_3$ can be defined as:
-\[P'_3 = E_t(P_2 \Vert E_c(P_3)_{\uparrow 2}) + E_c(P_3)_{\uparrow 2}\]
+
+\begin{equation}
+    P'_3 = E_t(P_2 \Vert E_c(P_3)_{\uparrow 2}) + E_c(P_3)_{\uparrow 2} \tag{5}
+\end{equation}
+
 
 ,where where $E_t()$ denotes texture extractor component, $E_c()$ denotes content extractor component, $\uparrow 2\times$ here denotes double up-scaling by 
 sub-pixel convolution and k denotes feature concatenation. The content extractor and texture extractor are both composed of residual blocks. In the main stream, 
@@ -86,14 +90,14 @@ Sub-pixel convolution augments pixels on the dimensions of width and height via 
 
 Mask classification architectures group pixels into N segments by predicting N binary masks, along with N corresponding category labels. 
 Mask classification is general enough to address any segmentation or object detection task by assigning different semantics.
-However, the  challenge is to find good representations for each segment. Inspired by DETR [], each segment in an image can be represented as a 
+However, the  challenge is to find good representations for each segment. Inspired by DETR \cite{e2evisiontr}, each segment in an image can be represented as a 
 C-dimensional feature vector know as object query and can be processed by a Transformer decoder, trained with a set prediction objective. A simple meta 
 architecture would consist of three components. 
 
 A backbone that extracts low resolution features from an image. A pixel decoder that gradually up-samples low-resolution features from the output of the 
 backbone to generate high-resolution per-pixel embeddings. And finally a Transformer decoder that operates on image features to process object queries. 
 The final binary mask predictions are decoded from per-pixel embeddings with object queries. One successful instantiation of such a meta architecture is 
-MaskFormer [].
+MaskFormer\cite{mamt}.
 
 
 Mask2Former adopts this kind meta architecture, with the proposed Transformer decoder in the Figure \ref{fig:mamt} replacing the standard one. The key 
@@ -103,7 +107,7 @@ foreground region of the predicted mask for each query, instead of attending to 
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.8]{Figures/MaskAttentionMaskTransformer.jpg}
-    \caption{Masked-Attention Mask Transformer}
+    \caption{Masked-Attention Mask Transformer \cite{mamt2}}
     \label{fig:mamt}
 \end{figure}
 
@@ -111,7 +115,7 @@ foreground region of the predicted mask for each query, instead of attending to 
 \newpage
 To handle small objects, an efficient multi-scale strategy is proposed to utilize high-resolution features. It feeds successive feature maps from the 
 pixel decoder’s feature pyramid into successive Transformer  decoder layers in a round robin fashion. 
-Context features have been shown to be important for image segmentation. However, recent studies [] suggest that the slow convergence of 
+Context features have been shown to be important for image segmentation. However, recent studies \cite{instasqueries, FaPN, segmenter} suggest that the slow convergence of 
 Transformer-based models is due to global context in the cross-attention layer, as it takes many training epochs for cross-attention to learn to attend to 
 localized object regions. 
 
@@ -119,7 +123,9 @@ There is the hypothesize that local features are enough to update query features
 For this a masked attention was proposed, a variant of cross attention that only attends within the foreground region of the predicted mask for each query. 
 Standard cross-attention computes:
 
-\[X_l = \text{softmax}(Q_l K_l^T) V_l + X_{l-1}\]
+\begin{equation}
+    X_l = \text{softmax}(Q_l K_l^T) V_l + X_{l-1} \tag{6}
+\end{equation}
 
 Here, $l$ is the layer index, $X_l \epsilon R^{N \times C}$ refers to N C-dimensional query features at the $l$th layer and 
 $Q_l = f_Q(X_l-1) \epsilon R^{N \times C} $. Here $X_0$ denotes input query features to the Transformer decoder. $K_l, V_l \epsilon R^{H_l W_l \times C}$ are the 
@@ -127,23 +133,29 @@ image features under transformation $f_K()$ and $f_{V}()$ respectively, and $H_l
 linear transformations
 
 
-Our masked attention modulates the attention matrix via
-\[X_l = \text{softmax}(\mathcal{M}_{l-1} + Q_l K_l^T) V_l + X_{l-1}\]
+Our masked attention modulates the attention matrix via:
+
+\begin{equation}
+    X_l = \text{softmax}(\mathcal{M}_{l-1} + Q_l K_l^T) V_l + X_{l-1} \tag{7}
+\end{equation}
+
 
 Moreover, the attention mask $M_{l-1}$ at feature location (x, y) is:
-\[
+
+\begin{equation}
     \mathcal{M}_{l-1}(x, y) = 
     \begin{cases} 
     0 & \text{if } \mathcal{M}_{l-1}(x, y) = 1 \\
     -\infty & \text{otherwise} 
-    \end{cases}    
-\]
+    \end{cases}  \tag{8}
+\end{equation}
+    
 
 Here, $M_{l-1} \epsilon \{0, 1\}^{N \times H_l W_l}$  is the binarized output, thresholded at 0.5 of the resized mask prediction of the previous $(l - 1)$-th 
 Transformer decoder layer. It is resized to the same resolution of $K_l$. $M_0$ is the binary mask prediction obtained from $X_0$, before feeding query features
 into the Transformer decoder.
 
-High-resolution features improve model performance, especially for small objects [], however, this is computationally demanding. 
+High-resolution features improve model performance, especially for small objects \cite{e2evisiontr}, however, this is computationally demanding. 
 Thus the solution being an efficient multi-scale strategy to introduce high-resolution features while controlling the increase in computation. 
 Instead of always using the high-resolution feature map, a feature pyramid which consists of both low- and high-resolution features is utilized and 
 feed one resolution of the  multi-scale feature to one Transformer decoder layer at a time. Specifically, the feature pyramid produced by the 
@@ -177,7 +189,7 @@ In this section we are going to analyze our model, the Extended Masked-Attention
 Firstly we are going to analyze the EFPN part of the model in the lower left part of the Figure \ref{fig:emamt}, where the EFPN model has as a input,
 an image of size $600 \times 600$. The reason for the selection of that size is the backbone we use to generate the rich feature maps for the model.
 In our architecture we decided that a pre-trained feature extractor that combines great performance and light design was vital. This combination of characteristics
-led us to the choice of EfficientNet [] model and more specifically the EfficientNet-B7 model that uses an input size of $600 \times 600$. Furthermore we decided 
+led us to the choice of EfficientNet \cite{efficient} model and more specifically the EfficientNet-B7 model that uses an input size of $600 \times 600$. Furthermore we decided 
 to create five feature maps that have the sizes $(300, 300), (150, 150), (75, 75), (38, 38), (19, 19)$ in order to have a wide range of data for the model to use. 
 
 Alongside the feature maps the EFPN also produces the bounding boxes and the initial binary masks that are going to be used by the MAMT detector. The 
@@ -225,13 +237,94 @@ Lastly after the attention mechanisms—both masked and cross-attention—the FF
 attention-focused features. This structure allows the FFN to introduce additional complexity and abstraction capabilities into the feature representations.
 
 
-\textbf{Add loss function here:}
+In order to maximize the capabilities of this model we had to create a custom loss function that takes into consideration all the data created by the model. 
+The loss function for the Extended Mask2Former model is designed to jointly optimize object detection and instance segmentation tasks by integrating multiple 
+loss components. The total loss \( L_{\text{total}} \) is computed as a weighted sum of the mask loss, bounding box regression loss, and classification loss:
+
+\begin{equation}
+    L_{\text{total}} = \lambda_{\text{mask}} \, L_{\text{mask}} + \lambda_{\text{bbox}} \, L_{\text{bbox}} + \lambda_{\text{class}} \, L_{\text{class}} \tag{9}    
+\end{equation}
+
+where:
+
+\( \lambda_{\text{mask}} \), \( \lambda_{\text{bbox}} \), and \( \lambda_{\text{class}} \) are weighting coefficients for each loss component.
+
+\vspace{1.5cm}
+
+\begin{enumerate}
+    \item \textbf{Mask Loss}: \\
+    The mask loss measures the discrepancy between the predicted masks \( \hat{M} \) and the ground truth masks \( M \). It uses the Binary Cross-Entropy Loss with logits:
+    \begin{equation}
+        L_{\text{mask}} = \frac{1}{N} \sum_{i=1}^{N} \text{BCEWithLogits}\left( \hat{M}_i, \, M_i \right) \tag{10}
+    \end{equation}
+
+    - \( N \) is the number of matched instances. \\
+    - The matching between predicted and ground truth masks is performed using the Hungarian algorithm based on a combined cost of mask Intersection over Union (IoU) 
+    and classification cost.
+    \newpage
+
+    \item \textbf{Matching via Hungarian Algorithm}: \\
+
+    To align predicted instances with ground truth instances, the Hungarian algorithm solves an assignment problem using a combined cost matrix \( \mathbf{C} \):
+    
+    \begin{equation}
+        \mathbf{C} = \alpha \left( 1 - \text{IoU}\left( \hat{M}, \, M \right) \right) + \beta \left( -\log\left( \text{Softmax}\left( \hat{C}_{\text{mask}} \right) + \epsilon \right) \right) \tag{11}
+    \end{equation}
+    
+    - \( \alpha \) and \( \beta \) are weighting coefficients for the IoU and classification cost components, respectively. \\ 
+    - \( \text{IoU}\left( \hat{M}, \, M \right) \) computes the Intersection over Union between predicted and ground truth masks. \\
+    - The negative log-likelihood term penalizes incorrect class predictions. \\
+    - \( \epsilon \) is a small constant added to avoid taking the logarithm of zero. \\
+
+    \item \textbf{Bounding Box Regression Loss}:
+
+    This loss quantifies the error between the predicted bounding boxes \( \hat{B} \) and the regression targets \( B^* \) (encoded ground truth boxes relative to anchor boxes \( A \)) using the Smooth L1 Loss:
+    
+    \begin{equation}
+        L_{\text{bbox}} = \frac{1}{K} \sum_{j=1}^{K} \text{SmoothL1}\left( \hat{B}_j, \, B^*_j \right) \tag{12}
+    \end{equation}
+    
+    - \( K \) is the number of anchor boxes. \\ 
+    - The regression targets \( B^* \) are obtained by encoding the matched ground truth boxes \( B \) with respect to the anchors \( A \):
+    
+      \begin{equation}
+        B^* = \text{encode}\left( B, \, A \right) \tag{13}
+      \end{equation}
+    
+    - Anchors are matched to ground truth boxes using an IoU-based matching strategy.
+
+    \item \textbf{Classification Loss}:
+
+    The classification loss evaluates the discrepancy between the combined class predictions \( \hat{C} \) and the ground truth class labels \( C \). 
+    The predictions from both the bounding box branch \( \hat{C}_{\text{bbox}} \) and the mask branch \( \hat{C}_{\text{mask}} \) are combined by 
+    taking the element-wise maximum of their softmax probabilities:
+    
+    \begin{equation}
+        \hat{C} = \max\left( \text{Softmax}\left( \hat{C}_{\text{bbox}} \right), \, \text{Softmax}\left( \hat{C}_{\text{mask}} \right) \right) \tag{14}
+    \end{equation}
+
+    
+    The classification loss is then computed using the Cross-Entropy Loss:
+    
+    \begin{equation}
+        L_{\text{class}} = \frac{1}{N} \sum_{i=1}^{N} \text{CrossEntropy}\left( \hat{C}_i, \, C_i \right) \tag{15}
+    \end{equation}
+    
+    - \( N \) is the number of instances. \\
+    - \( C_i \) is the ground truth class label for instance \( i \).
+
+\end{enumerate}
 
 
+This multi-task learning approach leverages the shared representations between tasks, leading to better generalization and performance compared to training each 
+task separately. It allows the model to learn more robust and comprehensive features from the data, as the different tasks provide complementary information that 
+enriches the learning process. By leveraging both mask predictions and bounding box regressions, the model maximizes the use of all available data from small objects. 
+Specifically, this combined approach addresses the challenges posed by small objects, which often provide limited information due to their size. The masks capture 
+fine-grained spatial details that might be overlooked in bounding box predictions, enhancing the accuracy of segmentation for small objects. Meanwhile, the bounding 
+boxes provide coarse localization that can guide the mask predictions, improving robustness in detecting small objects. This synergy allows the model to effectively 
+detect and segment small objects, enhancing both accuracy and robustness in scenarios where small object recognition is critical.
 
-
-
-\newpage
+\vspace{1.5cm}
 
 The table below, sorted by the number of parameters, provides a comparative look at various popular object detection models that we have presented in the 
 section above. This table highlights models ranging from YOLOv3, known for its balance of speed and accuracy, to more complex architectures like Mask R-CNN, 
@@ -255,5 +348,5 @@ and operational efficiency, guiding decisions in model selection based on specif
     \end{tabular}
     \caption{Comparison of Object Detection Models Sorted by Number of Parameters}
     \label{tab:model_parameters}
-    \end{table}
+\end{table}
     
