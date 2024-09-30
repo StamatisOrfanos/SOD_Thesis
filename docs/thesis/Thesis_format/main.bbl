@@ -678,6 +678,58 @@
       \verb https://arxiv.org/abs/2108.07058
       \endverb
     \endentry
+    \entry{swin}{misc}{}
+      \name{author}{5}{}{%
+        {{hash=56ba559f18e74cf681fe113aba3fa9af}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Gang},
+           giveni={G\bibinitperiod}}}%
+        {{hash=9e24468edb70e9f876a7e442038c2c9b}{%
+           family={Xu},
+           familyi={X\bibinitperiod},
+           given={Di},
+           giveni={D\bibinitperiod}}}%
+        {{hash=766be2ae75370cbbe36201ff9048544e}{%
+           family={Cheng},
+           familyi={C\bibinitperiod},
+           given={Xing},
+           giveni={X\bibinitperiod}}}%
+        {{hash=8683250e41837b44ba6c7f1c28857fa4}{%
+           family={Si},
+           familyi={S\bibinitperiod},
+           given={Lingyu},
+           giveni={L\bibinitperiod}}}%
+        {{hash=a9e11885a9a61b0343b107417f0a9449}{%
+           family={Zheng},
+           familyi={Z\bibinitperiod},
+           given={Changwen},
+           giveni={C\bibinitperiod}}}%
+      }
+      \strng{namehash}{4bc5fe7e313cd37e7052af92d5b78ecd}
+      \strng{fullhash}{c126e5e621651273531318910d1845b5}
+      \strng{bibnamehash}{4bc5fe7e313cd37e7052af92d5b78ecd}
+      \strng{authorbibnamehash}{4bc5fe7e313cd37e7052af92d5b78ecd}
+      \strng{authornamehash}{4bc5fe7e313cd37e7052af92d5b78ecd}
+      \strng{authorfullhash}{c126e5e621651273531318910d1845b5}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.CV}
+      \field{eprinttype}{arXiv}
+      \field{title}{SimViT: Exploring a Simple Vision Transformer with sliding windows}
+      \field{year}{2021}
+      \verb{eprint}
+      \verb 2112.13085
+      \endverb
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/2112.13085
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/2112.13085
+      \endverb
+    \endentry
     \entry{fpn}{misc}{}
       \name{author}{6}{}{%
         {{hash=08f925fe4692d130a1d7cb7d94483351}{%

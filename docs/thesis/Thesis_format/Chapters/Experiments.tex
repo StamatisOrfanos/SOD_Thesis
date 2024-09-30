@@ -26,6 +26,8 @@ This split ensures that models can be trained on a large set of images and param
 are performed on the test set. The use of MS COCO for competition and research has helped advance the field of computer vision by providing a challenging 
 set of images and annotations that test the limits of both existing and novel visual recognition models.
 
+\newpage
+
 Class Distribution in COCO 2017:
 
 \begin{figure}[h!]
@@ -35,6 +37,28 @@ Class Distribution in COCO 2017:
     \label{fig:coco-class}
 \end{figure}
 
+
+Calculating the mean and standard deviation of the bounding boxes and masks is crucial for generating more precise anchors, as it allows us to tailor the anchor sizes 
+and aspect ratios to the actual distribution of objects in the dataset. This not only improves detection accuracy by aligning the anchors more closely with the objects, 
+but also reduces unnecessary complexity by minimizing the need for an excessive number of anchors, which can lead to increased computational cost without performance gains.
+With that point in mind we calculated and store the following:
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Metric                     & Number of Pixel   \\ \hline
+        Mean Width                 & 100               \\ \hline
+        Mean Height                & 104               \\ \hline
+        Width Standard Deviation   & 123               \\ \hline
+        Height Standard Deviation  & 111               \\ \hline
+    \end{tabular}
+    \caption{Basic statistics of COCO dataset bounding boxes}
+    \label{tab:coco_bboxes}
+\end{table}
+
+
+\newpage
 \subsection{Unmanned Aerial Vehicle Small Object Detection}
 
 The UAV-SOD (Unmanned Aerial Vehicle Small Object Detection)  \cite{UAVSmallObjectKaggle}  dataset is specifically designed for advancing research in the area of object 
@@ -55,6 +79,23 @@ Class Distribution in UAV Small Object Detection:
 \end{figure}
 
 
+Once again computing the mean and standard deviation of the bounding boxes and masks helps ensure that the anchors are appropriately scaled to the objects in the dataset, 
+reducing unnecessary complexity in the model.
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Metric                     & Number of Pixel   \\ \hline
+        Mean Width                 & 19                \\ \hline
+        Mean Height                & 19                \\ \hline
+        Width Standard Deviation   & 16                \\ \hline
+        Height Standard Deviation  & 17                \\ \hline
+    \end{tabular}
+    \caption{Basic statistics of UAV-SOD dataset bounding boxes}
+    \label{tab:uav_bboxes}
+\end{table}
+
+\newpage
 \subsection{VisDrone}
 
 VisDrone \cite{VisDroneDataset} is a dataset designed for drone-based object detection, featuring $10,209$ images captured across various environments using different 
@@ -73,14 +114,34 @@ Class Distribution in VIS Drone:
     \label{fig:vis-class}
 \end{figure}
 
+By determining the mean and standard deviation of the bounding boxes and masks, we optimize the anchor generation process, leading to more efficient object detection 
+without adding unnecessary complexity. These variations convey the same core idea but in a more concise manner, assuming the main explanation has already been 
+provided for the first dataset.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Metric                     & Number of Pixel   \\ \hline
+        Mean Width                 & 15                \\ \hline
+        Mean Height                & 14                \\ \hline
+        Width Standard Deviation   & 16                \\ \hline
+        Height Standard Deviation  & 13                \\ \hline
+    \end{tabular}
+    \caption{Basic statistics of VisDrone dataset bounding boxes}
+    \label{tab:vis_bboxes}
+\end{table}
 
 
-As we can understand from the class distribution, we can understand that class imbalance is present in the datasets. Class imbalance poses a significant 
+\newpage
+From what we can detect in the class distributions, a significant class imbalance is present in the datasets. Class imbalance poses a 
 challenge in training because models trained on such data may develop a bias towards more common classes and perform poorly on rare classes. 
 We have to take this into consideration when choosing the evaluation metrics that give a more nuanced view of class-specific performance, such as 
-per-class accuracy or the F1-score, are crucial for assessing a model’s true effectiveness across the varied classes present in these datasets.
-
-
+per-class accuracy, are crucial for assessing a model’s true effectiveness across the varied classes present in these datasets.
+Finally the COCO 2017 dataset is commonly used as a benchmark in object detection tasks, though it is not specifically designed for small object detection. 
+The mean and standard deviation of its bounding box sizes indicate that it includes a wider range of object sizes, with many larger objects. While the COCO dataset 
+is useful for evaluating general object detection performance, datasets like UAV-SOD and VisDrone are more focused on small object detection, as reflected in 
+their much smaller average bounding box sizes, making them more appropriate for detecting smaller objects in complex environments.
 
 \newpage
 \section{Data Pre-Processing}
@@ -155,12 +216,12 @@ well across various conditions and datasets, guiding improvements and ensuring t
 with the basic definitions we have:
 
 \begin{enumerate}
-    \item True Positives (TP) are the predictions that correctly match the class of the ground truth AND Confidence and IoU scores are 
+    \item True Positives (TP) \cite{metrics} are the predictions that correctly match the class of the ground truth AND Confidence and IoU scores are 
     higher than their thresholds.
-    \item False Positive (FP) are the predictions that incorrectly predict a positive class when the ground truth is actually negative 
+    \item False Positive (FP) \cite{metrics} are the predictions that incorrectly predict a positive class when the ground truth is actually negative 
     OR the IoU score is lower than the threshold.
-    \item False Negative (FN) occurs when the model misses positive instances. It predicts a negative class when the ground truth is actually positive.
-    \item True Negative (TN) represents instances where the confidence score of a detection that is not supposed to detect anything is lower than 
+    \item False Negative (FN) \cite{metrics} occurs when the model misses positive instances. It predicts a negative class when the ground truth is actually positive.
+    \item True Negative (TN) \cite{metrics} represents instances where the confidence score of a detection that is not supposed to detect anything is lower than 
     the threshold. This metric is not used in the object detection field since there are too many boxes that should not detect an object in an image.
 \end{enumerate}
 
@@ -195,7 +256,7 @@ of predictions. It is a fundamental metric for determining whether a detection i
 \end{equation}
 
 
-Average Precision (AP) \cite{metrics}quantifies the precision of an object detector across different recall levels by taking the mean of precisions computed 
+Average Precision (AP) \cite{metrics} quantifies the precision of an object detector across different recall levels by taking the mean of precisions computed 
 at the point of each of the 11 recall levels. The precision at each recall level $r$ is interpolated by taking the maximum precision measured 
 for a method at any recall level $\geqslant r$
 
@@ -255,28 +316,31 @@ segmentation tasks. We evaluate the model's ability to accurately detect and seg
 performance on small objects, which pose significant challenges due to their limited visual information. For brevity and clarity, we will use the following 
 abbreviations throughout:
 
-\begin{enumerate}
+\begin{itemize}
     \item Masked-Attention Mask Transformer will be referred to as MAMT.
     \item Extended Masked-Attention Mask Transformer will be referred to as EMAMT.
-    \item Extended Feature Pyramid Network with a R-CNN will be referred to as EFPN.
-\end{enumerate}
+\end{itemize}
 
+
+The Mask2Former model has a Sliding Window (Swin-L) \cite{swin} backbone, pre-trained on the ImageNet-22K dataset, is the best performing model from the proposed 
+Mask2Former variations that we will compare our model against. It operates with 200 queries and was trained for 100 epochs utilizing a total of 216 million parameters. 
+This model is computationally intensive, requiring 868 gigaflops (FLOPS) and running at a speed of 4 frames per second (FPS). The use of a pre-trained 
+Swin-L backbone adds significant power to its feature extraction, but the high number of parameters and FLOPS highlight the overall complexity and 
+computational weight of the model, which can impact efficiency in high-performance tasks.
 
 \subsection{Microsoft Common Object in COntext (MS COCO)}
-As expected, the proposed methodology is lighter than original Masked-Attention Mask Transformer by xx\% but it is heavier than the Extended Fea. 
 
-Furthermore, when considering the average mAP across IoU thresholds ranging
-from 0.5 to 0.95, the proposed methodology.
-
+As expected, the proposed methodology is significantly lighter than original Masked-Attention Mask Transformer, where our model is 56\% lighter in terms of 
+number of trainable parameters. This complexity reduction comes at a performance drop of around 6.5\%, which is sensible given the great difference in parameters
+and complexity. We can see the performance of each model on the table \ref{tab:coco_results} along with the mAP across IoU thresholds ranging from 0.5 to 0.95.
 
 \begin{table}[h]
     \centering
-    \begin{tabular}{|c|c|c|c|c|}
+    \begin{tabular}{|c|c|c|c|c|c|}
         \hline
-        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
-        EMAMT              & --                     & --                       & 95M                 &  492             \\ \hline
-        MAMT               & --                     & --                       & 216M                &  868             \\ \hline
-        EFPN               & --                     & --                       & 35M                 &  537             \\ \hline
+        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}    & \textbf{Queries}   & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
+        EMAMT              & 44.5                   & 30.2                       & \textbf{100}       & \textbf{95M}        &  \textbf{492}     \\ \hline
+        MAMT               & \textbf{50.2}          & \textbf{38.8}              & 200                & 216M                &  868              \\ \hline
     \end{tabular}
     \caption{Results of training for COCO dataset}
     \label{tab:coco_results}
@@ -286,20 +350,19 @@ from 0.5 to 0.95, the proposed methodology.
 
 \subsection{Unmanned Aerial Vehicle Small Object Detection}
 
-Once again as expected, the proposed methodology is lighter than original Masked-Attention Mask Transformer by 9.51\%. 
-
-Furthermore, when considering the average mAP across IoU thresholds ranging
-from 0.5 to 0.95, the proposed methodology.
+As seen with the COCO dataset, the proposed methodology is substantially lighter. In the UAV-SOD dataset, this reduction in complexity results in a slight 
+performance improvement, with the EMAMT model outperforming MAMT by a margin of 3.1\% in mAP(@0.5) and 3.1\% in mAP(@0.5:0.95). This result is particularly notable 
+given the significant reduction in both parameters and FLOPs. The detailed results of the two models can be seen in Table \ref{tab:uav_results}, showing that our 
+lighter model maintains strong performance even in small object detection tasks.
 
 
 \begin{table}[h]
     \centering
-    \begin{tabular}{|c|c|c|c|c|}
+    \begin{tabular}{|c|c|c|c|c|c|}
         \hline
-        \textbf{Model}     & \textbf{mAP(@0.5)}    & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
-        EMAMT              & --                    & --                       & 95M                 &  492             \\ \hline
-        MAMT               & --                    & --                       & 216M                &  868             \\ \hline
-        EFPN               & --                    & --                       & 35M                 &  537             \\ \hline
+        \textbf{Model}     & \textbf{mAP(@0.5)}    & \textbf{mAP(@0.5:0.95)}    & \textbf{Queries}   & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
+        EMAMT              & \textbf{51.3}         & \textbf{39.2}              & \textbf{100}       & \textbf{95M}        &  \textbf{492}     \\ \hline
+        MAMT               & 48.2                  & 36.1                       & 200                & 216M                &  868              \\ \hline
     \end{tabular}
     \caption{Results of training for UAV-SOD dataset}
     \label{tab:uav_results}
@@ -309,22 +372,19 @@ from 0.5 to 0.95, the proposed methodology.
 
 \subsection{VisDrone}
 
-
-Finally the proposed methodology is lighter than original Masked-Attention Mask Transformer by 9.51\%. 
-
-Furthermore, when considering the average mAP across IoU thresholds ranging
-from 0.5 to 0.95, the proposed methodology.
-
+Similar to the UAV-SOD dataset, the proposed EMAMT model achieves a significant reduction in trainable parameters, being 56\% lighter than the original MAMT. 
+However, in the VisDrone dataset, this comes at a noticeable performance trade-off, with a drop of around 13.7\% in mAP(@0.5) and 10\% in mAP(@0.5:0.95). Despite 
+this reduction in performance, the lighter architecture of EMAMT offers benefits in terms of computational efficiency. As the table \ref{tab:vis_results} summarizes 
+the performance of both models, showcasing the balance between model complexity and detection performance on small object datasets.
 
 
 \begin{table}[h]
     \centering
-    \begin{tabular}{|c|c|c|c|c|}
+    \begin{tabular}{|c|c|c|c|c|c|}
         \hline
-        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
-        EMAMT              & --                     & --                       & 95M                 &  492             \\ \hline
-        MAMT               & --                     & --                       & 216M                &  868             \\ \hline
-        EFPN               & --                     & --                       & 35M                 &  800              \\ \hline
+        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}    & \textbf{Queries}   & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
+        EMAMT              & 39.5                   & 29.2                       & \textbf{100}       & \textbf{95M}        &  \textbf{492}     \\ \hline
+        MAMT               & \textbf{53.2}          & \textbf{39.2}              & 200                & 216M                &  868              \\ \hline
     \end{tabular}
     \caption{Results of training for VisDrone dataset}
     \label{tab:vis_results}
