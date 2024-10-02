@@ -1,101 +1,59 @@
+import re
+import json
+import matplotlib.pyplot as plt
+from PIL import Image, ImageDraw, ImageFont
+import numpy as np
 
-# import os
-# import chardet
-# import matplotlib.pyplot as plt
+def load_class_names(json_file):
+    with open(json_file, 'r') as file:
+        data = json.load(file)
+        class_names = data["UAV_SOD"]["CATEGORY_ID_TO_NAME"]
+    return class_names
 
-# def detect_encoding(file_path):
-#     with open(file_path, 'rb') as file:
-#         raw_data = file.read(5000)
-#         result = chardet.detect(raw_data)
-#         return result['encoding']
+def parse_annotations(annotation_path, class_names):
+    boxes = []
+    with open(annotation_path, 'r') as file:
+        for line in file:
+            parts = line.strip().split(',')
+            x_min, y_min, x_max, y_max, class_code = map(int, parts[:5])
+            class_name = class_names[str(class_code)]
+            mask_string = re.search(r'\[\((.*?)\)\]', line).group(1) # type: ignore
+            mask_coords = [tuple(map(int, pair.split(','))) for pair in mask_string.split('), (')]
+            # Calculate bounding box from mask
+            xs, ys = zip(*mask_coords)
+            mask_x_min, mask_x_max = min(xs), max(xs)
+            mask_y_min, mask_y_max = min(ys), max(ys)
+            boxes.append((x_min, y_min, x_max, y_max, class_name, mask_coords, (mask_x_min, mask_y_min, mask_x_max, mask_y_max)))
+    return boxes
 
-# def count_classes_in_annotations(file_path):
-#     class_counts = {}
-#     encoding = detect_encoding(file_path)
-#     with open(file_path, 'r', encoding=encoding, errors='ignore') as file:
-#         for line in file:
-#             try:
-#                 parts = line.strip().split(',')
-#                 class_code = int(parts[4])
-#                 if class_code in class_counts:
-#                     class_counts[class_code] += 1
-#                 else:
-#                     class_counts[class_code] = 1
-#             except Exception as e:
-#                 print(f"Error processing line in {file_path}: {e}")
-#     return class_counts
-
-# def process_dataset(base_path):
-#     subsets = ['train', 'test', 'validation']
-#     overall_counts = {}
-#     if not os.path.exists(os.path.join(base_path, 'test')):
-#         subsets.remove('test')
-#     for subset in subsets:
-#         subset_path = os.path.join(base_path, subset, 'annotations')
-#         for annotation_file in os.listdir(subset_path):
-#             file_path = os.path.join(subset_path, annotation_file)
-#             class_counts = count_classes_in_annotations(file_path)
-#             for class_code, count in class_counts.items():
-#                 if class_code in overall_counts:
-#                     overall_counts[class_code] += count
-#                 else:
-#                     overall_counts[class_code] = count
-#     return overall_counts
-
-# def plot_histogram(class_counts, dataset_name, class_mapping=None):
-#     if class_mapping:
-#         labels = {int(k): v for k, v in class_mapping.items()}
-#         # Map counts to class names
-#         named_counts = {labels[k]: v for k, v in class_counts.items() if k in labels}
-#         keys = list(named_counts.keys())
-#         values = list(named_counts.values())
-#     else:
-#         keys = list(class_counts.keys())
-#         values = list(class_counts.values())
-
-#     plt.figure(figsize=(10, 5))
-#     plt.bar(keys, values, color='blue', width=0.5)
-#     plt.xlabel('Class')
-#     plt.ylabel('Number of Instances')
-#     name = ""
+def plot_image_with_boxes_and_masks(image_path, boxes):
+    image = Image.open(image_path).convert("RGB")
+    draw = ImageDraw.Draw(image)
+    try:
+        font = ImageFont.truetype("arial.ttf", 16)
+    except IOError:
+        font = ImageFont.load_default()
+        
+        
+    for (x_min, y_min, x_max, y_max, class_name, mask_coords, mask_bbox) in boxes:
+        draw.rectangle([x_min, y_min, x_max, y_max], outline="red", width=2)
+        draw.rectangle(mask_bbox, outline="black", width=1)
+        text_position = (x_min, y_min - 10)
+        draw.text(text_position, class_name, fill="red", font=font)
+        draw.polygon(mask_coords, outline="black")
     
-#     if dataset_name == "coco2017":
-#         name = "COCO 2017"
-#     elif dataset_name == "uav_sod_data":
-#         name = "UAV Small Object Detection"
-#     else:
-#         name = "VIS Drone"
-    
-#     plt.title(f'Class Distribution in {name}')
-#     plt.tight_layout()    
-#     plt.savefig(f"{dataset_name}_class_distribution.png")
-#     plt.close()
+    image = np.array(image)
+    fig, ax = plt.subplots(figsize=(10, 10))
+    ax.imshow(image)
+    ax.axis('off')
+    ax.text(0.01, 1, "Ground Bounding Boxes", transform=ax.transAxes, fontsize=10, color='red', verticalalignment='top', bbox=dict(boxstyle="round", facecolor='white', edgecolor='red'))
+    ax.text(0.01, 0.97, "Ground Truth Masks", transform=ax.transAxes, fontsize=10, color='black', verticalalignment='top', bbox=dict(boxstyle="round", facecolor='white', edgecolor='black'))
+    plt.savefig("uav_ground_truth.jpg")
+    plt.show()
 
-# def main():
-#     class_mappings = {
-#         'uav_sod_data': {
-#             "1": "building", "2": "vehicle", "3": "ship", "4": "pool", "5": "quarry",
-#             "6": "well", "7": "house", "8": "cable-tower", "9": "mesh-cage", "10": "landslide"
-#         },
-#         'vis_drone_data': {
-#             "0": "ignore", "1": "pedestrian", "2": "people", "3": "bicycle", "4": "car",
-#             "5": "van", "6": "truck", "7": "tricycle", "8": "tricycle", "9": "bus", "10": "motor", "11": "others", "12": "obj"
-#         }
-#     }
-
-#     datasets = {
-#         'coco2017': 'data/coco2017',
-#         'uav_sod_data': 'data/uav_sod_data',
-#         'vis_drone_data': 'data/vis_drone_data'
-#     }
-
-#     for dataset_name, dataset_path in datasets.items():
-#         print(f"Processing {dataset_name}...")
-#         class_counts = process_dataset(dataset_path)
-#         class_mapping = class_mappings.get(dataset_name)
-#         plot_histogram(class_counts, dataset_name, class_mapping)
-#         print(f"Completed {dataset_name}. Saved histogram as '{dataset_name}_class_distribution.png'.")
-
-# if __name__ == "__main__":
-#     main()
-
+image_path = '1.jpg'
+annotation_path = '1.txt'
+json_file = 'src/code_map.json'
+class_names = load_class_names(json_file)
+boxes = parse_annotations(annotation_path, class_names)
+plot_image_with_boxes_and_masks(image_path, boxes)

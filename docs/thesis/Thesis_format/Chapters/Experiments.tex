@@ -347,13 +347,29 @@ and complexity. We can see the performance of each model on the table \ref{tab:c
 \end{table}
 
 
+On the plot seen on the Figrue  \ref{fig:coco-train}, both models demonstrate a rapid increase in mAP during the first 20 epochs, reflecting quick initial learning. 
+Afterward, the mAP increases more gradually, indicating that the models are nearing convergence. The MAMT model consistently outperforms EMAMT in both metrics, 
+achieving a higher final mAP. The mAP@0.5 performance of MAMT plateaus at around 50\%, while EMAMT stabilizes at 41.5\%. Similarly, for mAP@0.5:0.95, MAMT reaches 
+approximately 39\%, while EMAMT stabilizes around 30\%.
+
+These results highlight the trade-off between model complexity and performance. While EMAMT is a lighter model with fewer parameters, it shows a lower 
+overall performance compared to MAMT, which has a larger parameter count and FLOPs.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.55]{Figures/coco_train.jpg}
+    \caption{Performance comparison of MAMT and EMAMT on mAP at 50\% IoU threshold (left) and the average mAP across IoU thresholds from 50\% to 95\% (right) 
+    for the COCO2017 dataset}
+    \label{fig:coco-train}
+\end{figure}
+
 
 \subsection{Unmanned Aerial Vehicle Small Object Detection}
 
 As seen with the COCO dataset, the proposed methodology is substantially lighter. In the UAV-SOD dataset, this reduction in complexity results in a slight 
-performance improvement, with the EMAMT model outperforming MAMT by a margin of 3.1\% in mAP(@0.5) and 3.1\% in mAP(@0.5:0.95). This result is particularly notable 
-given the significant reduction in both parameters and FLOPs. The detailed results of the two models can be seen in Table \ref{tab:uav_results}, showing that our 
-lighter model maintains strong performance even in small object detection tasks.
+performance improvement, with the EMAMT model outperforming MAMT by a margin of 3.1\% in mAP(@0.5) and 3.1\% in mAP(@0.5:0.95). This result is particularly 
+notable given the significant reduction in both parameters and FLOPs. The detailed results of the two models can be seen in Table \ref{tab:uav_results}, 
+showing that our lighter model maintains strong performance even in small object detection tasks.
 
 
 \begin{table}[h]
@@ -368,6 +384,22 @@ lighter model maintains strong performance even in small object detection tasks.
     \label{tab:uav_results}
 \end{table}
 
+Once again both models exhibit a sharp rise in mAP during the first 20 epochs as presented , which signifies efficient early learning. After this initial phase, the 
+EMAMT model maintains a higher mAP throughout the training period compared to MAMT, indicating better performance in this dataset. The EMAMT model peaks 
+at an mAP@0.5 of approximately 51\%, while MAMT reaches around 48\%. Similarly, for mAP@0.5:0.95, EMAMT stabilizes at around 39\%, outperforming MAMT, 
+which plateaus at 36\%.
+
+These results suggest that EMAMT, despite having fewer parameters, manages to deliver superior performance on small object detection tasks, such as in 
+UAV-SOD, compared to the larger MAMT model. This highlights the potential of more efficient models to perform well in specialized scenarios where smaller 
+objects dominate the dataset.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.55]{Figures/uav_train.jpg}
+    \caption{Performance comparison of MAMT and EMAMT on mAP at 50\% IoU threshold (left) and the average mAP across IoU thresholds from 50\% to 95\% (right) 
+    for the UAV-SOD dataset}
+    \label{fig:uav-train}
+\end{figure}
 
 
 \subsection{VisDrone}
@@ -388,5 +420,21 @@ the performance of both models, showcasing the balance between model complexity 
     \end{tabular}
     \caption{Results of training for VisDrone dataset}
     \label{tab:vis_results}
-    
 \end{table}
+
+
+Similarly both models exhibit a sharp rise in performance during the first 20 epochs, with MAMT clearly outperforming EMAMT throughout the training. In the 
+mAP@0.5 plot, MAMT reaches a higher final performance of approximately 53\%, while EMAMT plateaus around 39\%. Similarly, for mAP@0.5:0.95, MAMT achieves 
+around 39\%, while EMAMT settles at around 29\%.
+
+These results highlight the stronger performance of MAMT over EMAMT for object detection in the VisDrone dataset, which contains small and challenging objects. 
+Despite being a lighter model, EMAMT shows a notable performance, but the more complex MAMT model offers a better ability to handle the intricacies of the dataset, 
+as seen by the significant gap in both metrics.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.55]{Figures/vis_train.jpg}
+    \caption{Performance comparison of MAMT and EMAMT on mAP at 50\% IoU threshold (left) and the average mAP across IoU thresholds from 50\% to 95\% (right) 
+    for the VisDrone dataset}
+    \label{fig:uav-train}
+\end{figure}
