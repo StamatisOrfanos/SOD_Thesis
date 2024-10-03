@@ -357,10 +357,33 @@ overall performance compared to MAMT, which has a larger parameter count and FLO
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.55]{Figures/coco_train.jpg}
+    \includegraphics[scale=0.45]{Figures/coco_train.jpg}
     \caption{Performance comparison of MAMT and EMAMT on mAP at 50\% IoU threshold (left) and the average mAP across IoU thresholds from 50\% to 95\% (right) 
     for the COCO2017 dataset}
     \label{fig:coco-train}
+\end{figure}
+
+
+As depicted in Figure \ref{fig:coco-images}, the model successfully detected all the labelled objects. Despite having a lower mAP, the model was able to find the objects with
+great precision with the bounding boxes predictions of the EFPN module and a very respectable accuracy by the masks created by the Mask2Former module of the 
+EMAMT. It is important to note, that the COCO2017 dataset had a big class imbalance and from what we can see in the Figure \ref{fig:coco-images}, the masks and the subsequent 
+bounding boxes from those masks are not as detailed for the objects like the airplanes as the person objects. This difference is to be expected based on the 
+class distribution, but we can clearly see that the mask and the created bounding box is accurate enough. 
+
+\begin{figure}[!h]
+    \captionsetup{justification=centering}
+    \centering
+    \begin{minipage}{0.4\textwidth}
+      \includegraphics[scale=0.35]{Figures/coco_ground_truth.jpg}
+      \caption{Ground Truth Bounding boxes and Masks}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.4\textwidth}
+      \includegraphics[scale=0.35]{Figures/coco_predictions.jpg}
+      \caption{Predicted Bounding boxes and Masks}
+    \end{minipage}
+    \caption{Comparison between ground truth and predictions of EMAMT for the COCO2017 dataset}
+    \label{fig:coco-images}
 \end{figure}
 
 
@@ -395,10 +418,33 @@ objects dominate the dataset.
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.55]{Figures/uav_train.jpg}
+    \includegraphics[scale=0.45]{Figures/uav_train.jpg}
     \caption{Performance comparison of MAMT and EMAMT on mAP at 50\% IoU threshold (left) and the average mAP across IoU thresholds from 50\% to 95\% (right) 
     for the UAV-SOD dataset}
     \label{fig:uav-train}
+\end{figure}
+
+
+
+As depicted in Figure \ref{fig:uav-images}, the model successfully detected all but one of the labelled objects. In this dataset the EMAMT model achieved the best 
+results eclipsing the original MAMT model. In this case we had a dataset, where the class imbalance is not as prominent and we have less than 100 objects per image, 
+a combination that created the best situation for the model. 
+
+
+\begin{figure}[!h]
+    \captionsetup{justification=centering}
+    \centering
+    \begin{minipage}{0.4\textwidth}
+      \includegraphics[scale=0.35]{Figures/uav_ground_truth.jpg}
+      \caption{Ground Truth Bounding boxes and Masks}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.4\textwidth}
+      \includegraphics[scale=0.35]{Figures/uav_predictions.jpg}
+      \caption{Predicted Bounding boxes and Masks}
+    \end{minipage}
+    \caption{Comparison between ground truth and predictions of EMAMT for the UAV-SOD dataset}
+    \label{fig:uav-images}
 \end{figure}
 
 
@@ -438,3 +484,28 @@ as seen by the significant gap in both metrics.
     for the VisDrone dataset}
     \label{fig:uav-train}
 \end{figure}
+
+
+
+As depicted in Figure \ref{fig:vis-images}, the model successfully detected most of the labelled objects. In this dataset we faced a variety of challenges including
+a variable number size and quite a lot of missing annotations. This led to model detecting correctly many more objects than annotated by the dataset. These problems
+can be found in both the train and validation set of the VisDrone dataset. 
+
+
+\begin{figure}[!h]
+    \captionsetup{justification=centering}
+    \centering
+    \begin{minipage}{0.4\textwidth}
+      \includegraphics[scale=0.35]{Figures/vis_ground_truth.jpg}
+      \caption{Ground Truth Bounding boxes and Masks}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.4\textwidth}
+      \includegraphics[scale=0.35]{Figures/vis_predictions.jpg}
+      \caption{Predicted Bounding boxes and Masks}
+    \end{minipage}
+    \caption{Comparison between ground truth and predictions of EMAMT for the VisDrone dataset}
+    \label{fig:vis-images}
+\end{figure}
+
+

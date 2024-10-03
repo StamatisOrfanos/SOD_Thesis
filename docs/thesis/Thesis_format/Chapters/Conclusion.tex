@@ -1,46 +1,26 @@
 \chapter{Conclusion}
 
-In this thesis, we introduced a novel network-level gradient path design for object
-detection models, incorporating both ‘top-down’ and ‘bottom-up’ pathways in the
-network’s ‘neck’. This method is versatile, with applicability to both single-stage
-and multi-stage models.
-Upon evaluating the performance of the original models and their modified
-counterparts using our proposed method, we arrived at the following
-conclusions:
+In this thesis, we introduced the Extended Masked-Attention Mask Transformer (EMAMT), leveraging a novel integration of the 
+Enhanced Feature Pyramid Network (EFPN) backbone with the Mask2Former framework to enhance object detection capabilities. 
+This architectural evolution aimed at improving efficiency and accuracy, particularly in challenging environments involving small object detection.
 
+Upon evaluating the performance of EMAMT against the traditional Masked-Attention Mask Transformer (MAMT) equipped with a Sliding Window Transformer (Swin-L) 
+backbone, our findings are as follows:
 
-The application of our method to single-stage models results in a more
-significant reduction in computational resources compared to its
-application to multi-stage models.
-• Despite its lower efficiency with multi-stage models, our proposed method
-can still be beneficial when the demand for computational resources
-outweighs the need for model precision.
-• The modified two-stage model, while being 9.51% lighter than its original
-version, does exhibit a decrease in performance. Specifically, its mAP at a
-0.5 IoU threshold is at least 7.8% lower, and the average mAP across IoU
-thresholds from 0.5 to 0.95 is at least 3.6% lower.
-• The one-stage model, when modified with our proposed method, becomes
-32.67% lighter than its original version with a small decrease in mAP by
-1.6% at 0.5 IoU threshold and average mAP across IoU thresholds from
-0.5 to 0.95.
-• Interestingly, on a remote sensing images dataset, the performance of the
-modified one-stage model improves by at least 6.3% mAP at a 0.5 IoU
-threshold and by 2.4% average mAP across IoU thresholds from 0.5 to
-0.95.
-In future work, we intend to further investigate the performance differences that
-we have noticed between the single-stage and two-stage models. A key question
-that emerged from our study is why the two-stage model did not yield similar
-results to the single-stage model. Unravelling this mystery will be a primary focus,
+\begin{itemize}
+    \item EMAMT demonstrates substantial computational efficiency, reducing model complexity by up to 56\% in terms of the number of trainable parameters compared to MAMT.
+    \item In the UAV-SOD dataset, EMAMT not only matched but also slightly exceeded the performance of MAMT, showcasing its suitability for aerial based small object detection tasks.
+    \item Conversely, in datasets characterized by diverse object sizes and dense urban environments, such as MS COCO and VisDrone, EMAMT exhibited reductions in mean Average Precision (mAP) by 6.5\% and 13.7\%, respectively. 
+\end{itemize}
 
+For future work, we intend to investigate deeper into EMAMT’s capabilities across a broader spectrum of datasets, aiming to minimize the performance gaps. 
+This includes creating a better mechanism to handle the variety of number of object per image, optimizing the interaction between the EFPN backbone and Mask2Former 
+found in datasets like VisDrone and MS COCO. Furthermore, we plan to investigate the specific contributions of each of the five feature maps used in the EMAMT architecture. 
+By evaluating the impact of each feature map on overall model performance, we aim to identify opportunities to streamline the model further. This could lead to a 
+reduction in computational complexity without significant sacrifices in accuracy, especially if some feature maps prove to be less informative than anticipated. 
+This analysis will be crucial for optimizing the balance between model depth and performance efficiency.
 
-as it has the potential to yield a useful understanding of the fundamental
-mechanics of these models and inspire future techniques for optimisation.
-Additionally, we plan to work on enhancing the performance of multi-stage
-models. While our proposed method showed promising results with single-stage
-models, its effectiveness was less noticeable when used with multi-stage models.
-We believe there is potential for improvement in this area.
-Lastly, to ensure the generalizability of our findings, we intend to experiment with
-a broader range of single-stage models, including various versions of YOLO. This
-will help us determine whether the results obtained from the TPH-YOLOv5
-model apply to a diverse range of models, thereby solidifying the robustness of
-our proposed method.
+Additionally, the exploration of further reducing computational demands without compromising the accuracy will be crucial, especially for real-time applications. 
+We also plan to extend our testing to include additional object detection frameworks and datasets to verify the generalizability and robustness of EMAMT across 
+different scenarios, which will help in further solidifying its efficacy and applicability in practical applications.
+
