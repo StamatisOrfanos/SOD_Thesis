@@ -33,4 +33,6 @@
 \contentsline {section}{\numberline {5.1}Differences between models}{41}{section.5.1}%
 \contentsline {section}{\numberline {5.2}Performance difference between datasets}{41}{section.5.2}%
 \contentsline {chapter}{\numberline {6}Conclusion}{43}{chapter.6}%
-\contentsline {chapter}{\numberline {A}Appendix A}{46}{appendix.A}%
+\contentsline {chapter}{\numberline {A}Appendix}{46}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Source Code Repository}{46}{section.A.1}%
+\contentsline {section}{\numberline {A.2}ExtendedMask2Former Class}{46}{section.A.2}%
