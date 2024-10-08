@@ -104,9 +104,9 @@
   of the detection models.
 
   \begin{itemize}
-    \item \hyperlink{https://cocodataset.org/}{Microsoft Common Object in COntext dataset}
-    \item \hyperlink{https://github.com/VisDrone/VisDrone-Dataset}{Vis-Drone dataset}
-    \item \hyperlink{https://www.kaggle.com/datasets/sovitrath/uav-small-object-detection-dataset}{Unmaned Arieal Vehicles - Small Object detection dataset}
+    \item \href{https://cocodataset.org/}{Microsoft Common Object in COntext dataset}
+    \item \href{https://github.com/VisDrone/VisDrone-Dataset}{Vis-Drone dataset}
+    \item \href{https://www.kaggle.com/datasets/sovitrath/uav-small-object-detection-dataset}{Unmaned Arieal Vehicles - Small Object detection dataset}
   \end{itemize}
 \end{frame}
 
@@ -314,9 +314,8 @@
 
 
 
-
+\section{Proposed Method}
 \begin{frame}
-  \frametitle{Proposed Method}
   \frametitle{Proposed Method}
   \begin{figure}[h!]
     \centering
@@ -547,11 +546,31 @@
 
 
 \section{Conclusion}
-\begin{frame}
-  \frametitle{Conclusion}
-  % Conclusion content goes here.
+\begin{frame}[t]
+  \frametitle{Conclusion: Overview and Achievements}
+  We introduced the \textit{Extended Masked-Attention Mask Transformer (EMAMT)}, integrating the Enhanced Feature Pyramid Network (EFPN) with Mask2Former, aiming at enhanced efficiency and accuracy in object detection.
+
+  \textbf{Key Findings:}
+  \begin{itemize}
+    \item EMAMT achieved up to 56\% reduction in model complexity compared to the traditional Masked-Attention Mask Transformer (MAMT).
+    \item EMAMT surpassed MAMT in performance on the UAV-SOD dataset, affirming its effectiveness in aerial small object detection.
+    \item In more diverse environments like MS COCO and VisDrone, EMAMT showed reductions in mAP by 6.5\% and 13.7\%, highlighting areas for further optimization.
+  \end{itemize}
 \end{frame}
 
+\begin{frame}[t]
+  \frametitle{Future Work}
+  \textbf{Planned Investigations and Optimizations:}
+  \begin{itemize}
+    \item Detailed analysis of each feature map in EMAMT to assess their individual contributions and optimize model structure.
+    \item Explore strategies to further reduce computational demands while maintaining accuracy, crucial for real-time applications.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \centering
+  \Large{Thank you for your attention and time.}
+\end{frame}
 
 
 \end{document}
