@@ -12,7 +12,7 @@ on detection accuracy. This reduction in size facilitates a lower computational 
 original MAMT's 868 gigaflops, potentially enhancing deployment capabilities on resource constrained platforms.
 
 However, this efficiency comes with trade-offs. The performance of EMAMT, while impressive, generally trails behind that of MAMT when measured by 
-mean Average Precision (mAP) across various Intersection over Union (IoU) thresholds. For instance, on the MS COCO dataset, EMAMT shows a performance drop 
+mean Average Precision (mAP) across various Intersection over Union thresholds. For instance, on the MS COCO dataset, EMAMT shows a performance drop 
 of about 6.5\% in mAP when compared to MAMT. Despite this, it still maintains a competitive edge in scenarios involving small objects, as evidenced by its 
 performance on datasets specifically challenging for object scale, like UAV-SOD.
 
@@ -31,16 +31,16 @@ just as critical as accuracy. This balance is crucial for real world application
 
 \section{Performance difference between datasets}
 
-The Extended Masked-Attention Mask Transformer (EMAMT) has been benchmarked across three distinct datasets—MS COCO, UAV-SOD, and VisDrone, each providing unique 
-insights into its performance nuances compared to the original Masked-Attention Mask Transformer (MAMT).
+The Extended Masked-Attention Mask Transformer has been benchmarked across three distinct datasets—MS COCO, UAV-SOD, and VisDrone, each providing unique 
+insights into its performance nuances compared to the original Masked-Attention Mask Transformer.
 
 In the MS COCO dataset, characterized by its diverse and complex scenes, EMAMT showed a decrease in performance, with a drop of approximately 6.5\% in 
-mean Average Precision (mAP). This illustrates the trade-offs of a reduced computational footprint, where EMAMT sacrifices some accuracy for efficiency, 
+mean Average Precision. This illustrates the trade-offs of a reduced computational footprint, where EMAMT sacrifices some accuracy for efficiency, 
 particularly in scenarios with objects that are rare in the dataset.
 
-On the other hand the EMAMT model excelled in the UAV-SOD dataset, which focuses on small object detection from aerial views. Here, the model slightly outperformed the MAMT model, 
-underscoring its effectiveness in environments where its optimized architecture for aerial imagery and small scale object detection could be fully leveraged. 
-This suggests that EMAMT’s design, which includes an Enhanced Feature Pyramid Network (EFPN) backbone, is particularly well suited for parsing the details required 
+On the other hand the EMAMT model excelled in the UAV-SOD dataset, which focuses on small object detection from aerial views. Here, the model slightly outperformed the 
+MAMT model, underscoring its effectiveness in environments where its optimized architecture for aerial imagery and small scale object detection could be fully leveraged. 
+This suggests that EMAMT’s design, which includes an Enhanced Feature Pyramid Network backbone, is particularly well suited for parsing the details required 
 in drone based monitoring.
 
 However, the performance in the VisDrone dataset, with its varied object numbers and missing annotations. The model saw a significant reduction 

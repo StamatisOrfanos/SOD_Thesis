@@ -1,16 +1,16 @@
 \chapter{Conclusion}
 
-In this thesis, we introduced the Extended Masked-Attention Mask Transformer (EMAMT), leveraging a novel integration of the 
+In this thesis, we introduced the Extended Masked-Attention Mask Transformer, leveraging a novel integration of the 
 Enhanced Feature Pyramid Network (EFPN) backbone with the Mask2Former framework to enhance object detection capabilities. 
 This architectural evolution aimed at improving efficiency and accuracy, particularly in challenging environments involving small object detection.
 
-Upon evaluating the performance of EMAMT against the traditional Masked-Attention Mask Transformer (MAMT) equipped with a Sliding Window Transformer (Swin-L) 
+Upon evaluating the performance of EMAMT against the traditional Masked-Attention Mask Transformer equipped with a Sliding Window Transformer
 backbone, our findings are as follows:
 
 \begin{itemize}
     \item EMAMT demonstrates substantial computational efficiency, reducing model complexity by up to 56\% in terms of the number of trainable parameters compared to MAMT.
     \item In the UAV-SOD dataset, EMAMT not only matched but also slightly exceeded the performance of MAMT, showcasing its suitability for aerial based small object detection tasks.
-    \item Conversely, in datasets characterized by diverse object sizes and dense urban environments, such as MS COCO and VisDrone, EMAMT exhibited reductions in mean Average Precision (mAP) by 6.5\% and 13.7\%, respectively. 
+    \item Conversely, in datasets characterized by diverse object sizes and dense urban environments, such as MS COCO and VisDrone, EMAMT exhibited reductions in mean Average Precision by 6.5\% and 13.7\%, respectively. 
 \end{itemize}
 
 For future work, we intend to investigate deeper into EMAMT’s capabilities across a broader spectrum of datasets, aiming to minimize the performance gaps. 
