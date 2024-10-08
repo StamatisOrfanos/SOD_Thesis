@@ -26,6 +26,8 @@ This split ensures that models can be trained on a large set of images and param
 are performed on the test set. The use of MS COCO for competition and research has helped advance the field of computer vision by providing a challenging 
 set of images and annotations that test the limits of both existing and novel visual recognition models.
 
+\newpage
+
 Class Distribution in COCO 2017:
 
 \begin{figure}[h!]
@@ -35,6 +37,28 @@ Class Distribution in COCO 2017:
     \label{fig:coco-class}
 \end{figure}
 
+
+Calculating the mean and standard deviation of the bounding boxes and masks is crucial for generating more precise anchors, as it allows us to tailor the anchor sizes 
+and aspect ratios to the actual distribution of objects in the dataset. This not only improves detection accuracy by aligning the anchors more closely with the objects, 
+but also reduces unnecessary complexity by minimizing the need for an excessive number of anchors, which can lead to increased computational cost without performance gains.
+With that point in mind we calculated and store the following:
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Metric                     & Number of Pixel   \\ \hline
+        Mean Width                 & 100               \\ \hline
+        Mean Height                & 104               \\ \hline
+        Width Standard Deviation   & 123               \\ \hline
+        Height Standard Deviation  & 111               \\ \hline
+    \end{tabular}
+    \caption{Basic statistics of COCO dataset bounding boxes}
+    \label{tab:coco_bboxes}
+\end{table}
+
+
+\newpage
 \subsection{Unmanned Aerial Vehicle Small Object Detection}
 
 The UAV-SOD (Unmanned Aerial Vehicle Small Object Detection)  \cite{UAVSmallObjectKaggle}  dataset is specifically designed for advancing research in the area of object 
@@ -55,6 +79,23 @@ Class Distribution in UAV Small Object Detection:
 \end{figure}
 
 
+Once again computing the mean and standard deviation of the bounding boxes and masks helps ensure that the anchors are appropriately scaled to the objects in the dataset, 
+reducing unnecessary complexity in the model.
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Metric                     & Number of Pixel   \\ \hline
+        Mean Width                 & 19                \\ \hline
+        Mean Height                & 19                \\ \hline
+        Width Standard Deviation   & 16                \\ \hline
+        Height Standard Deviation  & 17                \\ \hline
+    \end{tabular}
+    \caption{Basic statistics of UAV-SOD dataset bounding boxes}
+    \label{tab:uav_bboxes}
+\end{table}
+
+\newpage
 \subsection{VisDrone}
 
 VisDrone \cite{VisDroneDataset} is a dataset designed for drone-based object detection, featuring $10,209$ images captured across various environments using different 
@@ -73,14 +114,34 @@ Class Distribution in VIS Drone:
     \label{fig:vis-class}
 \end{figure}
 
+By determining the mean and standard deviation of the bounding boxes and masks, we optimize the anchor generation process, leading to more efficient object detection 
+without adding unnecessary complexity. These variations convey the same core idea but in a more concise manner, assuming the main explanation has already been 
+provided for the first dataset.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Metric                     & Number of Pixel   \\ \hline
+        Mean Width                 & 15                \\ \hline
+        Mean Height                & 14                \\ \hline
+        Width Standard Deviation   & 16                \\ \hline
+        Height Standard Deviation  & 13                \\ \hline
+    \end{tabular}
+    \caption{Basic statistics of VisDrone dataset bounding boxes}
+    \label{tab:vis_bboxes}
+\end{table}
 
 
-As we can understand from the class distribution, we can understand that class imbalance is present in the datasets. Class imbalance poses a significant 
+\newpage
+From what we can detect in the class distributions, a significant class imbalance is present in the datasets. Class imbalance poses a 
 challenge in training because models trained on such data may develop a bias towards more common classes and perform poorly on rare classes. 
 We have to take this into consideration when choosing the evaluation metrics that give a more nuanced view of class-specific performance, such as 
-per-class accuracy or the F1-score, are crucial for assessing a model’s true effectiveness across the varied classes present in these datasets.
-
-
+per-class accuracy, are crucial for assessing a model’s true effectiveness across the varied classes present in these datasets.
+Finally the COCO 2017 dataset is commonly used as a benchmark in object detection tasks, though it is not specifically designed for small object detection. 
+The mean and standard deviation of its bounding box sizes indicate that it includes a wider range of object sizes, with many larger objects. While the COCO dataset 
+is useful for evaluating general object detection performance, datasets like UAV-SOD and VisDrone are more focused on small object detection, as reflected in 
+their much smaller average bounding box sizes, making them more appropriate for detecting smaller objects in complex environments.
 
 \newpage
 \section{Data Pre-Processing}
@@ -155,12 +216,12 @@ well across various conditions and datasets, guiding improvements and ensuring t
 with the basic definitions we have:
 
 \begin{enumerate}
-    \item True Positives (TP) are the predictions that correctly match the class of the ground truth AND Confidence and IoU scores are 
+    \item True Positives (TP) \cite{metrics} are the predictions that correctly match the class of the ground truth AND Confidence and IoU scores are 
     higher than their thresholds.
-    \item False Positive (FP) are the predictions that incorrectly predict a positive class when the ground truth is actually negative 
+    \item False Positive (FP) \cite{metrics} are the predictions that incorrectly predict a positive class when the ground truth is actually negative 
     OR the IoU score is lower than the threshold.
-    \item False Negative (FN) occurs when the model misses positive instances. It predicts a negative class when the ground truth is actually positive.
-    \item True Negative (TN) represents instances where the confidence score of a detection that is not supposed to detect anything is lower than 
+    \item False Negative (FN) \cite{metrics} occurs when the model misses positive instances. It predicts a negative class when the ground truth is actually positive.
+    \item True Negative (TN) \cite{metrics} represents instances where the confidence score of a detection that is not supposed to detect anything is lower than 
     the threshold. This metric is not used in the object detection field since there are too many boxes that should not detect an object in an image.
 \end{enumerate}
 
@@ -195,7 +256,7 @@ of predictions. It is a fundamental metric for determining whether a detection i
 \end{equation}
 
 
-Average Precision (AP) \cite{metrics}quantifies the precision of an object detector across different recall levels by taking the mean of precisions computed 
+Average Precision (AP) \cite{metrics} quantifies the precision of an object detector across different recall levels by taking the mean of precisions computed 
 at the point of each of the 11 recall levels. The precision at each recall level $r$ is interpolated by taking the maximum precision measured 
 for a method at any recall level $\geqslant r$
 
@@ -226,7 +287,7 @@ computing resources of the \textit{ml.p4d.24xlarge} instance, we were able to ef
 
 To provide clarity on our training setup and ensure reproducibility, the table \ref{tab:training_parameters} summarizes the key training parameters used for the 
 Extended Masked-Attention Mask Transformer. These parameters were carefully selected based on extensive experimentation to achieve an optimal balance between 
-convergence speed and model accuracy. 
+convergence speed and model accuracy.
 \begin{table}[h]
 \centering
 \begin{tabular}{|c|c|c|c|}
@@ -255,78 +316,196 @@ segmentation tasks. We evaluate the model's ability to accurately detect and seg
 performance on small objects, which pose significant challenges due to their limited visual information. For brevity and clarity, we will use the following 
 abbreviations throughout:
 
-\begin{enumerate}
+\begin{itemize}
     \item Masked-Attention Mask Transformer will be referred to as MAMT.
     \item Extended Masked-Attention Mask Transformer will be referred to as EMAMT.
-    \item Extended Feature Pyramid Network with a R-CNN will be referred to as EFPN.
-\end{enumerate}
+\end{itemize}
 
+
+The Mask2Former model has a Sliding Window (Swin-L) \cite{swin} backbone, pre-trained on the ImageNet-22K dataset, is the best performing model from the proposed 
+Mask2Former variations that we will compare our model against. It operates with 200 queries and was trained for 100 epochs utilizing a total of 216 million parameters. 
+This model is computationally intensive, requiring 868 gigaflops (FLOPS) and running at a speed of 4 frames per second (FPS). The use of a pre-trained 
+Swin-L backbone adds significant power to its feature extraction, but the high number of parameters and FLOPS highlight the overall complexity and 
+computational weight of the model, which can impact efficiency in high-performance tasks.
 
 \subsection{Microsoft Common Object in COntext (MS COCO)}
-As expected, the proposed methodology is lighter than original Masked-Attention Mask Transformer by xx\% but it is heavier than the Extended Fea. 
 
-Furthermore, when considering the average mAP across IoU thresholds ranging
-from 0.5 to 0.95, the proposed methodology.
-
+As expected, the proposed methodology is significantly lighter than original Masked-Attention Mask Transformer, where our model is 56\% lighter in terms of 
+number of trainable parameters. This complexity reduction comes at a performance drop of around 6.5\%, which is sensible given the great difference in parameters
+and complexity. We can see the performance of each model on the table \ref{tab:coco_results} along with the mAP across IoU thresholds ranging from 0.5 to 0.95.
 
 \begin{table}[h]
     \centering
-    \begin{tabular}{|c|c|c|c|c|}
+    \begin{tabular}{|c|c|c|c|c|c|}
         \hline
-        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
-        EMAMT              & --                     & --                       & 95M                 &  492             \\ \hline
-        MAMT               & --                     & --                       & 216M                &  868             \\ \hline
-        EFPN               & --                     & --                       & 35M                 &  537             \\ \hline
+        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}    & \textbf{Queries}   & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
+        EMAMT              & 44.5                   & 30.2                       & \textbf{100}       & \textbf{95M}        &  \textbf{492}     \\ \hline
+        MAMT               & \textbf{50.2}          & \textbf{38.8}              & 200                & 216M                &  868              \\ \hline
     \end{tabular}
-    \caption{Results of training for COCO dataset}
+    \caption{Results for COCO dataset}
     \label{tab:coco_results}
 \end{table}
 
 
+On the plot seen on the Figrue  \ref{fig:coco-train}, both models demonstrate a rapid increase in mAP during the first 20 epochs, reflecting quick initial learning. 
+Afterward, the mAP increases more gradually, indicating that the models are nearing convergence. The MAMT model consistently outperforms EMAMT in both metrics, 
+achieving a higher final mAP. The mAP@0.5 performance of MAMT plateaus at around 50\%, while EMAMT stabilizes at 41.5\%. Similarly, for mAP@0.5:0.95, MAMT reaches 
+approximately 39\%, while EMAMT stabilizes around 30\%.
+
+These results highlight the trade-off between model complexity and performance. While EMAMT is a lighter model with fewer parameters, it shows a lower 
+overall performance compared to MAMT, which has a larger parameter count and FLOPs.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.45]{Figures/coco_train.jpg}
+    \caption{Performance comparison of MAMT and EMAMT on mAP at 50\% IoU threshold (left) and the average mAP across IoU thresholds from 50\% to 95\% (right) 
+    for the COCO2017 dataset}
+    \label{fig:coco-train}
+\end{figure}
+
+
+As depicted in Figure \ref{fig:coco-images}, the model successfully detected all the labelled objects. Despite having a lower mAP, the model was able to find the objects with
+great precision with the bounding boxes predictions of the EFPN module and a very respectable accuracy by the masks created by the Mask2Former module of the 
+EMAMT. It is important to note, that the COCO2017 dataset had a big class imbalance and from what we can see in the Figure \ref{fig:coco-images}, the masks and the subsequent 
+bounding boxes from those masks are not as detailed for the objects like the airplanes as the person objects. This difference is to be expected based on the 
+class distribution, but we can clearly see that the mask and the created bounding box is accurate enough. 
+
+\begin{figure}[!h]
+    \captionsetup{justification=centering}
+    \centering
+    \begin{minipage}{0.4\textwidth}
+      \includegraphics[scale=0.35]{Figures/coco_ground_truth.jpg}
+      \caption{Ground Truth Bounding boxes and Masks}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.4\textwidth}
+      \includegraphics[scale=0.35]{Figures/coco_predictions.jpg}
+      \caption{Predicted Bounding boxes and Masks}
+    \end{minipage}
+    \caption{Comparison between ground truth and predictions of EMAMT for the COCO2017 dataset}
+    \label{fig:coco-images}
+\end{figure}
+
 
 \subsection{Unmanned Aerial Vehicle Small Object Detection}
 
-Once again as expected, the proposed methodology is lighter than original Masked-Attention Mask Transformer by 9.51\%. 
-
-Furthermore, when considering the average mAP across IoU thresholds ranging
-from 0.5 to 0.95, the proposed methodology.
+As seen with the COCO dataset, the proposed methodology is substantially lighter. In the UAV-SOD dataset, this reduction in complexity results in a slight 
+performance improvement, with the EMAMT model outperforming MAMT by a margin of 3.1\% in mAP(@0.5) and 3.1\% in mAP(@0.5:0.95). This result is particularly 
+notable given the significant reduction in both parameters and FLOPs. The detailed results of the two models can be seen in Table \ref{tab:uav_results}, 
+showing that our lighter model maintains strong performance even in small object detection tasks.
 
 
 \begin{table}[h]
     \centering
-    \begin{tabular}{|c|c|c|c|c|}
+    \begin{tabular}{|c|c|c|c|c|c|}
         \hline
-        \textbf{Model}     & \textbf{mAP(@0.5)}    & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
-        EMAMT              & --                    & --                       & 95M                 &  492             \\ \hline
-        MAMT               & --                    & --                       & 216M                &  868             \\ \hline
-        EFPN               & --                    & --                       & 35M                 &  537             \\ \hline
+        \textbf{Model}     & \textbf{mAP(@0.5)}    & \textbf{mAP(@0.5:0.95)}    & \textbf{Queries}   & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
+        EMAMT              & \textbf{51.3}         & \textbf{39.2}              & \textbf{100}       & \textbf{95M}        &  \textbf{492}     \\ \hline
+        MAMT               & 48.2                  & 36.1                       & 200                & 216M                &  868              \\ \hline
     \end{tabular}
-    \caption{Results of training for UAV-SOD dataset}
+    \caption{Results for UAV-SOD dataset}
     \label{tab:uav_results}
 \end{table}
 
+Once again both models exhibit a sharp rise in mAP during the first 20 epochs as presented , which signifies efficient early learning. After this initial phase, the 
+EMAMT model maintains a higher mAP throughout the training period compared to MAMT, indicating better performance in this dataset. The EMAMT model peaks 
+at an mAP@0.5 of approximately 51\%, while MAMT reaches around 48\%. Similarly, for mAP@0.5:0.95, EMAMT stabilizes at around 39\%, outperforming MAMT, 
+which plateaus at 36\%.
+
+These results suggest that EMAMT, despite having fewer parameters, manages to deliver superior performance on small object detection tasks, such as in 
+UAV-SOD, compared to the larger MAMT model. This highlights the potential of more efficient models to perform well in specialized scenarios where smaller 
+objects dominate the dataset.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.45]{Figures/uav_train.jpg}
+    \caption{Performance comparison of MAMT and EMAMT on mAP at 50\% IoU threshold (left) and the average mAP across IoU thresholds from 50\% to 95\% (right) 
+    for the UAV-SOD dataset}
+    \label{fig:uav-train}
+\end{figure}
+
+
+
+As depicted in Figure \ref{fig:uav-images}, the model successfully detected all but one of the labelled objects. In this dataset the EMAMT model achieved the best 
+results eclipsing the original MAMT model. In this case we had a dataset, where the class imbalance is not as prominent and we have less than 100 objects per image, 
+a combination that created the best situation for the model. 
+
+
+\begin{figure}[!h]
+    \captionsetup{justification=centering}
+    \centering
+    \begin{minipage}{0.4\textwidth}
+      \includegraphics[scale=0.35]{Figures/uav_ground_truth.jpg}
+      \caption{Ground Truth Bounding boxes and Masks}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.4\textwidth}
+      \includegraphics[scale=0.35]{Figures/uav_predictions.jpg}
+      \caption{Predicted Bounding boxes and Masks}
+    \end{minipage}
+    \caption{Comparison between ground truth and predictions of EMAMT for the UAV-SOD dataset}
+    \label{fig:uav-images}
+\end{figure}
 
 
 \subsection{VisDrone}
 
-
-Finally the proposed methodology is lighter than original Masked-Attention Mask Transformer by 9.51\%. 
-
-Furthermore, when considering the average mAP across IoU thresholds ranging
-from 0.5 to 0.95, the proposed methodology.
-
+Similar to the UAV-SOD dataset, the proposed EMAMT model achieves a significant reduction in trainable parameters, being 56\% lighter than the original MAMT. 
+However, in the VisDrone dataset, this comes at a noticeable performance trade-off, with a drop of around 13.7\% in mAP(@0.5) and 10\% in mAP(@0.5:0.95). Despite 
+this reduction in performance, the lighter architecture of EMAMT offers benefits in terms of computational efficiency. As the table \ref{tab:vis_results} summarizes 
+the performance of both models, showcasing the balance between model complexity and detection performance on small object datasets.
 
 
 \begin{table}[h]
     \centering
-    \begin{tabular}{|c|c|c|c|c|}
+    \begin{tabular}{|c|c|c|c|c|c|}
         \hline
-        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}  & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
-        EMAMT              & --                     & --                       & 95M                 &  492             \\ \hline
-        MAMT               & --                     & --                       & 216M                &  868             \\ \hline
-        EFPN               & --                     & --                       & 35M                 &  800              \\ \hline
+        \textbf{Model}     & \textbf{mAP(@0.5)}     & \textbf{mAP(@0.5:0.95)}    & \textbf{Queries}   & \textbf{Parameters} & \textbf{GFLOPs}  \\ \hline
+        EMAMT              & 39.5                   & 29.2                       & \textbf{100}       & \textbf{95M}        &  \textbf{492}     \\ \hline
+        MAMT               & \textbf{53.2}          & \textbf{39.2}              & 200                & 216M                &  868              \\ \hline
     \end{tabular}
-    \caption{Results of training for VisDrone dataset}
+    \caption{Results for VisDrone dataset}
     \label{tab:vis_results}
-    
 \end{table}
+
+
+Similarly both models exhibit a sharp rise in performance during the first 20 epochs, with MAMT clearly outperforming EMAMT throughout the training. In the 
+mAP@0.5 plot, MAMT reaches a higher final performance of approximately 53\%, while EMAMT plateaus around 39\%. Similarly, for mAP@0.5:0.95, MAMT achieves 
+around 39\%, while EMAMT settles at around 29\%.
+
+These results highlight the stronger performance of MAMT over EMAMT for object detection in the VisDrone dataset, which contains small and challenging objects. 
+Despite being a lighter model, EMAMT shows a notable performance, but the more complex MAMT model offers a better ability to handle the intricacies of the dataset, 
+as seen by the significant gap in both metrics.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.55]{Figures/vis_train.jpg}
+    \caption{Performance comparison of MAMT and EMAMT on mAP at 50\% IoU threshold (left) and the average mAP across IoU thresholds from 50\% to 95\% (right) 
+    for the VisDrone dataset}
+    \label{fig:uav-train}
+\end{figure}
+
+
+
+As depicted in Figure \ref{fig:vis-images}, the model successfully detected most of the labelled objects. In this dataset we faced a variety of challenges including
+a variable number size and quite a lot of missing annotations. This led to model detecting correctly many more objects than annotated by the dataset. These problems
+can be found in both the train and validation set of the VisDrone dataset. 
+
+
+\begin{figure}[!h]
+    \captionsetup{justification=centering}
+    \centering
+    \begin{minipage}{0.4\textwidth}
+      \includegraphics[scale=0.35]{Figures/vis_ground_truth.jpg}
+      \caption{Ground Truth Bounding boxes and Masks}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.4\textwidth}
+      \includegraphics[scale=0.35]{Figures/vis_predictions.jpg}
+      \caption{Predicted Bounding boxes and Masks}
+    \end{minipage}
+    \caption{Comparison between ground truth and predictions of EMAMT for the VisDrone dataset}
+    \label{fig:vis-images}
+\end{figure}
+
+

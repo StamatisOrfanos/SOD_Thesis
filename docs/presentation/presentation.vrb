@@ -1,0 +1,12 @@
+\frametitle{Data Preprocessing Steps}
+  \begin{itemize}
+    \item Annotation format standardization for consistency across datasets.
+    \item Normalization of image pixel values using dataset-specific mean and standard deviation.
+    \item Create masks from bounding box coordinates.
+  \end{itemize}
+
+  \textbf{Annotation Format Example:}
+  \begin{lstlisting}
+    x_min, y_min, x_max, y_max, class_id, [(x1, y1), (x2, y2), ...]
+  \end{lstlisting}
+
