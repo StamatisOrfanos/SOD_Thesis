@@ -284,17 +284,35 @@
 \end{frame}
 
 
-
 \section{Object Detection Metrics}
 \begin{frame}
-  \frametitle{Object Detection Metrics}
-  % Object Detection Metrics content goes here.
+  \frametitle{Object Detection Metrics: Precision and Recall}
+  \textbf{Precision} - The proportion of true positive identifications made by the model out of all positive identifications it made.
+  \[
+  Precision = \frac{TP}{TP + FP}
+  \]
+  
+  \textbf{Recall} - The proportion of true positive identifications made by the model out of all actual positives available during the test.
+  \[
+  Recall = \frac{TP}{TP + FN}
+  \]
 \end{frame}
 
+
 \begin{frame}
-  \frametitle{Object Detection Metrics}
-  % Object Detection Metrics content goes here.
+  \frametitle{Object Detection Metrics: AP and mAP}
+  \textbf{Average Precision (AP)} - A measure of precision across varying thresholds, reflecting the area under the precision-recall curve.
+  \[
+  AP = \sum_{n} (R_n - R_{n-1}) P_n
+  \]
+  
+  \textbf{Mean Average Precision (mAP)} - The average of AP scores across all classes or varying IoU thresholds, providing a single overall effectiveness score for the detection system.
+  \[
+  mAP = \frac{1}{N} \sum_{i=1}^{N} AP_i
+  \]
 \end{frame}
+
+
 
 
 \begin{frame}
@@ -350,9 +368,16 @@
 
 \section{Experiments}
 \begin{frame}[t]
-  \scriptsize
   \frametitle{Experiments}
+  To effectively implement and evaluate the Extended Masked-Attention Mask Transformer, we utilized Amazon Web Services (AWS) SageMaker, 
+  leveraging the powerful \textit{ml.p4d.24xlarge} instance with eight NVIDIA A100 GPUs.
+
+  \vspace{1cm}
+  
+  The table below summarizes the tailored training parameters per dataset, optimized through extensive experimentation to maximize model performance.
+
   \begin{table}[h]
+    \scriptsize
     \centering
     \begin{tabular}{|c|c|c|c|}
         \hline
@@ -366,14 +391,21 @@
     \end{tabular}
     \caption{Details of training parameters per dataset}
     \label{tab:training_parameters}
-    \end{table}
+  \end{table}
 \end{frame}
+
 
 
 \begin{frame}[t]
   \scriptsize
-  \frametitle{Experiments}
-
+  \frametitle{Experiments - COCO2017}
+  \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.25]{Figures/coco_train.jpg}
+    \caption{Performance comparison of MAMT and EMAMT on mAP at 50\% IoU threshold (left) and the average mAP across IoU thresholds from 50\% to 95\% (right) 
+    for the COCO2017 dataset}
+    \label{fig:coco-train}
+  \end{figure}
 
 
   \begin{table}[h]
@@ -389,9 +421,44 @@
   \end{table}
 \end{frame}
 
+
+
 \begin{frame}[t]
   \scriptsize
-  \frametitle{Experiments}
+  \frametitle{Experiments - COCO2017}
+  \begin{columns}
+      \begin{column}{0.5\textwidth}
+      \centering
+      \begin{figure}
+        \includegraphics[scale=0.22]{Figures/coco_ground_truth.jpg}
+        \caption{Image with Ground Truth Bounding Boxes and Masks}
+        \label{fig:pre-process}
+      \end{figure}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \centering
+      \begin{figure}
+        \includegraphics[scale=0.22]{Figures/coco_predictions.jpg}
+        \caption{Image with Predicted Bounding Boxes and Masks}
+        \label{fig:post-pre-process}
+      \end{figure}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+
+\begin{frame}[t]
+  \scriptsize
+  \frametitle{Experiments - VisDrone}
+
+  \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.25]{Figures/vis_train.jpg}
+    \caption{Performance comparison of MAMT and EMAMT on mAP at 50\% IoU threshold (left) and the average mAP across IoU thresholds from 50\% to 95\% (right) 
+    for the VisDrone dataset}
+    \label{fig:uav-train}
+  \end{figure}
+
   \begin{table}[h]
     \centering
     \begin{tabular}{|c|c|c|c|c|c|}
@@ -408,7 +475,40 @@
 
 \begin{frame}[t]
   \scriptsize
-  \frametitle{Experiments}
+  \frametitle{Experiments - VisDrone}
+  \begin{columns}
+      \begin{column}{0.5\textwidth}
+      \centering
+      \begin{figure}
+        \includegraphics[scale=0.22]{Figures/vis_ground_truth.jpg}
+        \caption{Image with Ground Truth Bounding Boxes and Masks}
+        \label{fig:pre-process}
+      \end{figure}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \centering
+      \begin{figure}
+        \includegraphics[scale=0.22]{Figures/vis_predictions.jpg}
+        \caption{Image with Predicted Bounding Boxes and Masks}
+        \label{fig:post-pre-process}
+      \end{figure}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+
+\begin{frame}[t]
+  \scriptsize
+  \frametitle{Experiments - UAV-SOD}
+
+  \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.25]{Figures/uav_train.jpg}
+    \caption{Performance comparison of MAMT and EMAMT on mAP at 50\% IoU threshold (left) and the average mAP across IoU thresholds from 50\% to 95\% (right) 
+    for the UAV-SOD dataset}
+    \label{fig:uav-train}
+\end{figure}
+
   \begin{table}[h]
     \centering
     \begin{tabular}{|c|c|c|c|c|c|}
@@ -419,9 +519,31 @@
     \end{tabular}
     \caption{Results for UAV-SOD dataset}
     \label{tab:uav_results}
-\end{table}
+  \end{table}
 \end{frame}
 
+\begin{frame}[t]
+  \scriptsize
+  \frametitle{Experiments UAV-SOD}
+  \begin{columns}
+      \begin{column}{0.5\textwidth}
+      \centering
+      \begin{figure}
+        \includegraphics[scale=0.22]{Figures/uav_ground_truth.jpg}
+        \caption{Image with Ground Truth Bounding Boxes and Masks}
+        \label{fig:pre-process}
+      \end{figure}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \centering
+      \begin{figure}
+        \includegraphics[scale=0.22]{Figures/uav_predictions.jpg}
+        \caption{Image with Predicted Bounding Boxes and Masks}
+        \label{fig:post-pre-process}
+      \end{figure}
+    \end{column}
+  \end{columns}
+\end{frame}
 
 
 \section{Conclusion}
