@@ -11,3 +11,7 @@
 \beamer@slide {fig:ftt}{19}
 \beamer@slide {fig:proposed-model}{20}
 \beamer@slide {fig:proposed-model-Transformer}{21}
+\beamer@slide {tab:training_parameters}{22}
+\beamer@slide {tab:coco_results}{23}
+\beamer@slide {tab:vis_results}{24}
+\beamer@slide {tab:uav_results}{25}
