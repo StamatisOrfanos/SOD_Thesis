@@ -13,6 +13,7 @@ backbone, our findings are as follows:
     \item Conversely, in datasets characterized by diverse object sizes and dense urban environments, such as MS COCO and VisDrone, EMAMT exhibited reductions in mean Average Precision by 6.5\% and 13.7\%, respectively. 
 \end{itemize}
 
+
 For future work, we intend to investigate deeper into EMAMT’s capabilities across a broader spectrum of datasets, aiming to minimize the performance gaps. 
 This includes creating a better mechanism to handle the variety of number of object per image, optimizing the interaction between the EFPN backbone and Mask2Former 
 found in datasets like VisDrone and MS COCO. Furthermore, we plan to investigate the specific contributions of each of the five feature maps used in the EMAMT architecture. 
@@ -24,3 +25,7 @@ Additionally, the exploration of further reducing computational demands without 
 We also plan to extend our testing to include additional object detection frameworks and datasets to verify the generalizability and robustness of EMAMT across 
 different scenarios, which will help in further solidifying its efficacy and applicability in practical applications.
 
+A specific area of further investigation will be the adaptation of the mask loss component of our model. Currently utilizing Binary Cross-Entropy with Logits Loss, 
+we aim to explore the potential benefits of implementing Focal Tversky Loss. This loss function may offer improvements in handling the class imbalance present 
+within small object detections by focusing loss calculation more significantly on harder, misclassified examples, potentially enhancing the model's accuracy and 
+learning efficiency in complex scenarios.
