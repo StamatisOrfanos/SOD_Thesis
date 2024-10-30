@@ -1,11 +1,7 @@
 import numpy as np
 import torch, statistics
-from sklearn.metrics import precision_recall_curve, average_precision_score
 import torch
 from torch.utils.data import DataLoader
-from torchvision.transforms import Compose, ToTensor, Normalize
-from torchvision import transforms
-from sklearn.metrics import confusion_matrix
 import pandas as pd
 from datetime import datetime
 
@@ -69,10 +65,6 @@ def train(model, train_loader, device, anchors, optimizer, num_epochs, dataset):
         # Save model info every 25 epochs to check progress with evaluation
         if epoch % 25 == 0 and epoch != 0: torch.save(model, 'results/model_{}_{}.pt'.format(dataset, epoch)) # type: ignore
         print('For the epoch:{} the loss is: {}, the precision is: {}, the recall is: {}, the mAP[0.5] is: {} and the mAP[0.5-0.95] is: {}'.format(loss, map['precision'], map['recall'], map['mAP'], mapCOCO['mAP']))
-        
-
-
-
 
 
 def evaluate_model(model, data_loader, device, anchors):
@@ -107,4 +99,3 @@ def evaluate_model(model, data_loader, device, anchors):
         avg_loss = total_loss / len(data_loader)
 
     return avg_loss
-
