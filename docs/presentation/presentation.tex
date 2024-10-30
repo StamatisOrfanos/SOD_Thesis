@@ -326,6 +326,7 @@
 \end{frame}
 
 \begin{frame}
+  \frametitle{Proposed Method}
   \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.15]{Figures/efpn.jpg}
@@ -363,6 +364,21 @@
     \caption{Vision Transformer Architecture}
     \label{fig:proposed-model-Transformer}
   \end{figure}
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Proposed Method}
+  To jointly optimize object detection and instance segmentation by incorporating multiple loss components, each addressing specific aspects of model 
+  performance.
+
+  \[L_{total} = \lambda_{mask} L_{mask} + \lambda_{bbox} L_{bbox} + \lambda_{class} L_{class}\]
+
+  \begin{itemize}
+    \item Mask Loss - \(\lambda_{mask} = 1\)
+    \item Bounding Box Loss - \(\lambda_{bbox} = 1\)
+    \item Class Loss - \(\lambda_{class} = 0.8\)
+  \end{itemize}
+
 \end{frame}
 
 \section{Experiments}
