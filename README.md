@@ -1,48 +1,14 @@
-# Small Object Detection - Master's Thesis
+# Small-object detection in remote sensing images and video - Master's Thesis
+
 
 ## Introduction
-
-Small Object Detection is an emerging field in computer vision, focusing on identifying and classifying objects of relatively small size within images. This is particularly challenging due to limited pixel information and the difficulty in distinguishing these objects from their surroundings. The aim of this thesis is to explore and develop innovative methods for effectively detecting small objects, with potential applications in areas such as surveillance, medical imaging, and autonomous vehicles.
-
-## Objectives
-
-The primary objectives of this project include:
-
-1. Investigating current algorithms and techniques in small object detection.
-2. Developing a novel approach/model to improve detection accuracy.
-3. Evaluating the performance of the proposed solution against existing benchmarks.
-
-### Datasets
-
-#### [Coco Dataset](https://cocodataset.org/#home)
-
-he MS COCO dataset is a large-scale object detection, image segmentation, and captioning dataset published by Microsoft. Machine Learning and Computer Vision engineers popularly use the COCO dataset for various computer vision projects. Understanding visual scenes is a primary goal of computer vision; it involves recognizing what objects are present, localizing the objects in 2D and 3D, determining the object’s attributes, and characterizing the relationship between objects. Therefore, algorithms for object detection and object classification can be trained using the dataset.
-
-#### [City-scapes](https://www.cityscapes-dataset.com/)
-
-#### [UAV Small Object Detection Dataset](https://www.kaggle.com/datasets/sovitrath/uav-small-object-detection-dataset)
-
-This dataset contains aerial imagery from UAVs to facilitate small object detection using deep learning.
-This version of the dataset contains a training, validation, and test split.
-Training: 717 samples
-Validation: 84 samples
-Test: 43 samples
-
-#### [VisDrone-Dataset](https://www.kaggle.com/datasets/wwj0510/visdrone)
-
-Drones, or general UAVs, equipped with cameras have been fast deployed to a wide range of applications, including agricultural, aerial photography, fast delivery, and surveillance. Consequently, automatic understanding of visual data collected from these platforms become highly demanding, which brings computer vision to drones more and more closely. We are excited to present a large-scale benchmark with carefully annotated ground-truth for various important computer vision tasks, named VisDrone, to make vision meet drones. The VisDrone2019 dataset is collected by the AISKYEYE team at Lab of Machine Learning and Data Mining , Tianjin University, China. The benchmark dataset consists of 288 video clips formed by 261,908 frames and 10,209 static images, captured by various drone-mounted cameras, covering a wide range of aspects including location (taken from 14 different cities separated by thousands of kilometers in China), environment (urban and country), objects (pedestrian, vehicles, bicycles, etc.), and density (sparse and crowded scenes). Note that, the dataset was collected using various drone platforms (i.e., drones with different models), in different scenarios, and under various weather and lighting conditions. These frames are manually annotated with more than 2.6 million bounding boxes of targets of frequent interests, such as pedestrians, cars, bicycles, and tricycles. Some important attributes including scene visibility, object class and occlusion, are also provided for better data utilization.
-
-### Getting Started
-
-### Prerequisites (software requirements, dependencies)
-
-### Example commands
+Object detection in remote sensing images has been a challenging problem for the computer vision research community due to the presence of small or tiny objects, which are often difficult to detect because they occupy only a small proportion of the image. These objects can be defined in two main ways: relatively, where an object is considered small if its bounding box covers less than 1% of the image area or absolutely, where small objects are defined by specific pixel dimensions, such as 32x32 pixels in the MS-COCO dataset or 16x16 pixels in the USC-GRAD-STDb. There have been improvements in the mean Average Precision (mAP) of the models using different architectures. Most of the detection models are becoming more complex and bigger, which can cause a problem usually when a detection model is intended for use in a satellite or an Unmanned Aerial Vehicle, since their computation resources are limited. This thesis proposes a new backbone being the Extended Feature Pyramid Network for the visual transformer Masked-Attention Mask Transformer as the detector. This new model utilizes feature maps, bounding boxes and masks as information to effectively localize and classify small objects. This approach has achieved a significant reduction in computational complexity, specifically a 56% decrease in Giga-Floating Point Operations Per Second (GFLOPs) in all cases. The datasets that were used for the evaluation of the models with the proposed method, were the Microsoft Common Object in COntext (MS COCO), VisDrone and Unmanned Aerial Vehicle Small Object Detection (UAV-SOD). On the UAV-SOD dataset the model had a 3.1% mAP improvement, while having an almost identical performance on the most complex dataset the MS COCO with a 6.5% decrease. Lastly on the VisDrone dataset we got a bigger performance decrease of around 13%, since the test data had objects that the model correctly localized and classified but the annotations were incorrectly not included. In this last case we think the performance of the model was better than the result may suggest. The results demonstrate the effectiveness of the proposed method, providing useful intel in multi-task learning and achieving greater accuracy performance and better computational efficiency on a set of challenging datasets.
 
 ### License
 
 MIT License
 
-Copyright (c) 2023 Stamatis Orfanos
+Copyright (c) 2023 Stamatios Orfanos
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
